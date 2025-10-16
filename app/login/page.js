@@ -1,6 +1,9 @@
 "use client"; // เพิ่ม directive นี้เพื่อระบุว่าเป็น Client Component
 
 import React, { useState } from 'react';
+import Image from "next/image";
+import BookImg from "../images/book.png"; // import รูปจาก app/images
+
 // ไอคอน SVG สำหรับการซ่อน/แสดงรหัสผ่าน
 const EyeIcon = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -168,20 +171,15 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* ส่วนขวา: รูปภาพ/โฆษณา (ซ่อนบนมือถือ) */}
-      <div className="hidden md:block md:w-1/2 relative bg-gray-100 overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(https://placehold.co/1200x800/2A4E7E/ffffff?text=Digital+Archive+Platform)` }}
-        >
-          {/* ใช้พื้นหลังสีน้ำเงินเข้มคล้ายภาพต้นฉบับ */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/90 to-blue-700/70"></div>
-          <div className="absolute inset-0 flex items-center justify-center p-10 text-white text-center">
-            <h2 className="text-3xl font-extrabold leading-snug">
-              คลังความรู้ดิจิทัล <br/> ที่เข้าถึงได้ง่ายและรวดเร็ว
-            </h2>
-          </div>
-        </div>
+      {/* ส่วนขวา: รูปภาพ */}
+      <div className="hidden md:block md:w-1/2 relative overflow-hidden">
+        <Image
+          src={BookImg}
+          alt="Digital Archive Illustration"
+          fill
+          className="object-cover"
+          priority
+        />
       </div>
       
     </div>
