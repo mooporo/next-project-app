@@ -25,9 +25,19 @@ const Navbar = () => (
 
 // Hero Section
 const HeroSection = () => (
-  <section className="relative pt-32 pb-32 overflow-hidden bg-gray-50">
-    {/* Background gradient */}
-    <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A] to-[#111827] z-0"></div>
+  <section className="relative pt-32 pb-32 overflow-hidden">
+    {/* Background image */}
+    <div className="absolute inset-0 z-0">
+      <Image
+        src="/background.png" // วางไฟล์ background.png ใน public/
+        alt="Background"
+        fill
+        className="object-cover"
+        priority
+      />
+      {/* Overlay สีเข้มเพื่อให้ข้อความอ่านง่าย */}
+      <div className="absolute inset-0 bg-black/40"></div>
+    </div>
 
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between">
       {/* ซ้าย */}
@@ -47,18 +57,18 @@ const HeroSection = () => (
         </a>
       </div>
 
-     <div className="md:w-1/2 flex justify-center p-8">
-  <div className="w-[350px] h-[350px] relative rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-    <Image
-      src="/research.png"  // วางไฟล์ research.png ใน public/
-      alt="Research"
-      fill
-      className="object-contain"
-      priority
-    />
-  </div>
-</div>
-
+      {/* ขวา */}
+      <div className="md:w-1/2 flex justify-center p-8">
+        <div className="w-[350px] h-[350px] relative rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+          <Image
+            src="/research.png"  // วางไฟล์ research.png ใน public/
+            alt="Research"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+      </div>
     </div>
   </section>
 );
