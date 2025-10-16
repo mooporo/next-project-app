@@ -1,103 +1,131 @@
-import Image from "next/image";
+import React from 'react';
+// โค้ดนี้ถูกปรับปรุงเพื่อให้เป็นไปตาม UI ใหม่ที่มี Navbar และ Hero Section
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+// ส่วน Navbar (จำลอง)
+const Navbar = () => (
+  <header className="fixed top-0 left-0 right-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+      
+      {/* โลโก้/ชื่อโปรเจกต์ */}
+      <div className="flex items-center space-x-8">
+        <h1 className="text-xl font-bold text-blue-600">Siam Archive</h1>
+        {/* เมนูนำทางหลัก (ซ่อนบนมือถือ) */}
+        <nav className="hidden md:flex space-x-8 text-gray-700 text-sm font-medium">
+          <a href="#" className="hover:text-blue-600 transition duration-150">Home</a>
+          <a href="#" className="hover:text-blue-600 transition duration-150">Search</a>
+          <a href="#" className="hover:text-blue-600 transition duration-150">Model</a>
+        </nav>
+      </div>
+      
+      {/* ปุ่ม Login/Register */}
+      <div className="space-x-3">
+        {/* ปุ่ม Login ใช้การนำทางไปยังหน้า /login ที่สร้างไว้ก่อนหน้า */}
+        <a 
+          href="/login" 
+          className="px-4 py-1.5 border border-blue-600 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-50 transition duration-150 shadow-sm"
+        >
+          Login
+        </a>
+        <a 
+          href="/register" 
+          className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-150 shadow-md"
+        >
+          Register
+        </a>
+      </div>
+    </div>
+  </header>
+);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+// ส่วน Hero Section
+const HeroSection = () => (
+  <section className="relative pt-24 pb-12 overflow-hidden bg-gray-50">
+    {/* Background Shape/Effect: จำลองพื้นหลังสีน้ำเงินเข้มที่มีลวดลาย */}
+    <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A] to-[#111827]">
+      {/* เพิ่ม effect ลวดลายทางเรขาคณิตจางๆ */}
+      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M0 0h100v100H0z" fill="none" stroke="white" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23p)"/></svg>')` }}></div>
+    </div>
+
+    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between z-10">
+      
+      {/* คอลัมน์ซ้าย: ข้อความและปุ่ม */}
+      <div className="md:w-1/2 text-left py-12 md:py-24">
+        <h2 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">
+          ยินดีต้อนรับสู่ Siam Archive
+        </h2>
+        <p className="text-xl text-blue-200 mb-6">
+          สถานที่สำหรับการค้นหางานวิจัย
+        </p>
+        <ul className="text-lg text-blue-100 space-y-2 mb-8 list-none">
+          <li className="flex items-center">
+            <span className="text-xl mr-2 text-white">‹</span>
+            ค้นหา อัปโหลด ศึกษา และสร้างชุมชนงานวิจัย
+          </li>
+        </ul>
+        
+        {/* ปุ่ม Get Start */}
+        <a
+          href="#"
+          className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-500 hover:bg-indigo-600 shadow-xl transition duration-300 transform hover:scale-105"
+        >
+          Get Start
+        </a>
+      </div>
+
+      {/* คอลัมน์ขวา: รูปภาพประกอบ (ใช้ Placeholder ที่มีธีม) */}
+      <div className="md:w-1/2 flex justify-center p-8">
+        <div 
+          className="w-[350px] h-[350px] rounded-2xl shadow-2xl bg-white/10 flex items-center justify-center p-4 border border-white/20"
+          style={{ backgroundImage: `url(https://placehold.co/400x400/0F2B5B/F0F3FF?text=งานวิจัย+RESEARCH&font=Inter)`, backgroundSize: 'cover' }}
+        >
+          {/* แทนที่ด้วยไอคอนงานวิจัยถ้ามี */}
+          <span className="text-4xl text-white font-bold backdrop-blur-sm p-2 rounded-lg">RESEARCH</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      
+    </div>
+  </section>
+);
+
+// ส่วน Feature/Description (จำลองส่วนข้อความด้านล่าง)
+const DescriptionSection = () => (
+  <section className="py-16 bg-white">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p className="text-xl text-gray-700 leading-relaxed mb-8">
+        แพลตฟอร์มของเราออกแบบมาเพื่อจัดเก็บและบริหารจัดการงานวิจัยอย่างมีประสิทธิภาพ
+        ด้วยระบบที่ใช้งานง่าย คุณสามารถจัดการและเข้าถึงงานวิจัยได้สะดวก
+        พร้อมรองรับการแสดงผลที่ตอบสนองต่อทุกอุปกรณ์
+      </p>
+      
+      {/* ปุ่มเริ่มต้น (Start Button) */}
+      <a
+        href="#"
+        className="inline-flex items-center px-10 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl transition duration-300 transform hover:scale-105"
+      >
+        เริ่มต้นไหม?
+      </a>
+    </div>
+  </section>
+);
+
+
+const HomePage = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-white font-['Inter']">
+      
+      {/* 1. Navbar */}
+      <Navbar />
+
+      {/* 2. Hero Section */}
+      <HeroSection />
+
+      {/* 3. Description Section */}
+      <DescriptionSection />
+
+      {/* ลบ ArchiveIcon และโค้ดเก่าที่ไม่เกี่ยวข้องออก */}
+
     </div>
   );
-}
+};
+
+export default HomePage;
