@@ -1,45 +1,59 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
+import Drawer from "./components/Drawer"; // import Drawer component
 
 // Navbar
-const Navbar = () => (
-  <header className="fixed top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm shadow-sm">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-      <div className="flex items-center space-x-8">
-        <h1 className="text-xl font-bold text-blue-600">Siam Archive</h1>
-        <nav className="hidden md:flex space-x-8 text-gray-700 text-sm font-medium">
-          <a href="/" className="hover:text-blue-600 transition duration-150">Home</a>
-          <a href="/search" className="hover:text-blue-600 transition duration-150">Search</a>
-          <a href="/model" className="hover:text-blue-600 transition duration-150">Model</a>
-        </nav>
+const Navbar = () => {
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+        <div className="flex items-center space-x-8">
+          <h1 className="text-xl font-bold text-blue-600">Siam Archive</h1>
+          <nav className="hidden md:flex space-x-8 text-gray-700 text-sm font-medium">
+            <a href="/" className="hover:text-blue-600 transition duration-150">Home</a>
+            <a href="/search" className="hover:text-blue-600 transition duration-150">Search</a>
+            <a href="/model" className="hover:text-blue-600 transition duration-150">Model</a>
+          </nav>
+        </div>
+        <div className="flex items-center space-x-3">
+          {/** รูปโปรไฟล์ user ด้านซ้าย Login */}
+          <div className="w-8 h-8 relative">
+            <Image
+              src={userAvatar || '/placeholder-avatar.png'} // placeholder หากยังไม่มี
+              alt="Profile"
+              fill
+              className="rounded-full object-cover"
+            />
+          </div>
+
+          <a
+            href="/login"
+            className="px-4 py-1.5 border border-blue-600 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-50 transition duration-150 shadow-sm"
+          >
+            Login
+          </a>
+          <a
+            href="/register"
+            className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-150 shadow-md"
+          >
+            Register
+          </a>
+        </div>
       </div>
-      <div className="space-x-3">
-        <a
-          href="/login"
-          className="px-4 py-1.5 border border-blue-600 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-50 transition duration-150 shadow-sm"
-        >
-          Login
-        </a>
-        <a
-          href="/register"
-          className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-150 shadow-md"
-        >
-          Register
-        </a>
-      </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 // Hero Section
 const HeroSection = () => (
   <section className="relative pt-32 pb-32 overflow-hidden">
-    {/* Background image */}
     <div className="absolute inset-0 z-0">
       <Image
-        src="/background.png" // วางไฟล์ background.png ใน public/
+        src="/background.png"
         alt="Background"
         fill
         className="object-cover"
@@ -49,7 +63,6 @@ const HeroSection = () => (
     </div>
 
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between">
-      {/* ซ้าย */}
       <div className="md:w-1/2 text-left py-24 z-10">
         <h2 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">
           ยินดีต้อนรับสู่ Siam Archive
@@ -69,11 +82,10 @@ const HeroSection = () => (
         </a>
       </div>
 
-      {/* ขวา */}
       <div className="md:w-1/2 flex justify-center p-8">
         <div className="w-[350px] h-[350px] relative rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           <Image
-            src="/research.png" // วางไฟล์ research.png ใน public/
+            src="/research.png"
             alt="Research"
             fill
             className="object-contain"
@@ -109,6 +121,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white font-['Inter']">
       <Navbar />
+      <Drawer /> {/* เพิ่ม Drawer component */}
       <HeroSection />
       <DescriptionSection />
     </div>

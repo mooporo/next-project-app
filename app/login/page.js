@@ -3,39 +3,18 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import BookImg from "../images/book.png";
+import { supabase } from "../lib/supabaseClient";
 
-// ไอคอน SVG สำหรับการซ่อน/แสดงรหัสผ่าน
+// ไอคอนสำหรับซ่อน/แสดงรหัสผ่าน
 const EyeIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const EyeOffIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
     <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
     <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.37-1.62" />
@@ -60,36 +39,38 @@ export default function LoginPage() {
   const [user_email, setUserEmail] = useState("");
   const [user_password, setUserPassword] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Attempting login with:", { user_email, user_password });
-    // เรียก API login ในแอปจริง
+
+    // ตรวจสอบผู้ใช้จาก Supabase
+    const { data, error } = await supabase
+      .from("user_tb")
+      .select("*")
+      .eq("email", user_email)
+      .eq("password", user_password) // สำหรับ production ควร hash password
+      .single();
+
+    if (error || !data) {
+      alert("Email หรือรหัสผ่านไม่ถูกต้อง");
+      return;
+    }
+
+    alert("เข้าสู่ระบบสำเร็จ! ชื่อผู้ใช้: " + data.name);
+    // TODO: redirect ไปหน้า dashboard
   };
 
   return (
     <div className="min-h-screen flex font-['Inter']">
-      {/* ฟอร์มล็อกอิน */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16">
         <div className="w-full max-w-md">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            ยินดีต้อนรับสู่ Siam Archive
-          </h1>
-          <p className="text-gray-600 mb-8">
-            ใช้อีเมลและรหัสผ่านของคุณเพื่อเข้าสู่ระบบ
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">ยินดีต้อนรับสู่ Siam Archive</h1>
+          <p className="text-gray-600 mb-8">ใช้อีเมลและรหัสผ่านของคุณเพื่อเข้าสู่ระบบ</p>
 
           <form onSubmit={handleLogin} className="space-y-6">
-            {/* Email */}
             <div>
-              <label
-                htmlFor="user_email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Email
-              </label>
+              <label htmlFor="user_email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 id="user_email"
-                name="user_email"
                 type="email"
                 required
                 value={user_email}
@@ -99,26 +80,14 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label
-                  htmlFor="user_password"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  รหัสผ่าน
-                </label>
-                <a
-                  href="#"
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  ลืมรหัสผ่าน?
-                </a>
+                <label htmlFor="user_password" className="block text-sm font-medium text-gray-700">รหัสผ่าน</label>
+                <a href="#" className="text-xs text-blue-600 hover:text-blue-700 font-medium">ลืมรหัสผ่าน?</a>
               </div>
               <div className="relative">
                 <input
                   id="user_password"
-                  name="user_password"
                   type={showPassword ? "text" : "password"}
                   required
                   value={user_password}
@@ -130,41 +99,27 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me */}
             <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-sm text-gray-900"
-              >
-                จำฉันไว้
-              </label>
+              <input id="remember-me" type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">จำฉันไว้</label>
             </div>
 
-            {/* Login Button */}
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150"
               >
                 ลงชื่อเข้าใช้
               </button>
             </div>
           </form>
 
-          {/* Divider */}
           <div className="mt-6 relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-gray-300" />
@@ -174,45 +129,25 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Google & Guest Login */}
           <div className="mt-6 flex space-x-3">
-            <button
-              type="button"
-              className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
-            >
+            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
               <GoogleIcon className="mr-2" />
               Sign in with Google
             </button>
-            <button
-              type="button"
-              className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
-            >
+            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
               Sign in as Guest
             </button>
           </div>
 
-          {/* Register Link */}
           <p className="mt-8 text-center text-sm text-gray-600">
             ยังไม่มีบัญชีใช่ไหม?{" "}
-            <a
-              href="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              ลงทะเบียนเป็นสมาชิก
-            </a>
+            <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">ลงทะเบียนเป็นสมาชิก</a>
           </p>
         </div>
       </div>
 
-      {/* ภาพประกอบด้านขวา */}
       <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-        <Image
-          src={BookImg}
-          alt="Digital Archive Illustration"
-          fill
-          className="object-cover"
-          priority
-        />
+        <Image src={BookImg} alt="Digital Archive Illustration" fill className="object-cover" priority />
       </div>
     </div>
   );

@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import BookImg from "../images/book.png";
+import { supabase } from "../lib/supabaseClient"; // อย่าลืมสร้างไฟล์นี้
+import { v4 as uuidv4 } from "uuid"; // ใช้ UUID แทน crypto.randomUUID
 
 const GoogleIcon = (props) => (
   <svg {...props} viewBox="0 0 48 48" width="20" height="20">
@@ -37,9 +39,104 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    console.log("Attempting registration with:", formData);
+
+    // ตรวจสอบรหัสผ่านตรงกัน
+    if (formData.user_password !== formData.confirmPassword) {
+      alert("❌ รหัสผ่านไม่ตรงกัน");
+      return;
+    }
+
+    // ตรวจสอบช่องว่าง
+    if (
+      !formData.username ||
+      !formData.user_email ||
+      !formData.user_fullname ||
+      !formData.user_birthdate ||
+      !formData.user_type_id ||
+      !formData.user_org_id
+    ) {
+      alert("⚠️ กรุณากรอกข้อมูลให้ครบทุกช่อง");
+      return;
+    }
+
+    try {
+      // ตรวจสอบอีเมลหรือชื่อผู้ใช้ซ้ำ
+      const { data: existingUsers, error: checkError } = await supabase
+        .from("user_tb")
+        .select("user_email, username")
+        .or(`user_email.eq.${formData.user_email},username.eq.${formData.username}`);
+
+      if (checkError) {
+        console.error("Error checking duplicates:", checkError);
+        alert("เกิดข้อผิดพลาดระหว่างตรวจสอบข้อมูลซ้ำ");
+        return;
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        const isEmailDuplicate = existingUsers.some(
+          (user) => user.user_email === formData.user_email
+        );
+        const isUsernameDuplicate = existingUsers.some(
+          (user) => user.username === formData.username
+        );
+
+        if (isEmailDuplicate) {
+          alert("❌ อีเมลนี้ถูกใช้ไปแล้ว");
+          return;
+        }
+        if (isUsernameDuplicate) {
+          alert("❌ ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว");
+          return;
+        }
+      }
+
+      // สร้าง UUID
+      const user_id = uuidv4();
+
+      // insert ข้อมูลลง Supabase
+      const { data, error } = await supabase.from("user_tb").insert([
+        {
+          user_id,
+          username: formData.username,
+          user_email: formData.user_email,
+          user_password: formData.user_password, // production: hash ก่อน
+          user_fullname: formData.user_fullname,
+          user_birthdate: formData.user_birthdate,
+          user_type_id: formData.user_type_id,
+          user_org_id: formData.user_org_id,
+          user_image: null,
+          user_status: 1,
+          user_created_at: new Date().toISOString(),
+        },
+      ]).select();
+
+      if (error) {
+        console.error("❌ Register error:", error);
+        alert("เกิดข้อผิดพลาดในการลงทะเบียน: " + error.message);
+        return;
+      }
+
+      alert("✅ ลงทะเบียนสำเร็จ!");
+      setFormData({
+        username: "",
+        user_email: "",
+        user_fullname: "",
+        user_birthdate: "",
+        user_type_id: "",
+        user_org_id: "",
+        user_password: "",
+        confirmPassword: "",
+        agreeTerms: false,
+      });
+
+      // redirect ไป login
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("❌ Unexpected error:", err);
+      alert("เกิดข้อผิดพลาด: " + err.message);
+    }
   };
 
   const userTypeOptions = [
@@ -229,7 +326,7 @@ export default function RegisterPage() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150"
               >
                 ลงทะเบียน
               </button>
@@ -248,10 +345,16 @@ export default function RegisterPage() {
 
           {/* Google & Guest Buttons */}
           <div className="mt-4 flex space-x-3">
-            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+            <button
+              type="button"
+              className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
+            >
               <GoogleIcon className="mr-2" /> ลงทะเบียนด้วย Google
             </button>
-            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+            <button
+              type="button"
+              className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
+            >
               ลงทะเบียนในฐานะผู้มาเยือน
             </button>
           </div>
