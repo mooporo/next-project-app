@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import BookImg from "../images/book.png"; // import รูปจาก app/images
+import BookImg from "../images/book.png";
 
-// ไอคอน SVG สำหรับ Google
 const GoogleIcon = (props) => (
   <svg {...props} viewBox="0 0 48 48" width="20" height="20">
     <clipPath id="g">
@@ -20,11 +19,12 @@ const GoogleIcon = (props) => (
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     username: "",
-    email: "",
-    idNumber: "",
-    dob: "",
-    userType: "",
-    password: "",
+    user_email: "",
+    user_fullname: "",
+    user_birthdate: "",
+    user_type_id: "",
+    user_org_id: "",
+    user_password: "",
     confirmPassword: "",
     agreeTerms: false,
   });
@@ -44,14 +44,21 @@ export default function RegisterPage() {
 
   const userTypeOptions = [
     { value: "", label: "โปรดเลือกประเภทผู้ใช้" },
-    { value: "student", label: "นักศึกษา" },
-    { value: "lecturer", label: "อาจารย์/นักวิจัย" },
-    { value: "public", label: "บุคคลทั่วไป" },
+    { value: "1", label: "นักศึกษา" },
+    { value: "2", label: "อาจารย์/นักวิจัย" },
+    { value: "3", label: "บุคคลทั่วไป" },
+  ];
+
+  const userOrgOptions = [
+    { value: "", label: "โปรดเลือกสังกัด" },
+    { value: "1", label: "คณะวิศวกรรมศาสตร์" },
+    { value: "2", label: "คณะวิทยาศาสตร์" },
+    { value: "3", label: "สังกัดอื่นๆ" },
   ];
 
   return (
     <div className="min-h-screen flex font-['Inter']">
-      {/* แบบฟอร์มด้านซ้าย */}
+      {/* ฟอร์มด้านซ้าย */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-white z-10">
         <div className="w-full max-w-md">
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center md:text-left">
@@ -59,8 +66,11 @@ export default function RegisterPage() {
           </h1>
 
           <form onSubmit={handleRegister} className="space-y-4">
+            {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                ชื่อผู้ใช้
+              </label>
               <input
                 id="username"
                 name="username"
@@ -73,80 +83,120 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Full Name */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+              <label htmlFor="user_fullname" className="block text-sm font-medium text-gray-700 mb-1">
+                ชื่อ-นามสกุล
+              </label>
               <input
-                id="email"
-                name="email"
+                id="user_fullname"
+                name="user_fullname"
+                type="text"
+                required
+                placeholder="ชื่อ-นามสกุล"
+                value={formData.user_fullname}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="user_email" className="block text-sm font-medium text-gray-700 mb-1">
+                อีเมล
+              </label>
+              <input
+                id="user_email"
+                name="user_email"
                 type="email"
                 required
                 placeholder="อีเมล"
-                value={formData.email}
+                value={formData.user_email}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
+            {/* Birthdate */}
             <div>
-              <label htmlFor="idNumber" className="block text-sm font-medium text-gray-700 mb-1">หมายเลขประจำตัวประชาชน</label>
+              <label htmlFor="user_birthdate" className="block text-sm font-medium text-gray-700 mb-1">
+                วัน/เดือน/ปี เกิด
+              </label>
               <input
-                id="idNumber"
-                name="idNumber"
-                type="text"
-                required
-                maxLength={13}
-                placeholder="หมายเลขประจำตัวประชาชน"
-                value={formData.idNumber}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">วันเดือนปีเกิด</label>
-              <input
-                id="dob"
-                name="dob"
+                id="user_birthdate"
+                name="user_birthdate"
                 type="date"
                 required
-                value={formData.dob}
+                value={formData.user_birthdate}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
+            {/* User Type */}
             <div>
-              <label htmlFor="userType" className="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
+              <label htmlFor="user_type_id" className="block text-sm font-medium text-gray-700 mb-1">
+                ประเภทผู้ใช้
+              </label>
               <select
-                id="userType"
-                name="userType"
+                id="user_type_id"
+                name="user_type_id"
                 required
-                value={formData.userType}
+                value={formData.user_type_id}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
                 {userTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.value === ""}>{option.label}</option>
+                  <option key={option.value} value={option.value} disabled={option.value === ""}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* User Org */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
+              <label htmlFor="user_org_id" className="block text-sm font-medium text-gray-700 mb-1">
+                สังกัด
+              </label>
+              <select
+                id="user_org_id"
+                name="user_org_id"
+                required
+                value={formData.user_org_id}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                {userOrgOptions.map((option) => (
+                  <option key={option.value} value={option.value} disabled={option.value === ""}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="user_password" className="block text-sm font-medium text-gray-700 mb-1">
+                รหัสผ่าน
+              </label>
               <input
-                id="password"
-                name="password"
+                id="user_password"
+                name="user_password"
                 type="password"
                 required
                 placeholder="รหัสผ่าน"
-                value={formData.password}
+                value={formData.user_password}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">ยืนยันรหัสผ่าน</label>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                ยืนยันรหัสผ่าน
+              </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -159,6 +209,7 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Agree Terms */}
             <div className="flex items-center">
               <input
                 id="agreeTerms"
@@ -174,6 +225,7 @@ export default function RegisterPage() {
               </label>
             </div>
 
+            {/* Register Button */}
             <div>
               <button
                 type="submit"
@@ -184,24 +236,24 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          <div className="mt-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">หรือ</span>
-              </div>
+          {/* Divider */}
+          <div className="mt-4 relative">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-gray-300" />
             </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">หรือ</span>
+            </div>
+          </div>
 
-            <div className="mt-4 flex space-x-3">
-              <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
-                <GoogleIcon className="mr-2" /> ลงทะเบียนด้วย Google
-              </button>
-              <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
-                ลงทะเบียนในฐานะผู้มาเยือน
-              </button>
-            </div>
+          {/* Google & Guest Buttons */}
+          <div className="mt-4 flex space-x-3">
+            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+              <GoogleIcon className="mr-2" /> ลงทะเบียนด้วย Google
+            </button>
+            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+              ลงทะเบียนในฐานะผู้มาเยือน
+            </button>
           </div>
 
           <p className="mt-8 text-center text-sm text-gray-600">
@@ -215,13 +267,7 @@ export default function RegisterPage() {
 
       {/* รูปภาพด้านขวา */}
       <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-        <Image
-          src={BookImg}
-          alt="หนังสือและเอกสารวิจัย"
-          fill
-          className="object-cover"
-          priority
-        />
+        <Image src={BookImg} alt="หนังสือและเอกสารวิจัย" fill className="object-cover" priority />
       </div>
     </div>
   );

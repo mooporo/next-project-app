@@ -3,21 +3,31 @@
 import React from "react";
 import Image from "next/image";
 
-// ส่วน Navbar
+// Navbar
 const Navbar = () => (
   <header className="fixed top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm shadow-sm">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
       <div className="flex items-center space-x-8">
         <h1 className="text-xl font-bold text-blue-600">Siam Archive</h1>
         <nav className="hidden md:flex space-x-8 text-gray-700 text-sm font-medium">
-          <a href="#" className="hover:text-blue-600 transition duration-150">Home</a>
-          <a href="#" className="hover:text-blue-600 transition duration-150">Search</a>
-          <a href="#" className="hover:text-blue-600 transition duration-150">Model</a>
+          <a href="/" className="hover:text-blue-600 transition duration-150">Home</a>
+          <a href="/search" className="hover:text-blue-600 transition duration-150">Search</a>
+          <a href="/model" className="hover:text-blue-600 transition duration-150">Model</a>
         </nav>
       </div>
       <div className="space-x-3">
-        <a href="/login" className="px-4 py-1.5 border border-blue-600 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-50 transition duration-150 shadow-sm">Login</a>
-        <a href="/register" className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">Register</a>
+        <a
+          href="/login"
+          className="px-4 py-1.5 border border-blue-600 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-50 transition duration-150 shadow-sm"
+        >
+          Login
+        </a>
+        <a
+          href="/register"
+          className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-150 shadow-md"
+        >
+          Register
+        </a>
       </div>
     </div>
   </header>
@@ -35,7 +45,6 @@ const HeroSection = () => (
         className="object-cover"
         priority
       />
-      {/* Overlay สีเข้มเพื่อให้ข้อความอ่านง่าย */}
       <div className="absolute inset-0 bg-black/40"></div>
     </div>
 
@@ -52,8 +61,11 @@ const HeroSection = () => (
             ค้นหา อัปโหลด ศึกษา และสร้างชุมชนงานวิจัย
           </li>
         </ul>
-        <a href="#" className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-500 hover:bg-indigo-600 shadow-xl transition duration-300 transform hover:scale-105">
-          Get Start
+        <a
+          href="/register"
+          className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-500 hover:bg-indigo-600 shadow-xl transition duration-300 transform hover:scale-105"
+        >
+          เริ่มใช้งาน
         </a>
       </div>
 
@@ -61,7 +73,7 @@ const HeroSection = () => (
       <div className="md:w-1/2 flex justify-center p-8">
         <div className="w-[350px] h-[350px] relative rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           <Image
-            src="/research.png"  // วางไฟล์ research.png ใน public/
+            src="/research.png" // วางไฟล์ research.png ใน public/
             alt="Research"
             fill
             className="object-contain"
@@ -82,8 +94,11 @@ const DescriptionSection = () => (
         ด้วยระบบที่ใช้งานง่าย คุณสามารถจัดการและเข้าถึงงานวิจัยได้สะดวก
         พร้อมรองรับการแสดงผลที่ตอบสนองต่อทุกอุปกรณ์
       </p>
-      <a href="#" className="inline-flex items-center px-10 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl transition duration-300 transform hover:scale-105">
-        เริ่มต้นไหม?
+      <a
+        href="/register"
+        className="inline-flex items-center px-10 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl transition duration-300 transform hover:scale-105"
+      >
+        เริ่มต้นใช้งาน
       </a>
     </div>
   </section>
