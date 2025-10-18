@@ -20,10 +20,9 @@ const Navbar = () => {
           </nav>
         </div>
         <div className="flex items-center space-x-3">
-          {/** รูปโปรไฟล์ user ด้านซ้าย Login */}
           <div className="w-8 h-8 relative">
             <Image
-              src={userAvatar || '/placeholder-avatar.png'} // placeholder หากยังไม่มี
+              src={userAvatar || '/placeholder-avatar.png'}
               alt="Profile"
               fill
               className="rounded-full object-cover"
@@ -75,7 +74,7 @@ const HeroSection = () => (
           </li>
         </ul>
         <a
-          href="/register"
+          href="/search"
           className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-500 hover:bg-indigo-600 shadow-xl transition duration-300 transform hover:scale-105"
         >
           เริ่มใช้งาน
@@ -107,7 +106,7 @@ const DescriptionSection = () => (
         พร้อมรองรับการแสดงผลที่ตอบสนองต่อทุกอุปกรณ์
       </p>
       <a
-        href="/register"
+        href="/search"
         className="inline-flex items-center px-10 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl transition duration-300 transform hover:scale-105"
       >
         เริ่มต้นใช้งาน

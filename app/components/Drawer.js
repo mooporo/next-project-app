@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation'; // ✅ เพิ่ม useRouter
 import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User } from 'lucide-react';
 
 // ข้อมูลเมนูนำทาง
@@ -60,6 +61,7 @@ const HistoryItem = ({ title, isActive, onClick }) => (
 );
 
 const Drawer = () => {
+  const router = useRouter(); // ✅ เรียก useRouter
   const [isOpen, setIsOpen] = useState(false);
   const [activeMenuKey, setActiveMenuKey] = useState('home');
   const [activeHistoryId, setActiveHistoryId] = useState(dummyHistory[0].id);
@@ -126,7 +128,13 @@ const Drawer = () => {
           <hr className="border-gray-200" />
 
           {/* New Chat Button */}
-          <button className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">
+          <button
+            onClick={() => {
+              router.push('/chat'); // ✅ ลิงค์ไปหน้า app/chat/page.js
+              setIsOpen(false);     // ✅ ปิด Drawer หลังคลิก
+            }}
+            className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors"
+          >
             <Plus className="w-5 h-5 mr-2" />
             <span>แชทใหม่</span>
           </button>

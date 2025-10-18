@@ -1,156 +1,186 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Upload, Home, Eye, MessageSquare, Menu } from 'lucide-react';
+"use client"; // ✅ ต้องมีบรรทัดนี้บนสุด
 
-// โครงสร้างหลักของหน้าค้นหา
-const SearchPage = () => {
-  // จำลองข้อมูลผลการค้นหา
-  const researchResults = [
-    { title: 'ชื่องานวิจัยตัวอย่าง 1', views: 154, comments: 23, id: 1 },
-    { title: 'ชื่องานวิจัยตัวอย่าง 2', views: 120, comments: 5, id: 2 },
-    { title: 'ชื่องานวิจัยตัวอย่าง 3', views: 88, comments: 10, id: 3 },
-    { title: 'ชื่องานวิจัยตัวอย่าง 4', views: 210, comments: 40, id: 4 },
-    { title: 'ชื่องานวิจัยตัวอย่าง 5', views: 95, comments: 15, id: 5 },
-    { title: 'ชื่องานวิจัยตัวอย่าง 6', views: 130, comments: 8, id: 6 },
-  ];
+import React, { useState } from 'react';
+import { Search, Home, Upload, Image, Eye, MessageSquare } from 'lucide-react';
 
-  const keywordTags = [
-    'AI', 'Big Data', 'Robotics', 'IoT', 'Machine Learning', 'Cyber Security', 'Blockchain', 'Cloud Computing'
-  ];
+// ตัวอย่างข้อมูลการ์ดผลงานวิจัย
+const mockResearchData = [
+  { id: 1, title: 'ชื่องานวิจัย 1', views: 125, comments: 4 },
+  { id: 2, title: 'ชื่องานวิจัย 2', views: 89, comments: 12 },
+  { id: 3, title: 'ชื่องานวิจัย 3', views: 201, comments: 7 },
+  { id: 4, title: 'ชื่องานวิจัย 4', views: 45, comments: 0 },
+  { id: 5, title: 'ชื่องานวิจัย 5', views: 300, comments: 20 },
+  { id: 6, title: 'ชื่องานวิจัย 6', views: 52, comments: 3 },
+];
+
+// ตัวอย่างคีย์เวิร์ด
+const mockKeywords = [
+  'ปัญญาประดิษฐ์',
+  'การเงินดิจิทัล',
+  'เทคโนโลยีชีวภาพ',
+  'พลังงานสะอาด',
+  'การเกษตรสมัยใหม่',
+  'รัฐศาสตร์',
+  'ประวัติศาสตร์',
+  'การแพทย์',
+];
+
+// Component: Research Result Card
+const ResearchCard = ({ title, views, comments }) => (
+  <div className="bg-white p-4 rounded-xl shadow-lg flex flex-col transition-transform duration-300 hover:scale-[1.02] cursor-pointer min-h-[250px] border border-gray-200">
+    <h2 className="text-lg font-bold text-gray-800 mb-3 truncate">{title}</h2>
+    <div className="flex-grow flex items-center justify-center bg-gray-100 rounded-lg p-4">
+      <Image size={64} className="text-gray-400" />
+    </div>
+    <div className="mt-4 flex justify-between text-sm font-medium text-gray-600">
+      <div className="flex items-center space-x-1">
+        <Eye size={16} className="text-blue-500" />
+        <span>Views: <span className="text-gray-900">{views}</span></span>
+      </div>
+      <div className="flex items-center space-x-1">
+        <MessageSquare size={16} className="text-blue-500" />
+        <span>Comments: <span className="text-gray-900">{comments}</span></span>
+      </div>
+    </div>
+  </div>
+);
+
+// Component: Keywords Sidebar Block
+const KeywordsBlock = () => (
+  <div className="bg-blue-600 p-6 rounded-xl shadow-lg border-2 border-blue-700">
+    <h3 className="text-xl font-semibold text-white mb-4">คีย์เวิร์ด</h3>
+    <div className="grid grid-cols-2 gap-3">
+      {mockKeywords.map((keyword, index) => (
+        <button
+          key={index}
+          className="bg-blue-800 text-white text-sm font-medium py-2 px-3 rounded-full hover:bg-blue-700 transition duration-150 shadow-md transform active:scale-95"
+          onClick={() => console.log(`Searching for: ${keyword}`)}
+        >
+          {keyword}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+// Component: Search Filter Sidebar Block
+const SearchFilterBlock = ({ searchState, setSearchState, handleSearch }) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setSearchState(prev => ({ ...prev, [name]: value }));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans">
-      {/* 1. Navbar / Header (แถบเมนูสีน้ำเงินเข้ม) */}
-      <header className="bg-blue-800 shadow-lg sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="text-3xl font-bold text-white tracking-wider">
-            Siam Archive
-          </div>
-          <nav className="hidden md:flex space-x-6 text-lg">
-            <a href="#" className="hover:text-blue-200 transition duration-150">Home</a>
-            <a href="#" className="hover:text-blue-200 transition duration-150">Search</a>
-            <a href="#" className="hover:text-blue-200 transition duration-150">Upload</a>
-            <a href="#" className="hover:text-blue-200 transition duration-150">Profile</a>
-          </nav>
-          <div className="md:hidden">
-            <Menu className="w-6 h-6 text-white cursor-pointer" />
-          </div>
-        </div>
-      </header>
+    <div className="bg-white p-6 rounded-xl shadow-lg">
+      <h3 className="text-md font-semibold text-gray-700 mb-4">ค้นหาด้วยชื่อ :</h3>
+      <input
+        type="text"
+        name="nameQuery"
+        value={searchState.nameQuery}
+        onChange={handleInputChange}
+        placeholder="กรอกชื่องานวิจัย..."
+        className="w-full p-3 mb-5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition duration-150 text-gray-800"
+      />
 
-      {/* 2. Main Content Area (Layout 2 คอลัมน์) */}
-      <main className="container mx-auto px-4 py-8">
-        <div 
-          className="grid grid-cols-1 lg:grid-cols-4 gap-8 
-                     bg-blue-950 p-6 rounded-xl shadow-2xl 
-                     bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-color-blue-900)_0%,_var(--tw-color-gray-900)_100%)]"
-        >
-          {/* 2.1. Left Sidebar (ค้นหาและคีย์เวิร์ด) - คอลัมน์ 1 */}
-          {/* ใช้ bg-gray-900/80 เพื่อจำลองความเข้มของ Sidebar */}
-          <div className="lg:col-span-1 space-y-0 rounded-xl bg-gray-900 bg-opacity-80 overflow-hidden">
-            
-            {/* อัพโหลดงานวิจัย - ใช้สีน้ำเงินสดใสตามภาพ */}
-            <div className="p-4 bg-blue-700 shadow-xl hover:bg-blue-600 transition duration-200 cursor-pointer text-center mb-6">
-              <Upload className="w-6 h-6 inline mr-2" />
-              <span className="text-xl font-semibold">อัพโหลดงานวิจัย</span>
-            </div>
+      <h3 className="text-md font-semibold text-gray-700 mb-2">คีย์เวิร์ด :</h3>
+      <select
+        name="keyword"
+        value={searchState.keyword}
+        onChange={handleInputChange}
+        className="w-full p-3 mb-6 border-2 border-gray-300 rounded-lg appearance-none bg-white focus:outline-none focus:border-blue-500 transition duration-150 cursor-pointer text-gray-800"
+      >
+        <option value="">-- เลือกคีย์เวิร์ด --</option>
+        {mockKeywords.map((k, i) => (
+          <option key={i} value={k}>{k}</option>
+        ))}
+      </select>
 
-            {/* ส่วนค้นหา/ฟิลเตอร์ - เพิ่ม padding รอบด้าน */}
-            <div className="space-y-4 px-4 pb-6">
-              {/* ปรับ Label เป็นสีขาวสนิทตามภาพ */}
-              <h3 className="text-lg font-bold text-white">ค้นหาด้วยชื่อ:</h3>
-              <input
-                type="text"
-                placeholder="กรอกชื่องานวิจัย..."
-                // พื้นหลังขาว
-                className="w-full p-3 rounded-lg bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              />
-              
-              {/* ปรับ Label เป็นสีขาวสนิทตามภาพ */}
-              <h3 className="text-lg font-bold text-white pt-2">คีย์เวิร์ด (ประเภท):</h3>
-              <select
-                // พื้นหลังขาว
-                className="w-full p-3 rounded-lg bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none pr-10"
-              >
-                <option value="">เลือกคีย์เวิร์ดหลัก...</option>
-                <option value="tech">เทคโนโลยี</option>
-                <option value="health">สุขภาพ</option>
-                <option value="social">สังคมศาสตร์</option>
-              </select>
-              
-              <button 
-                // ปุ่มสีน้ำเงินเข้ม/ดำ ตามภาพ
-                className="w-full flex items-center justify-center p-3 mt-6 bg-blue-900 rounded-lg text-xl font-bold 
-                           shadow-md hover:bg-blue-700 transition duration-200 active:scale-95"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                ค้นหา
-              </button>
-            </div>
-
-            {/* คีย์เวิร์ดแนะนำ - แถบสีน้ำเงินเต็มความกว้าง */}
-            <div> 
-              {/* Blue Header Bar for Keywords - ใช้สีน้ำเงินสดใสตามภาพ */}
-              <div className="bg-blue-700 p-3 shadow-xl">
-                <h2 className="text-xl font-bold text-white text-center">คีย์เวิร์ด</h2>
-              </div>
-              
-              {/* Grid of Keyword Buttons */}
-              <div className="grid grid-cols-2 gap-3 p-4"> 
-                {keywordTags.map((tag, index) => (
-                  <button
-                    key={index}
-                    // ปุ่มสีน้ำเงินสดใสตามภาพ
-                    className="p-3 text-sm bg-blue-700 rounded-lg shadow-lg hover:bg-blue-600 transition duration-150 active:scale-95 text-white" 
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* 2.2. Main Results Grid (ผลการค้นหางานวิจัย) - คอลัมน์ 2, 3, 4 */}
-          {/* ปรับ Grid เป็น 3 คอลัมน์ในหน้าจอใหญ่ตามภาพ */}
-          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-min">
-            {researchResults.map((item) => (
-              <ResearchCard key={item.id} item={item} />
-            ))}
-          </div>
-        </div>
-      </main>
+      <button
+        onClick={handleSearch}
+        className="w-full bg-blue-700 text-white text-lg font-bold py-3 rounded-xl hover:bg-blue-800 transition duration-150 shadow-xl transform active:scale-[0.98]"
+      >
+        ค้นหา
+      </button>
     </div>
   );
 };
 
-// Component สำหรับแสดงผลการวิจัยแต่ละรายการ
-const ResearchCard = ({ item }) => {
-  return (
-    // ปรับ Card ให้เป็นสีเทาอ่อน/ขาว ตามภาพ
-    <div className="bg-gray-200 p-5 rounded-xl shadow-xl transition duration-300 flex flex-col space-y-4">
-      {/* ชื่องานวิจัย - Text สีดำ ตามภาพ */}
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
-      
-      {/* รูปภาพ Placeholder - Background เทาอ่อน, icon ดำ */}
-      <div className="w-full h-40 bg-gray-400 rounded-lg flex items-center justify-center overflow-hidden">
-        {/* ไอคอน Placeholder Image */}
-        <svg className="w-16 h-16 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-      </div>
+// Component: Upload Button Block
+const UploadButtonBlock = () => (
+  <div className="bg-blue-700 p-5 rounded-xl shadow-xl hover:bg-blue-800 transition duration-300 cursor-pointer">
+    <div className="flex items-center justify-center">
+      <Upload size={24} className="text-white mr-3" />
+      <h3 className="text-xl font-bold text-white">อัพโหลดงานวิจัย</h3>
+    </div>
+  </div>
+);
 
-      {/* Views และ Comments */}
-      <div className="flex justify-start space-x-6 text-base text-gray-700 mt-2">
-        <span className="flex items-center">
-          <Eye className="w-5 h-5 mr-1 text-gray-700" />
-          Views: <span className="text-gray-900 ml-1">{item.views}</span>
-        </span>
-        <span className="flex items-center">
-          <MessageSquare className="w-5 h-5 mr-1 text-gray-700" />
-          Comments: <span className="text-gray-900 ml-1">{item.comments}</span>
-        </span>
-      </div>
+// Component: Navigation Header
+const Header = () => (
+  <header className="bg-blue-900 text-white shadow-2xl sticky top-0 z-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <h1 className="text-2xl font-extrabold tracking-wider">Siam Archive</h1>
+      <nav className="space-x-8">
+        <a href="#" className="hover:text-blue-300 transition-colors font-medium">Home</a>
+        <a href="#" className="hover:text-blue-300 transition-colors font-medium">Search</a>
+        <a href="#" className="hover:text-blue-300 transition-colors font-medium">About</a>
+      </nav>
+    </div>
+  </header>
+);
+
+// Main App Component
+export default function SearchPage() {
+  const [searchState, setSearchState] = useState({
+    nameQuery: '',
+    keyword: '',
+  });
+
+  const handleSearch = () => {
+    console.log('Performing Search with:', searchState);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <Header />
+
+      <main className="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Left Column: Sidebar */}
+          <aside className="lg:w-1/3 space-y-8">
+            <UploadButtonBlock />
+            <SearchFilterBlock
+              searchState={searchState}
+              setSearchState={setSearchState}
+              handleSearch={handleSearch}
+            />
+            <KeywordsBlock />
+          </aside>
+
+          {/* Right Column: Search Results Grid */}
+          <section className="lg:w-2/3">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">ผลลัพธ์การค้นหา</h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {mockResearchData.map((data) => (
+                <ResearchCard
+                  key={data.id}
+                  title={data.title}
+                  views={data.views}
+                  comments={data.comments}
+                />
+              ))}
+
+              {/* Placeholders */}
+              <div className="bg-gray-200 rounded-xl min-h-[250px] shadow-lg"></div>
+              <div className="bg-gray-200 rounded-xl min-h-[250px] shadow-lg hidden sm:block"></div>
+              <div className="bg-gray-200 rounded-xl min-h-[250px] shadow-lg"></div>
+            </div>
+          </section>
+
+        </div>
+      </main>
     </div>
   );
 }
-
-export default SearchPage;
