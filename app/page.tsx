@@ -1,12 +1,107 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, forwardRef } from "react";
 import Image from "next/image";
-import Drawer from "./components/Drawer"; // import Drawer component
+import Drawer from "./components/Drawer"; 
+import { Moon, Settings, LogOut, User, Edit, Upload } from "lucide-react";
 
-// Navbar
+// ================= Profile Dropdown =================
+const ProfileDropdown = forwardRef<HTMLDivElement, { onClose: () => void }>(
+  ({ onClose }, ref) => {
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    const handleItemClick = (action: string) => {
+      console.log(action);
+      onClose();
+    };
+
+    const toggleDarkMode = () => {
+      setIsDarkMode(!isDarkMode);
+      console.log("Dark Mode:", !isDarkMode);
+    };
+
+    const menuItemClass =
+      "group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 rounded-lg cursor-pointer transition duration-150 justify-between";
+
+    return (
+      <div
+        ref={ref}
+        className="absolute mt-2 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 z-50 right-0 max-w-[90vw] min-w-[13rem]"
+        style={{ overflow: "hidden" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Group 1 */}
+        <div className="p-1.5 space-y-0.5">
+          <div className={menuItemClass} onClick={() => handleItemClick("ดูโปรไฟล์")}>
+            <User className="w-4 h-4 mr-3 text-gray-400 group-hover:text-blue-600" />
+            ดูโปรไฟล์
+          </div>
+          <div className={menuItemClass} onClick={() => handleItemClick("แก้ไขโปรไฟล์")}>
+            <Edit className="w-4 h-4 mr-3 text-gray-400 group-hover:text-blue-600" />
+            แก้ไขโปรไฟล์
+          </div>
+          <div className={menuItemClass} onClick={() => handleItemClick("ประวัติการอัพโหลด")}>
+            <Upload className="w-4 h-4 mr-3 text-gray-400 group-hover:text-blue-600" />
+            ประวัติการอัพโหลด
+          </div>
+        </div>
+
+        {/* Group 2 */}
+        <div className="p-1.5 space-y-0.5">
+          <div className={menuItemClass} onClick={toggleDarkMode}>
+            โหมดมืด
+            <Moon className={`w-4 h-4 ml-2 ${isDarkMode ? "text-blue-600 fill-blue-600" : "text-gray-400"}`} />
+          </div>
+          <div className={menuItemClass} onClick={() => handleItemClick("ตั้งค่า")}>
+            ตั้งค่า
+            <Settings className="w-4 h-4 ml-2 text-gray-400 group-hover:text-blue-600" />
+          </div>
+        </div>
+
+        {/* Group 3 */}
+        <div className="p-1.5">
+          <div
+            className="group flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition duration-150"
+            onClick={() => handleItemClick("ออกจากระบบ")}
+          >
+            <LogOut className="w-4 h-4 mr-3 text-red-400 group-hover:text-red-600" />
+            ออกจากระบบ
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+ProfileDropdown.displayName = "ProfileDropdown";
+// =====================================================
+
+// ================= Navbar =================
 const Navbar = () => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  const handleAvatarClick = () => setIsDropdownOpen((prev) => !prev);
+  const closeDropdown = () => setIsDropdownOpen(false);
+
+  const avatarSrc = userAvatar || "/placeholder-avatar.png";
+
+  // ป้องกัน dropdown ทะลุหน้าจอ
+  useEffect(() => {
+    if (isDropdownOpen && dropdownRef.current && avatarRef.current) {
+      const dropdown = dropdownRef.current;
+      const rect = dropdown.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+
+      if (rect.bottom > viewportHeight) {
+        const overflow = rect.bottom - viewportHeight + 10;
+        dropdown.style.top = `-${overflow}px`;
+      } else {
+        dropdown.style.top = "100%";
+      }
+    }
+  }, [isDropdownOpen]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm shadow-sm">
@@ -19,12 +114,18 @@ const Navbar = () => {
             <a href="/model" className="hover:text-blue-600 transition duration-150">Model</a>
           </nav>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 relative">
+
+        <div className="flex items-center space-x-3 relative">
+          <div
+            className="w-8 h-8 relative cursor-pointer"
+            onClick={handleAvatarClick}
+            ref={avatarRef}
+          >
             <Image
-              src={userAvatar || '/placeholder-avatar.png'}
+              src={avatarSrc}
               alt="Profile"
               fill
+              sizes="32px"
               className="rounded-full object-cover"
             />
           </div>
@@ -41,13 +142,18 @@ const Navbar = () => {
           >
             Register
           </a>
+
+          {isDropdownOpen && <ProfileDropdown onClose={closeDropdown} ref={dropdownRef} />}
         </div>
       </div>
+
+      {isDropdownOpen && <div className="fixed inset-0 z-10" onClick={closeDropdown} />}
     </header>
   );
 };
+// ============================================
 
-// Hero Section
+// ================= Hero Section =================
 const HeroSection = () => (
   <section className="relative pt-32 pb-32 overflow-hidden">
     <div className="absolute inset-0 z-0">
@@ -55,6 +161,7 @@ const HeroSection = () => (
         src="/background.png"
         alt="Background"
         fill
+        sizes="100vw"
         className="object-cover"
         priority
       />
@@ -87,6 +194,7 @@ const HeroSection = () => (
             src="/research.png"
             alt="Research"
             fill
+            sizes="350px"
             className="object-contain"
             priority
           />
@@ -95,8 +203,9 @@ const HeroSection = () => (
     </div>
   </section>
 );
+// ============================================
 
-// Description Section
+// ================= Description Section =================
 const DescriptionSection = () => (
   <section className="py-16 bg-white relative z-10">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -114,13 +223,14 @@ const DescriptionSection = () => (
     </div>
   </section>
 );
+// ============================================
 
-// Home Page
+// ================= Home Page =================
 const HomePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white font-['Inter']">
       <Navbar />
-      <Drawer /> {/* เพิ่ม Drawer component */}
+      <Drawer />
       <HeroSection />
       <DescriptionSection />
     </div>
