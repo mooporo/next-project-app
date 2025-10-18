@@ -108,7 +108,6 @@ export default function RegisterPage() {
           user_org_id: formData.user_org_id,
           user_image: null,
           user_status: 1,
-          user_created_at: new Date().toISOString(),
         },
       ]).select();
 

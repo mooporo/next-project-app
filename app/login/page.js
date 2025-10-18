@@ -42,21 +42,18 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // ตรวจสอบผู้ใช้จาก Supabase
-    const { data, error } = await supabase
-      .from("user_tb")
-      .select("*")
-      .eq("email", user_email)
-      .eq("password", user_password) // สำหรับ production ควร hash password
-      .single();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: user_email,
+      password: user_password,
+    });
 
-    if (error || !data) {
-      alert("Email หรือรหัสผ่านไม่ถูกต้อง");
+    if (error) {
+      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       return;
     }
 
-    alert("เข้าสู่ระบบสำเร็จ! ชื่อผู้ใช้: " + data.name);
-    // TODO: redirect ไปหน้า dashboard
+    alert("เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + user_email);
+    window.location.href = "/dashboard"; // ✅ redirect ได้ตามต้องการ
   };
 
   return (

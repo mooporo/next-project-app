@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Search, Home, Upload, Image, Eye, MessageSquare } from 'lucide-react';
+import Drawer from '../components/Drawer'; // ✅ import Drawer ของคุณ
 
 // ตัวอย่างข้อมูลการ์ดผลงานวิจัย
 const mockResearchData = [
@@ -141,7 +142,10 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans relative">
+      {/* ใส่ Drawer ไว้ตรงนี้ */}
+      <Drawer />
+
       <Header />
 
       <main className="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">

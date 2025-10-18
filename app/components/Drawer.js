@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // ✅ เพิ่ม useRouter
-import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User, LogIn, UserPlus } from 'lucide-react';
 
-// ข้อมูลเมนูนำทาง
+// ข้อมูลเมนู
 const mainMenuItems = [
   { name: 'หน้าหลัก', icon: Home, key: 'home' },
   { name: 'ห้องสมุด', icon: Notebook, key: 'library' },
 ];
 
-// ข้อมูลเมนูฟังก์ชัน
 const functionMenuItems = [
   { name: 'เปรียบเทียบเนื้อหา', icon: Shuffle, key: 'compare' },
   { name: 'ตั้งข้อมูล', icon: Settings, key: 'config' },
@@ -24,7 +23,7 @@ const dummyHistory = [
   { id: '3', title: 'หัวข้อการวิจัยใหม่', active: false },
 ];
 
-// คอมโพเนนต์สำหรับแต่ละรายการเมนู
+// Drawer Item Component
 const DrawerItem = ({ icon: Icon, label, isActive, onClick }) => (
   <div
     onClick={onClick}
@@ -41,7 +40,6 @@ const DrawerItem = ({ icon: Icon, label, isActive, onClick }) => (
   </div>
 );
 
-// คอมโพเนนต์สำหรับรายการประวัติการสนทนา
 const HistoryItem = ({ title, isActive, onClick }) => (
   <div
     onClick={onClick}
@@ -61,10 +59,21 @@ const HistoryItem = ({ title, isActive, onClick }) => (
 );
 
 const Drawer = () => {
-  const router = useRouter(); // ✅ เรียก useRouter
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeMenuKey, setActiveMenuKey] = useState('home');
   const [activeHistoryId, setActiveHistoryId] = useState(dummyHistory[0].id);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // **ตัวอย่าง state ว่า user login หรือยัง**
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // false = ยังไม่ได้ login, true = login แล้ว
+  const username = 'Anonymous01'; // ตัวอย่างชื่อ user
+
+  const handleLogout = () => {
+    console.log('Logout');
+    setIsLoggedIn(false);
+    setIsProfileMenuOpen(false);
+  };
 
   return (
     <>
@@ -90,9 +99,7 @@ const Drawer = () => {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Navigation */}
         <div className="flex-grow p-4 space-y-6 overflow-y-auto">
-
           {/* Main Menu */}
           <section>
             <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">เมนู</h2>
@@ -130,8 +137,8 @@ const Drawer = () => {
           {/* New Chat Button */}
           <button
             onClick={() => {
-              router.push('/chat'); // ✅ ลิงค์ไปหน้า app/chat/page.js
-              setIsOpen(false);     // ✅ ปิด Drawer หลังคลิก
+              router.push('/chat');
+              setIsOpen(false);
             }}
             className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors"
           >
@@ -156,13 +163,79 @@ const Drawer = () => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center p-2 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+        <div className="p-4 border-t border-gray-200 relative">
+          <div
+            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+            className="flex items-center p-2 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+          >
             <div className="p-2 bg-gray-300 rounded-full">
               <User className="w-5 h-5 text-gray-600" />
             </div>
-            <span className="ml-3 font-medium text-gray-800 truncate" title="Anonymous01">Anonymous01</span>
+            <span className="ml-3 font-medium text-gray-800 truncate" title={username}>
+              {isLoggedIn ? username : 'Guest'}
+            </span>
           </div>
+
+          {/* Profile Menu Popup */}
+          {isProfileMenuOpen && (
+            <div className="absolute bottom-16 left-4 w-60 bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden z-50">
+              {isLoggedIn ? (
+                <>
+                  <div
+                    onClick={() => { router.push('/profile'); setIsProfileMenuOpen(false); }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    ดูโปรไฟล์
+                  </div>
+                  <div
+                    onClick={() => { router.push('/uploads'); setIsProfileMenuOpen(false); }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    ประวัติการอัพโหลด
+                  </div>
+                  <div
+                    onClick={() => { router.push('/settings'); setIsProfileMenuOpen(false); }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    ตั้งค่า
+                  </div>
+                  <div
+                    onClick={handleLogout}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
+                  >
+                    ออกจากระบบ
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    onClick={() => { router.push('/login'); setIsProfileMenuOpen(false); }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" /> เข้าสู่ระบบ
+                  </div>
+                  <div
+                    onClick={() => { router.push('/register'); setIsProfileMenuOpen(false); }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" /> ลงทะเบียน
+                  </div>
+                  <div
+                    onClick={() => { router.push('/settings'); setIsProfileMenuOpen(false); }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    ตั้งค่า
+                  </div>
+                  <div
+                    onClick={handleLogout}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
+                  >
+                    ออกจากระบบ
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
