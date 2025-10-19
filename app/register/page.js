@@ -175,7 +175,7 @@ export default function RegisterPage() {
                 placeholder="ชื่อผู้ใช้"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function RegisterPage() {
                 placeholder="ชื่อ-นามสกุล"
                 value={formData.user_fullname}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                 placeholder="อีเมล"
                 value={formData.user_email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -225,7 +225,7 @@ export default function RegisterPage() {
                 required
                 value={formData.user_birthdate}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -240,7 +240,7 @@ export default function RegisterPage() {
                 required
                 value={formData.user_type_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               >
                 {userTypeOptions.map((option) => (
                   <option key={option.value} value={option.value} disabled={option.value === ""}>
@@ -261,7 +261,7 @@ export default function RegisterPage() {
                 required
                 value={formData.user_org_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               >
                 {userOrgOptions.map((option) => (
                   <option key={option.value} value={option.value} disabled={option.value === ""}>
@@ -284,7 +284,7 @@ export default function RegisterPage() {
                 placeholder="รหัสผ่าน"
                 value={formData.user_password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -301,7 +301,7 @@ export default function RegisterPage() {
                 placeholder="ยืนยันรหัสผ่าน"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               />
             </div>
 
