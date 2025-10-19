@@ -1,81 +1,242 @@
 "use client";
 
-import React, { useState } from 'react';
-import Drawer from '../components/Drawer'; // ✅ ตัวใหญ่ตรงกับชื่อไฟล์
+import { useState, useEffect, useRef } from 'react';
+// สมมติว่า Drawer นำเข้าจากที่ถูกต้อง
+import Drawer from '../components/Drawer'; 
+import axios from 'axios';
 
 const ChatPage = () => {
   const [message, setMessage] = useState('');
+  // สถานะสำหรับเก็บประวัติการสนทนา
+  const [messages, setMessages] = useState([]);
+  const chatEndRef = useRef(null);
 
-  const handleSendMessage = () => {
-    if (message.trim() === '') return;
-    console.log('Sending message:', message);
-    setMessage(''); // ล้างข้อความหลังส่ง
+  // เลื่อนแชทไปด้านล่างสุดเมื่อมีข้อความใหม่
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // เลื่อนเมื่อ messages เปลี่ยน
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Component สำหรับแสดง Bubble ข้อความ (🌟 แก้ไขตรงนี้ 🌟)
+  const MessageBubble = ({ message }) => {
+    // ❌ เดิม: const isUser = message.sender === 'user';
+    // ✅ แก้ไข: ใช้ role แทน sender
+    const isUser = message.role === 'user'; 
+
+    // กำหนดรูปแบบตามผู้ส่ง
+    const containerClasses = isUser
+      ? "flex justify-end mb-4 pr-4 md:pr-8" // จัดชิดขวา
+      : "flex justify-start mb-4 pl-4 md:pl-8"; // จัดชิดซ้าย
+
+    const bubbleClasses = isUser
+      ? "bg-gray-200 text-gray-800 rounded-xl rounded-tr-none max-w-xs md:max-w-md lg:max-w-xl p-3 shadow-sm" // สีเทาอ่อน, มุมขวาบนเหลี่ยม
+      : "bg-white text-gray-800 rounded-xl rounded-tl-none max-w-xs md:max-w-md lg:max-w-xl p-3 shadow-lg border border-gray-100"; // สีขาว, มุมซ้ายบนเหลี่ยม
+
+    return (
+      <div className={containerClasses}>
+        <div className={bubbleClasses}>
+          {/* ❌ เดิม: <p className="...">{message.text}</p> */}
+          {/* ✅ แก้ไข: ใช้ content แทน text */}
+          <p className="text-base md:text-lg whitespace-pre-wrap">{message.content}</p> 
+        </div>
+      </div>
+    );
+  };
+  
+  // จัดการการส่งข้อความ
+  const handleSendMessage = async () => {
+    if (message.trim() === '') {
+      alert('⚠️ กรุณากรอกข้อความ');
+      return;
+    }
+
+    const currentMessage = message; // เก็บข้อความไว้ก่อน
+    
+    const userMessage = {
+      content: currentMessage,
+      role: 'user',
+    };
+
+    // 1. เพิ่มข้อความ User ทันที
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+    // 2. ล้าง input
+    setMessage('');
+
+    const formData = new FormData();
+    formData.append('user_id', 129);
+    formData.append('session_id', 129);
+    formData.append('role', 'user');
+    formData.append('content', currentMessage); // ใช้ currentMessage ที่เก็บไว้
+
+    try {
+      const res = await axios.post('http://localhost:5678/webhook/chat', formData);
+      console.log(res.data);
+      
+      // เพิ่มข้อความที่ตอบกลับมาจาก server
+      setMessages((prevMessages) => [...prevMessages, { 
+          content: res.data,
+          role: 'ai'
+      }]);
+    } catch (e) {
+      console.error('API Error:', e);
+      // **เพิ่มข้อความตอบกลับปลอมเมื่อเกิดข้อผิดพลาด** (แนะนำ)
+      setMessages((prevMessages) => [...prevMessages, { 
+          content: "⚠️ ขออภัยครับ ระบบ API เกิดข้อผิดพลาดชั่วคราว โปรดถามอีกครั้ง หรือลองใหม่ในภายหลัง", 
+          role: 'ai' 
+      }]);
+    }
+  };
+
+  // ตรวจสอบว่ามีการสนทนาเกิดขึ้นหรือยัง
+  const hasMessages = messages.length > 0;
+
+  // จัดการเมื่อกด Enter ใน textarea (เพื่อส่งข้อความ)
+  const handleKeyDown = (e) => {
+    // ส่งเมื่อกด Enter โดยที่ไม่มี Shift (คือไม่ต้องการขึ้นบรรทัดใหม่)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // ป้องกันการขึ้นบรรทัดใหม่
+      handleSendMessage();
+    }
+  };
+
+
+  // กำหนด layout ของ main content
+  const mainContentClasses = hasMessages
+    ? "flex-1 flex flex-col justify-between p-0 overflow-y-auto relative"
+    : "flex-1 flex flex-col items-center justify-center text-center p-4 overflow-y-auto";
+
+  // กำหนด layout ของ Input Area
+  // เมื่อมีข้อความ: ใช้ FIXED BOTTOM เพื่อให้อยู่ด้านล่างเสมอ
+  const inputAreaClasses = hasMessages
+    ? "w-full px-4 fixed bottom-0 left-0 right-0 flex justify-center z-10 py-4 bg-gray-50 border-t border-gray-200"
+    : "w-full max-w-lg lg:max-w-2xl px-4";
+
+  // กำหนดความกว้างของ Input box ภายในคอนเทนเนอร์
+  // เมื่อมีข้อความ: ให้กว้างเต็มพื้นที่ตาม max-w-4xl ที่ใช้ใน Chat History
+  const inputContainerWidth = hasMessages
+    ? "w-full max-w-4xl" // เมื่อมีข้อความ: กว้างเต็มพื้นที่หลัก (max-w-4xl)
+    : "w-full max-w-lg lg:max-w-2xl"; // เมื่อไม่มีข้อความ: กว้างตามเดิม
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
-      
+
       {/* Sidebar Drawer */}
       <Drawer />
 
-      {/* Main Content */}
+      {/* Main Content Container */}
       <div className="flex-1 flex flex-col">
-        
-        {/* Header */}
-        <header className="p-6 md:p-8 w-full bg-white shadow-md">
+
+        {/* Header (ถูกคงไว้) */}
+        <header className="p-6 md:p-8 w-full bg-white shadow-md z-20">
           <h1 className="text-xl font-bold text-gray-800 ml-16 md:ml-20">
             Siam Archive
           </h1>
         </header>
 
-        {/* Chat Content */}
-        <main className="flex-1 flex flex-col items-center justify-center text-center p-4 overflow-y-auto">
-          
-          {/* ข้อความต้อนรับ */}
-          <div className="space-y-3 mb-10 md:mb-16">
-            <p className="text-2xl md:text-3xl font-light text-gray-700">
-              ผมคือ AI ผู้ช่วยของ Siam Archive
-            </p>
-            <h2 className="text-3xl md:text-4xl font-semibold text-gray-800">
-              คุณต้องการให้ผมช่วยเรื่องใด...?
-            </h2>
-          </div>
+        {/* Chat Content / Welcome Screen */}
+        <main className={mainContentClasses}>
 
-          {/* Input Area */}
-          <div className="w-full max-w-lg lg:max-w-2xl px-4">
-            <div className="relative flex items-center bg-white border border-gray-200 rounded-2xl shadow-xl transition-shadow duration-300 hover:shadow-2xl">
-              
-              {/* Input */}
-              <input
-                type="text"
-                placeholder="พิมพ์ข้อความที่ต้องการ..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full py-4 pl-6 pr-16 text-lg text-gray-700 placeholder-gray-400 bg-transparent focus:outline-none"
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
-              
-              {/* Submit Button */}
-              <button
-                aria-label="Send message"
-                className="absolute right-3 p-3 bg-blue-500 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                onClick={handleSendMessage}
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  fill="white" 
-                  className="w-5 h-5 -rotate-45"
-                >
-                  <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
-                </svg>
-              </button>
+          {/* ส่วนแสดงข้อความต้อนรับ หรือ ประวัติการสนทนา */}
+          {!hasMessages ? (
+            // **กรณีไม่มีการสนทนา**
+            <div className="flex flex-col items-center justify-center flex-1 w-full p-4">
+              {/* ข้อความต้อนรับ */}
+              <div className="space-y-3 mb-10 md:mb-16">
+                <p className="text-2xl md:text-3xl font-light text-gray-700">
+                  ผมคือ AI ผู้ช่วยของ Siam Archive
+                </p>
+                <h2 className="text-3xl md:text-4xl font-semibold text-gray-800">
+                  คุณต้องการให้ผมช่วยเรื่องใด...?
+                </h2>
+              </div>
+
+              {/* Input Area เมื่อไม่มีการสนทนา: อยู่ตรงกลาง */}
+              <div className={inputAreaClasses}>
+                <div className={`relative flex items-center bg-white border border-gray-200 rounded-2xl shadow-xl transition-shadow duration-300 hover:shadow-2xl ${inputContainerWidth}`}>
+
+                  {/* Input ถูกเปลี่ยนเป็น TEXTAREA */}
+                  <textarea
+                    rows={1} // เริ่มต้น 1 บรรทัด
+                    placeholder="พิมพ์ข้อความที่ต้องการ..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full py-3 pl-6 pr-16 text-lg text-gray-700 placeholder-gray-400 bg-transparent focus:outline-none resize-none overflow-y-hidden min-h-[56px]" // 56px คือความสูงของ input เดิม (py-4 คือ 32px + padding)
+                    onKeyDown={handleKeyDown}
+                  />
+
+                  {/* Submit Button */}
+                  <button
+                    aria-label="Send message"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-3 bg-blue-500 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400"
+                    onClick={handleSendMessage}
+                    disabled={message.trim() === ''}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                      className="w-5 h-5 -rotate-45"
+                    >
+                      <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </main>
 
-        {/* Footer */}
-        <footer className="h-16"></footer>
+          ) : (
+            // **กรณีมีการสนทนา**
+            <>
+              {/* Chat History: มี padding-bottom เพื่อไม่ให้ข้อความสุดท้ายถูก Input Area บัง */}
+              <div className="flex-1 w-full max-w-4xl mx-auto pt-4 pb-20 overflow-y-auto">
+                {messages.map((msg, index) => (
+                  <MessageBubble key={index} message={msg} />
+                ))}
+                <div ref={chatEndRef} className="h-4" /> {/* ตัวอ้างอิงสำหรับ Scroll */}
+              </div>
+
+              {/* Input Area เมื่อมีการสนทนา: FIXED ที่ด้านล่าง */}
+              <div className={inputAreaClasses}>
+                <div className={`relative flex items-center bg-white border border-gray-200 rounded-2xl shadow-xl transition-shadow duration-300 hover:shadow-2xl ${inputContainerWidth}`}>
+
+                  {/* Input ถูกเปลี่ยนเป็น TEXTAREA */}
+                  <textarea
+                    rows={1}
+                    placeholder="พิมพ์ข้อความที่ต้องการ..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full py-3 pl-6 pr-16 text-lg text-gray-700 placeholder-gray-400 bg-transparent focus:outline-none resize-none overflow-y-hidden min-h-[56px]"
+                    onKeyDown={handleKeyDown}
+                  />
+
+                  {/* Submit Button */}
+                  {/* ปรับให้ปุ่มอยู่ตรงกลางแนวตั้งเสมอ ไม่ว่า textarea จะขยายขนาดเท่าใด */}
+                  <button
+                    aria-label="Send message"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-3 bg-blue-500 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400"
+                    onClick={handleSendMessage}
+                    disabled={message.trim() === ''}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                      className="w-5 h-5 -rotate-45"
+                    >
+                      <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+        </main>
       </div>
     </div>
   );
