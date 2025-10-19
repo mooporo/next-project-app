@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Search, Home, Upload, Image, Eye, MessageSquare } from 'lucide-react';
 import Drawer from '../components/Drawer'; // ✅ import Drawer ของคุณ
+import Link from 'next/link'; // ✅ ใช้ลิงก์ของ Next.js
 
 // ตัวอย่างข้อมูลการ์ดผลงานวิจัย
 const mockResearchData = [
@@ -116,15 +117,15 @@ const UploadButtonBlock = () => (
   </div>
 );
 
-// Component: Navigation Header
+// ✅ Component: Navigation Header (ใช้ Link แล้ว)
 const Header = () => (
   <header className="bg-blue-900 text-white shadow-2xl sticky top-0 z-10">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
       <h1 className="text-2xl font-extrabold tracking-wider">Siam Archive</h1>
       <nav className="space-x-8">
-        <a href="#" className="hover:text-blue-300 transition-colors font-medium">Home</a>
-        <a href="#" className="hover:text-blue-300 transition-colors font-medium">Search</a>
-        <a href="#" className="hover:text-blue-300 transition-colors font-medium">About</a>
+        <Link href="/" className="hover:text-blue-300 transition-colors font-medium">Home</Link>
+        <Link href="/search" className="hover:text-blue-300 transition-colors font-medium">Search</Link>
+        <Link href="/about" className="hover:text-blue-300 transition-colors font-medium">About</Link>
       </nav>
     </div>
   </header>
@@ -143,15 +144,12 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans relative">
-      {/* ใส่ Drawer ไว้ตรงนี้ */}
       <Drawer />
-
       <Header />
 
       <main className="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* Left Column: Sidebar */}
+
           <aside className="lg:w-1/3 space-y-8">
             <UploadButtonBlock />
             <SearchFilterBlock
@@ -162,10 +160,9 @@ export default function SearchPage() {
             <KeywordsBlock />
           </aside>
 
-          {/* Right Column: Search Results Grid */}
           <section className="lg:w-2/3">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">ผลลัพธ์การค้นหา</h2>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {mockResearchData.map((data) => (
                 <ResearchCard
