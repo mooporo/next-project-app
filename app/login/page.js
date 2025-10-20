@@ -50,7 +50,7 @@ export default function LoginPage() {
 
       if (data?.user) {
         alert("✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + user_email);
-        router.push("/app"); // เปลี่ยนเป็นหน้า app/page
+        router.push("/"); // ไปหน้า app/page.tsx (home)
       } else {
         alert("❌ ไม่พบผู้ใช้");
       }
