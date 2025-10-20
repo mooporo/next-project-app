@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import BookImg from "../images/book.png";
-import { supabase } from "../lib/supabaseClient"; // อย่าลืมสร้างไฟล์นี้
-import { v4 as uuidv4 } from "uuid"; // ใช้ UUID แทน crypto.randomUUID
+import { supabase } from "../lib/supabaseClient";
 
 const GoogleIcon = (props) => (
   <svg {...props} viewBox="0 0 48 48" width="20" height="20">
@@ -42,99 +41,53 @@ export default function RegisterPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // ตรวจสอบรหัสผ่านตรงกัน
     if (formData.user_password !== formData.confirmPassword) {
       alert("❌ รหัสผ่านไม่ตรงกัน");
       return;
     }
 
-    // ตรวจสอบช่องว่าง
-    if (
-      !formData.username ||
-      !formData.user_email ||
-      !formData.user_fullname ||
-      !formData.user_birthdate ||
-      !formData.user_type_id ||
-      !formData.user_org_id
-    ) {
-      alert("⚠️ กรุณากรอกข้อมูลให้ครบทุกช่อง");
-      return;
-    }
-
     try {
-      // ตรวจสอบอีเมลหรือชื่อผู้ใช้ซ้ำ
-      const { data: existingUsers, error: checkError } = await supabase
-        .from("user_tb")
-        .select("user_email, username")
-        .or(`user_email.eq.${formData.user_email},username.eq.${formData.username}`);
+      // สร้างบัญชีผู้ใช้ใน Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.user_email,
+        password: formData.user_password,
+      });
 
-      if (checkError) {
-        console.error("Error checking duplicates:", checkError);
-        alert("เกิดข้อผิดพลาดระหว่างตรวจสอบข้อมูลซ้ำ");
+      if (authError) {
+        alert("❌ ลงทะเบียนไม่สำเร็จ: " + authError.message);
         return;
       }
 
-      if (existingUsers && existingUsers.length > 0) {
-        const isEmailDuplicate = existingUsers.some(
-          (user) => user.user_email === formData.user_email
-        );
-        const isUsernameDuplicate = existingUsers.some(
-          (user) => user.username === formData.username
-        );
+      // ได้ user id จาก Auth
+      const user_id = authData.user.id;
 
-        if (isEmailDuplicate) {
-          alert("❌ อีเมลนี้ถูกใช้ไปแล้ว");
-          return;
-        }
-        if (isUsernameDuplicate) {
-          alert("❌ ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว");
-          return;
-        }
-      }
-
-      // สร้าง UUID
-      const user_id = uuidv4();
-
-      // insert ข้อมูลลง Supabase
+      // ใส่ข้อมูลเพิ่มเติมลง user_tb **ไม่ต้องเก็บรหัสผ่าน**
       const { data, error } = await supabase.from("user_tb").insert([
         {
           user_id,
           username: formData.username,
           user_email: formData.user_email,
-          user_password: formData.user_password, // production: hash ก่อน
           user_fullname: formData.user_fullname,
           user_birthdate: formData.user_birthdate,
           user_type_id: formData.user_type_id,
           user_org_id: formData.user_org_id,
-          user_image: null,
           user_status: 1,
+          user_image: null,
+          user_password: formData.user_password,
         },
-      ]).select();
+      ]);
 
       if (error) {
-        console.error("❌ Register error:", error);
-        alert("เกิดข้อผิดพลาดในการลงทะเบียน: " + error.message);
+        console.error(error);
+        alert("❌ เกิดข้อผิดพลาด: " + error.message);
         return;
       }
 
-      alert("✅ ลงทะเบียนสำเร็จ!");
-      setFormData({
-        username: "",
-        user_email: "",
-        user_fullname: "",
-        user_birthdate: "",
-        user_type_id: "",
-        user_org_id: "",
-        user_password: "",
-        confirmPassword: "",
-        agreeTerms: false,
-      });
-
-      // redirect ไป login
+      alert("✅ ลงทะเบียนสำเร็จ! ตรวจสอบอีเมลเพื่อยืนยันบัญชี");
       window.location.href = "/login";
     } catch (err) {
-      console.error("❌ Unexpected error:", err);
-      alert("เกิดข้อผิดพลาด: " + err.message);
+      console.error(err);
+      alert("❌ เกิดข้อผิดพลาด: " + err.message);
     }
   };
 
@@ -154,7 +107,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex font-['Inter']">
-      {/* ฟอร์มด้านซ้าย */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-white z-10">
         <div className="w-full max-w-md">
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center md:text-left">
@@ -164,9 +116,7 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                ชื่อผู้ใช้
-              </label>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
               <input
                 id="username"
                 name="username"
@@ -181,9 +131,7 @@ export default function RegisterPage() {
 
             {/* Full Name */}
             <div>
-              <label htmlFor="user_fullname" className="block text-sm font-medium text-gray-700 mb-1">
-                ชื่อ-นามสกุล
-              </label>
+              <label htmlFor="user_fullname" className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
               <input
                 id="user_fullname"
                 name="user_fullname"
@@ -198,9 +146,7 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div>
-              <label htmlFor="user_email" className="block text-sm font-medium text-gray-700 mb-1">
-                อีเมล
-              </label>
+              <label htmlFor="user_email" className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
               <input
                 id="user_email"
                 name="user_email"
@@ -215,9 +161,7 @@ export default function RegisterPage() {
 
             {/* Birthdate */}
             <div>
-              <label htmlFor="user_birthdate" className="block text-sm font-medium text-gray-700 mb-1">
-                วัน/เดือน/ปี เกิด
-              </label>
+              <label htmlFor="user_birthdate" className="block text-sm font-medium text-gray-700 mb-1">วัน/เดือน/ปี เกิด</label>
               <input
                 id="user_birthdate"
                 name="user_birthdate"
@@ -231,9 +175,7 @@ export default function RegisterPage() {
 
             {/* User Type */}
             <div>
-              <label htmlFor="user_type_id" className="block text-sm font-medium text-gray-700 mb-1">
-                ประเภทผู้ใช้
-              </label>
+              <label htmlFor="user_type_id" className="block text-sm font-medium text-gray-700 mb-1">ประเภทผู้ใช้</label>
               <select
                 id="user_type_id"
                 name="user_type_id"
@@ -243,18 +185,14 @@ export default function RegisterPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               >
                 {userTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.value === ""}>
-                    {option.label}
-                  </option>
+                  <option key={option.value} value={option.value} disabled={option.value === ""}>{option.label}</option>
                 ))}
               </select>
             </div>
 
             {/* User Org */}
             <div>
-              <label htmlFor="user_org_id" className="block text-sm font-medium text-gray-700 mb-1">
-                สังกัด
-              </label>
+              <label htmlFor="user_org_id" className="block text-sm font-medium text-gray-700 mb-1">สังกัด</label>
               <select
                 id="user_org_id"
                 name="user_org_id"
@@ -264,18 +202,14 @@ export default function RegisterPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
               >
                 {userOrgOptions.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.value === ""}>
-                    {option.label}
-                  </option>
+                  <option key={option.value} value={option.value} disabled={option.value === ""}>{option.label}</option>
                 ))}
               </select>
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="user_password" className="block text-sm font-medium text-gray-700 mb-1">
-                รหัสผ่าน
-              </label>
+              <label htmlFor="user_password" className="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
               <input
                 id="user_password"
                 name="user_password"
@@ -290,9 +224,7 @@ export default function RegisterPage() {
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                ยืนยันรหัสผ่าน
-              </label>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">ยืนยันรหัสผ่าน</label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -305,22 +237,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Agree Terms */}
-            <div className="flex items-center">
-              <input
-                id="agreeTerms"
-                name="agreeTerms"
-                type="checkbox"
-                required
-                checked={formData.agreeTerms}
-                onChange={handleInputChange}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-              />
-              <label htmlFor="agreeTerms" className="ml-2 block text-sm text-gray-900">
-                ฉันได้อ่านและยอมรับข้อตกลงและเงื่อนไข
-              </label>
-            </div>
-
+            
             {/* Register Button */}
             <div>
               <button
@@ -331,39 +248,6 @@ export default function RegisterPage() {
               </button>
             </div>
           </form>
-
-          {/* Divider */}
-          <div className="mt-4 relative">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">หรือ</span>
-            </div>
-          </div>
-
-          {/* Google & Guest Buttons */}
-          <div className="mt-4 flex space-x-3">
-            <button
-              type="button"
-              className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
-            >
-              <GoogleIcon className="mr-2" /> ลงทะเบียนด้วย Google
-            </button>
-            <button
-              type="button"
-              className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-150"
-            >
-              ลงทะเบียนในฐานะผู้มาเยือน
-            </button>
-          </div>
-
-          <p className="mt-8 text-center text-sm text-gray-600">
-            มีบัญชีอยู่แล้ว?{" "}
-            <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              กลับสู่หน้าเข้าสู่ระบบ
-            </a>
-          </p>
         </div>
       </div>
 

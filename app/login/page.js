@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import BookImg from "../images/book.png";
 import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 // --- ICONS ---
 const EyeIcon = (props) => (
@@ -20,45 +21,48 @@ const EyeOffIcon = (props) => (
     <line x1="2" y1="2" x2="22" y2="22" />
   </svg>
 );
-const GoogleIcon = (props) => (
-  <svg {...props} viewBox="0 0 48 48" width="20" height="20">
-    <clipPath id="g">
-      <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.3 0-13.3-6-13.3-13.3S16.7 10.3 24 10.3c3.9 0 7.2 1.5 9.8 3.2L41.3 9c-4.4-2.6-9.8-4-15.3-4C13.5 5 5 13.5 5 24s8.5 19 19 19c11.1 0 17.7-8.1 17.7-17.9 0-1.3-.1-2.6-.4-3.9z" />
-    </clipPath>
-    <path clipPath="url(#g)" fill="#FBBC04" d="M0 37V11l17 13z" />
-    <path clipPath="url(#g)" fill="#EA4335" d="M0 11l17 13 7-6.1L48 14V5z" />
-    <path clipPath="url(#g)" fill="#34A853" d="M0 37l30-23 7.9 1L48 37z" />
-    <path clipPath="url(#g)" fill="#4285F4" d="M48 14l-4.1 2.5H24v8.5h20.5z" />
-  </svg>
-);
-
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [user_email, setUserEmail] = useState("");
   const [user_password, setUserPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: user_email,
-      password: user_password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: user_email,
+        password: user_password,
+      });
 
-    if (error) {
-      alert("❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-      console.error(error.message);
-      return;
+      setLoading(false);
+
+      if (error) {
+        alert("❌ ล็อกอินไม่สำเร็จ: " + error.message);
+        console.error(error);
+        return;
+      }
+
+      if (data?.user) {
+        alert("✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + user_email);
+        router.push("/app"); // เปลี่ยนเป็นหน้า app/page
+      } else {
+        alert("❌ ไม่พบผู้ใช้");
+      }
+    } catch (err) {
+      setLoading(false);
+      console.error(err);
+      alert("❌ เกิดข้อผิดพลาด: " + err.message);
     }
-
-    alert("✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + user_email);
-    window.location.href = "/dashboard";
   };
 
   return (
     <div className="min-h-screen flex font-['Inter'] bg-white text-gray-900">
-
       {/* ฟอร์มล็อกอิน */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16">
         <div className="w-full max-w-md">
@@ -80,10 +84,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label htmlFor="user_password" className="block text-sm font-medium text-gray-700">รหัสผ่าน</label>
-                
-              </div>
+              <label htmlFor="user_password" className="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
               <div className="relative">
                 <input
                   id="user_password"
@@ -104,43 +105,16 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center">
-              <input id="remember-me" type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">จดจำฉันไว้</label>
-            </div>
-
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150"
+                disabled={loading}
+                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white ${loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"} transition duration-150`}
               >
-                ลงชื่อเข้าใช้
+                {loading ? "กำลังเข้าสู่ระบบ..." : "ลงชื่อเข้าใช้"}
               </button>
             </div>
           </form>
-
-          {/* Divider */}
-          <div className="mt-6 relative">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">หรือ</span>
-            </div>
-          </div>
-
-          {/* Google & Guest */}
-          <div className="mt-6 flex justify-center">
-            
-            <button type="button" className="w-1/2 inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              Sign in as Guest
-            </button>
-          </div>
-
-          <p className="mt-8 text-center text-sm text-gray-600">
-            ยังไม่มีบัญชีใช่ไหม?{" "}
-            <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">ลงทะเบียนเป็นสมาชิก</a>
-          </p>
         </div>
       </div>
 
