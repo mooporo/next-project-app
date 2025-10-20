@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Drawer from "./components/Drawer";
 import { User } from "lucide-react";
+import Link from "next/link"; // ✅ เพิ่ม Link
 
 const HomePage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -17,7 +18,7 @@ const HomePage = () => {
   return (
     <div className="flex">
       {/* Drawer */}
-      <Drawer isOpen={isDrawerOpen} setIsOpen={setIsDrawerOpen} />
+      <Drawer />
 
       {/* ปุ่ม Login/Register และรูปโปรไฟล์ ด้านขวาบน fixed */}
       <div className="fixed top-4 right-4 flex items-center gap-4 z-50">
@@ -31,7 +32,11 @@ const HomePage = () => {
           {/* Profile Popup */}
           {isProfilePopupOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden z-50">
-              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ดูโปรไฟล์</div>
+              {/* ✅ แก้เฉพาะ "ดูโปรไฟล์" ให้ลิงก์ไป /profile */}
+              <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                ดูโปรไฟล์
+              </Link>
+
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">แก้ไขโปรไฟล์</div>
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">โหมดมืด</div>

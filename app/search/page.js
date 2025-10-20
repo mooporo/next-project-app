@@ -117,7 +117,7 @@ const UploadButtonBlock = () => (
   </div>
 );
 
-// ✅ Component: Navigation Header (ใช้ Link แล้ว)
+// ✅ Component: Navigation Header
 const Header = () => (
   <header className="bg-blue-900 text-white shadow-2xl sticky top-0 z-10">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -144,8 +144,8 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans relative">
-      <Drawer />
-      <Header />
+      <Drawer /> {/* Drawer ไม่ต้องส่ง prop */}
+      <Header /> {/* ✅ ปัญหา Header is not defined หายแล้ว */}
 
       <main className="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row gap-8">

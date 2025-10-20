@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link"; // ✅ เพิ่ม Link
 import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User, LogIn, UserPlus } from "lucide-react";
 
 // ================= Drawer Data =================
@@ -25,8 +26,11 @@ const dummyHistory = [
 const DrawerItem = ({ icon: Icon, label, isActive, onClick }) => (
   <div
     onClick={onClick}
-    className={`flex items-center p-3 cursor-pointer rounded-lg transition-colors ${isActive ? "bg-blue-100 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-100"
-      }`}
+    className={`flex items-center p-3 cursor-pointer rounded-lg transition-colors ${
+      isActive
+        ? "bg-blue-100 text-blue-700 font-semibold"
+        : "text-gray-600 hover:bg-gray-100"
+    }`}
   >
     <Icon className="w-5 h-5 mr-3" />
     <span className="text-sm">{label}</span>
@@ -36,8 +40,11 @@ const DrawerItem = ({ icon: Icon, label, isActive, onClick }) => (
 const HistoryItem = ({ title, isActive, onClick }) => (
   <div
     onClick={onClick}
-    className={`flex items-center py-2 px-3 pl-6 cursor-pointer rounded-lg transition-colors ${isActive ? "bg-blue-100 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-100"
-      } text-sm truncate`}
+    className={`flex items-center py-2 px-3 pl-6 cursor-pointer rounded-lg transition-colors ${
+      isActive
+        ? "bg-blue-100 text-blue-700 font-semibold"
+        : "text-gray-600 hover:bg-gray-100"
+    } text-sm truncate`}
     title={title}
   >
     <span className="mr-2">•</span>
@@ -45,8 +52,8 @@ const HistoryItem = ({ title, isActive, onClick }) => (
   </div>
 );
 
-
-const Drawer = ({ isOpen, setIsOpen }) => {
+const Drawer = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [activeMenuKey, setActiveMenuKey] = useState("home");
   const [activeHistoryId, setActiveHistoryId] = useState(dummyHistory[0].id);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -67,19 +74,21 @@ const Drawer = ({ isOpen, setIsOpen }) => {
       >
         ☰ Siam Archive
       </button>
-      
 
       {/* Overlay */}
       {isOpen && <div onClick={() => setIsOpen(false)} className="fixed inset-0 bg-black/50 z-40"></div>}
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl overflow-hidden z-50 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl overflow-hidden z-50 transform transition-transform duration-300 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex-grow p-4 space-y-6 overflow-y-auto">
           <section>
-            <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">เมนู</h2>
+            <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">
+              เมนู
+            </h2>
             <div className="space-y-1">
               {mainMenuItems.map((item) => (
                 <DrawerItem
@@ -94,7 +103,9 @@ const Drawer = ({ isOpen, setIsOpen }) => {
           </section>
 
           <section>
-            <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">ฟังก์ชัน</h2>
+            <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">
+              ฟังก์ชัน
+            </h2>
             <div className="space-y-1">
               {functionMenuItems.map((item) => (
                 <DrawerItem
@@ -110,12 +121,17 @@ const Drawer = ({ isOpen, setIsOpen }) => {
 
           <hr className="border-gray-200" />
 
-          <button className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">
-            <Plus className="w-5 h-5 mr-2" /> แชทใหม่
-          </button>
+          {/* ✅ แก้เฉพาะปุ่ม “แชทใหม่” ให้ลิงก์ไป /chat */}
+          <Link href="/chat">
+            <button className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">
+              <Plus className="w-5 h-5 mr-2" /> แชทใหม่
+            </button>
+          </Link>
 
           <section>
-            <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">ประวัติการแชท</h2>
+            <h2 className="text-xs font-semibold uppercase text-gray-400 mb-2">
+              ประวัติการแชท
+            </h2>
             <div className="space-y-1">
               {dummyHistory.map((item) => (
                 <HistoryItem
@@ -150,9 +166,7 @@ const Drawer = ({ isOpen, setIsOpen }) => {
                   <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ดูโปรไฟล์</div>
                   <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
                   <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
-                  <div onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">
-                    ออกจากระบบ
-                  </div>
+                  <div onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">ออกจากระบบ</div>
                 </>
               ) : (
                 <>
@@ -163,9 +177,7 @@ const Drawer = ({ isOpen, setIsOpen }) => {
                     <UserPlus className="w-4 h-4 mr-2" /> ลงทะเบียน
                   </div>
                   <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
-                  <div onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">
-                    ออกจากระบบ
-                  </div>
+                  <div onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">ออกจากระบบ</div>
                 </>
               )}
             </div>
