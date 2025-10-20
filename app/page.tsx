@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Drawer from "./components/Drawer";
 import { User } from "lucide-react";
-import Link from "next/link"; // ✅ เพิ่ม Link
+import Link from "next/link";
 
 const HomePage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false); // ✅ สำหรับ popup
+  const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
 
   const handleLogout = () => {
     alert("ออกจากระบบแล้ว");
@@ -32,12 +32,15 @@ const HomePage = () => {
           {/* Profile Popup */}
           {isProfilePopupOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden z-50">
-              {/* ✅ แก้เฉพาะ "ดูโปรไฟล์" ให้ลิงก์ไป /profile */}
               <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
                 ดูโปรไฟล์
               </Link>
 
-              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">แก้ไขโปรไฟล์</div>
+              {/* ✅ แก้ไขโปรไฟล์ */}
+              <Link href="/edit-profile" className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                แก้ไขโปรไฟล์
+              </Link>
+
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">โหมดมืด</div>
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
