@@ -3,14 +3,65 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Drawer from "./components/Drawer";
+import { User } from "lucide-react";
 
 const HomePage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false); // ✅ สำหรับ popup
+
+  const handleLogout = () => {
+    alert("ออกจากระบบแล้ว");
+    setIsProfilePopupOpen(false);
+  };
 
   return (
     <div className="flex">
       {/* Drawer */}
       <Drawer isOpen={isDrawerOpen} setIsOpen={setIsDrawerOpen} />
+
+      {/* ปุ่ม Login/Register และรูปโปรไฟล์ ด้านขวาบน fixed */}
+      <div className="fixed top-4 right-4 flex items-center gap-4 z-50">
+        {/* รูปโปรไฟล์ */}
+        <div
+          className="w-8 h-8 p-2 bg-gray-300 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-400 transition-colors relative"
+          onClick={() => setIsProfilePopupOpen(!isProfilePopupOpen)}
+        >
+          <User className="w-5 h-5 text-gray-600" />
+
+          {/* Profile Popup */}
+          {isProfilePopupOpen && (
+            <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden z-50">
+              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ดูโปรไฟล์</div>
+              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">แก้ไขโปรไฟล์</div>
+              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
+              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">โหมดมืด</div>
+              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
+              <div
+                onClick={handleLogout}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
+              >
+                ออกจากระบบ
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Login */}
+        <a
+          href="/login"
+          className="px-6 py-2 border border-white text-white bg-transparent rounded-xl hover:bg-white hover:text-indigo-600 transition duration-300"
+        >
+          Login
+        </a>
+
+        {/* Register */}
+        <a
+          href="/register"
+          className="px-6 py-2 border border-white text-white bg-transparent rounded-xl hover:bg-white hover:text-indigo-600 transition duration-300"
+        >
+          Register
+        </a>
+      </div>
 
       {/* เนื้อหาหลัก */}
       <div className={`flex-1 transition-transform duration-300 ${isDrawerOpen ? 'translate-x-72' : 'translate-x-0'}`}>
@@ -41,6 +92,7 @@ const HomePage = () => {
                     ค้นหา อัปโหลด ศึกษา และสร้างชุมชนงานวิจัย
                   </li>
                 </ul>
+
                 <a
                   href="/search"
                   className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-500 hover:bg-indigo-600 shadow-xl transition duration-300 transform hover:scale-105"
@@ -50,7 +102,7 @@ const HomePage = () => {
               </div>
 
               <div className="md:w-1/2 flex justify-start p-8">
-                <div className="w-[450px] h-[450px] relative rounded-2xl shadow-2xl overflow-hidden ">
+                <div className="w-[450px] h-[450px] relative rounded-2xl shadow-2xl overflow-hidden">
                   <Image
                     src="/siam_archive.png"
                     alt="Research"
@@ -74,7 +126,6 @@ const HomePage = () => {
               </p>
             </div>
           </section>
-
         </div>
       </div>
     </div>
