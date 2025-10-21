@@ -13,9 +13,9 @@ export default function EditProfilePage() {
   const [form, setForm] = useState({
     user_fullname: "",
     user_email: "",
-    user_org_text: "",
-    user_position_text: "",
-    about_text: "",
+    user_birthdate: "",
+    user_org_id: null,
+    user_type_id: null,
     current_password: "",
     new_password: "",
     confirm_new_password: "",
@@ -52,10 +52,10 @@ export default function EditProfilePage() {
           ...prev,
           user_fullname: profileData.user_fullname || "",
           user_email: profileData.user_email || (user.email || ""),
+          user_birthdate: profileData.user_birthdate || "",
+          user_org_id: profileData.user_org_id || null,
+          user_type_id: profileData.user_type_id || null,
           user_image: profileData.user_image || "",
-          user_org_text: profileData.user_org_text || "",
-          user_position_text: profileData.user_position_text || "",
-          about_text: profileData.user_bio || "",
         }));
 
         if (profileData.user_image) {
@@ -170,6 +170,7 @@ export default function EditProfilePage() {
 
       const updates = {
         user_fullname: form.user_fullname,
+        user_birthdate: form.user_birthdate || null,
         user_image: finalImagePath || null,
       };
 
@@ -290,39 +291,15 @@ export default function EditProfilePage() {
                 <p className="text-xs text-gray-500">ไม่สามารถแก้ไขอีเมลได้</p>
               </div>
 
-              {/* สังกัด / มหาวิทยาลัย */}
+              {/* วันเกิด */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">สังกัด / มหาวิทยาลัย</label>
+                <label className="text-sm font-medium text-gray-700">วันเกิด</label>
                 <input
-                  type="text"
-                  name="user_org_text"
-                  value={form.user_org_text}
+                  type="date"
+                  name="user_birthdate"
+                  value={form.user_birthdate || ""}
                   onChange={handleInputChange}
                   className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
-                />
-              </div>
-
-              {/* ตำแหน่งทางวิชาการ */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">ตำแหน่งทางวิชาการ</label>
-                <input
-                  type="text"
-                  name="user_position_text"
-                  value={form.user_position_text}
-                  onChange={handleInputChange}
-                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
-                />
-              </div>
-
-              {/* ประวัติโดยย่อ */}
-              <div className="md:col-span-2 space-y-1">
-                <label className="text-sm font-medium text-gray-700">ประวัติโดยย่อ</label>
-                <textarea
-                  rows="4"
-                  name="about_text"
-                  value={form.about_text}
-                  onChange={handleInputChange}
-                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none resize-y"
                 />
               </div>
             </div>
