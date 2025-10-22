@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-// สมมติว่า Drawer นำเข้าจากที่ถูกต้อง
-import Drawer from '../components/Drawer'; 
+import { useParams } from 'next/navigation';
+import { supabase } from '@/app/lib/supabaseClient';
 import axios from 'axios';
 
 const ChatPage = () => {
@@ -11,21 +11,53 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const chatEndRef = useRef(null);
 
-  // เลื่อนแชทไปด้านล่างสุดเมื่อมีข้อความใหม่
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  //เจมส์ : เก็บ param(uuidv4) ที่ส่งจาก action ของปุ่ม "แชทใหม่" ที่อยู่บน Drawer
+  const { session_id } = useParams();
+
+  // console.log(messages.length);
+  //  console.log(session_id);
+
+  //เจมส์ : เพิ่มโหลดประวัติการสนทนาเมื่อเข้าหน้าจอใหม่
+  useEffect(() => {
+    // โหลดประวัติการสนทนาเมื่อเปิดหน้าจอ
+    const getChatHistoryBySessionId = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_history_tb')
+          .select('*')
+          .eq('session_id', session_id)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching chat history:', error);
+        } else {
+          console.log(data);
+          setMessages(data);
+        }
+
+      } catch (error) {
+        console.error('Error fetching chat history:', error);
+      }
+    }
+
+    getChatHistoryBySessionId();
+  }, [session_id]);
 
   // เลื่อนเมื่อ messages เปลี่ยน
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // เลื่อนแชทไปด้านล่างสุดเมื่อมีข้อความใหม่
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   // Component สำหรับแสดง Bubble ข้อความ (🌟 แก้ไขตรงนี้ 🌟)
   const MessageBubble = ({ message }) => {
     // ❌ เดิม: const isUser = message.sender === 'user';
     // ✅ แก้ไข: ใช้ role แทน sender
-    const isUser = message.role === 'user'; 
+    const isUser = message.role === 'user';
 
     // กำหนดรูปแบบตามผู้ส่ง
     const containerClasses = isUser
@@ -41,12 +73,12 @@ const ChatPage = () => {
         <div className={bubbleClasses}>
           {/* ❌ เดิม: <p className="...">{message.text}</p> */}
           {/* ✅ แก้ไข: ใช้ content แทน text */}
-          <p className="text-base md:text-lg whitespace-pre-wrap">{message.content}</p> 
+          <p className="text-base md:text-lg whitespace-pre-wrap">{message.content}</p>
         </div>
       </div>
     );
   };
-  
+
   // จัดการการส่งข้อความ
   const handleSendMessage = async () => {
     if (message.trim() === '') {
@@ -54,12 +86,41 @@ const ChatPage = () => {
       return;
     }
 
-    const currentMessage = message; // เก็บข้อความไว้ก่อน
-    
+    const currentMessage = message; // เก็บข้อความที่ผู้ใช้ส่งในขณะนั้น
+
     const userMessage = {
       content: currentMessage,
       role: 'user',
     };
+
+    //เจมส์ : ตรวจสอบว่า messages มี ความยาวมากกว่า 0 หรือไม่ ถ้าใช่ จะสร้าง session ใหม่
+    if (Array.isArray(messages) && messages.length === 0) {
+      try {
+        const formData = new FormData();
+        formData.append('session_id', session_id);
+        formData.append('user_id', 129);
+        formData.append('session_name', currentMessage);
+
+        const { data, error } = await supabase
+          .from('chat_session_tb')
+          .insert([
+            {
+              session_id: session_id,
+              user_id: 129,
+              session_name: currentMessage
+            }
+          ]);
+
+        if (error) {
+          console.error('Error create new session:', error);
+        }else{
+          console.log(data);
+        }
+
+      } catch (error) {
+        console.error('Error create new session:', error);
+      }
+    }
 
     // 1. เพิ่มข้อความ User ทันที
     setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -69,25 +130,25 @@ const ChatPage = () => {
 
     const formData = new FormData();
     formData.append('user_id', 129);
-    formData.append('session_id', 129);
+    formData.append('session_id', session_id);
     formData.append('role', 'user');
     formData.append('content', currentMessage); // ใช้ currentMessage ที่เก็บไว้
 
     try {
       const res = await axios.post('http://localhost:5678/webhook/chat', formData);
       console.log(res.data);
-      
+
       // เพิ่มข้อความที่ตอบกลับมาจาก server
-      setMessages((prevMessages) => [...prevMessages, { 
-          content: res.data,
-          role: 'ai'
+      setMessages((prevMessages) => [...prevMessages, {
+        content: res.data,
+        role: 'ai'
       }]);
-    } catch (e) {
-      console.error('API Error:', e);
+    } catch (error) {
+      console.error('Error insert chat history:', error);
       // **เพิ่มข้อความตอบกลับปลอมเมื่อเกิดข้อผิดพลาด** (แนะนำ)
-      setMessages((prevMessages) => [...prevMessages, { 
-          content: "⚠️ ขออภัยครับ ระบบ API เกิดข้อผิดพลาดชั่วคราว โปรดถามอีกครั้ง หรือลองใหม่ในภายหลัง", 
-          role: 'ai' 
+      setMessages((prevMessages) => [...prevMessages, {
+        content: "⚠️ ขออภัยครับ ระบบ API เกิดข้อผิดพลาดชั่วคราว โปรดถามอีกครั้ง หรือลองใหม่ในภายหลัง",
+        role: 'ai'
       }]);
     }
   };
@@ -113,7 +174,7 @@ const ChatPage = () => {
   // กำหนด layout ของ Input Area
   // เมื่อมีข้อความ: ใช้ FIXED BOTTOM เพื่อให้อยู่ด้านล่างเสมอ
   const inputAreaClasses = hasMessages
-    ? "w-full px-4 fixed bottom-0 left-0 right-0 flex justify-center z-10 py-4 bg-gray-50 border-t border-gray-200"
+    ? "w-full px-4 bottom-0 left-0 right-0 flex justify-center z-10 py-4 bg-gray-50 border-t border-gray-200"
     : "w-full max-w-lg lg:max-w-2xl px-4";
 
   // กำหนดความกว้างของ Input box ภายในคอนเทนเนอร์
@@ -125,8 +186,6 @@ const ChatPage = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
 
-      {/* Sidebar Drawer */}
-      <Drawer />
 
       {/* Main Content Container */}
       <div className="flex-1 flex flex-col">

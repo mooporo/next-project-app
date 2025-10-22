@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import Drawer from "./components/Drawer";
 import { User } from "lucide-react";
 import Link from "next/link"; // ✅ เพิ่ม Link
 
@@ -17,8 +16,8 @@ const HomePage = () => {
 
   return (
     <div className="flex">
-      {/* Drawer */}
-      <Drawer />
+
+      {/* เจมส์ : เอา Drawer ออกจาก page.tsx แล้ว */}
 
       {/* ปุ่ม Login/Register และรูปโปรไฟล์ ด้านขวาบน fixed */}
       <div className="fixed top-4 right-4 flex items-center gap-4 z-50">
