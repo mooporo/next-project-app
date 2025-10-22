@@ -36,12 +36,18 @@ const HomePage = () => {
                 ดูโปรไฟล์
               </Link>
 
-              {/* ✅ แก้ไขโปรไฟล์ */}
               <Link href="/edit-profile" className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
                 แก้ไขโปรไฟล์
               </Link>
 
-              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
+              {/* ✅ เปลี่ยนเป็นลิงก์ไปหน้า history */}
+              <Link
+                href="/history"
+                className="block px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                ประวัติการอัพโหลด
+              </Link>
+
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">โหมดมืด</div>
               <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
               <div
@@ -127,7 +133,10 @@ const HomePage = () => {
           {/* Description Section */}
           <section className="py-20 bg-white relative z-10">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <p className="text-2xl md:text-3xl text-black leading-relaxed mb-12 font-semibold" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+              <p
+                className="text-2xl md:text-3xl text-black leading-relaxed mb-12 font-semibold"
+                style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+              >
                 แพลตฟอร์มของเราออกแบบมาเพื่อจัดเก็บและบริหารจัดการงานวิจัยอย่างมีประสิทธิภาพ
                 ด้วยระบบที่ใช้งานง่าย คุณสามารถจัดการและเข้าถึงงานวิจัยได้สะดวก
                 พร้อมรองรับการแสดงผลที่ตอบสนองต่อทุกอุปกรณ์

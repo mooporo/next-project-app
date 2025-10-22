@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 
-// Component สำหรับ Header
+// ✅ Header (Navbar แบบ fixed ด้านบน)
 const Header = () => (
-  <header className="bg-blue-800 text-white shadow-lg">
+  <header className="bg-blue-800 text-white shadow-lg fixed top-0 left-0 w-full z-20">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16">
       <div className="text-2xl font-bold tracking-wider mr-10">Siam Archive</div>
       <nav className="flex space-x-6 text-sm font-medium">
@@ -126,7 +126,8 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen font-inter bg-[url('/background.png')] bg-cover bg-center">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* ✅ เพิ่ม margin-top เพื่อให้เนื้อหาไม่โดน Navbar บัง */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-80 flex-shrink-0">
             <Sidebar />
