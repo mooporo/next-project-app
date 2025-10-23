@@ -1,9 +1,9 @@
-// app/page.tsx
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import { Search, Upload, Users } from "lucide-react";
+import React, { useState } from "react";
+import Image from "next/image";
+import { User, Search, Upload, Users } from "lucide-react";
+import Link from "next/link"; // ✅ เพิ่ม Link
 
 type Feature = {
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -64,25 +64,29 @@ const ResearchCard: React.FC<ResearchItem> = ({ color, title, author, date, view
   </div>
 );
 
-// --- Navbar with Profile ---
+// --- Navbar / Profile UI อัปเดต ---
 const Navbar: React.FC = () => {
-  const [isProfilePopupOpen, setIsProfilePopupOpen] = React.useState(false);
+  const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
 
   const handleToggleProfile = () => setIsProfilePopupOpen(!isProfilePopupOpen);
   const handleLogout = () => {
     console.log("Logout clicked");
-    // เพิ่ม logic logout ที่นี่
   };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-10 bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        {/* โลโก้ */}
         <div className="text-xl font-bold text-blue-600">Siam Archive</div>
+
+        {/* ลิงก์เมนู */}
         <div className="hidden md:flex items-center space-x-4 text-gray-600 text-sm relative">
           <Link href="#" className="hover:text-blue-600 transition duration-150">หน้าหลัก</Link>
           <Link href="/search" className="hover:text-blue-600 transition duration-150">ค้นหางานวิจัย</Link>
           <Link href="#" className="hover:text-blue-600 transition duration-150">เกี่ยวกับเรา</Link>
           <Link href="#" className="hover:text-blue-600 transition duration-150">ติดต่อเรา</Link>
+
+          {/* ปุ่ม Login / Register */}
           <Link href="/login" className="bg-white text-gray-800 font-semibold py-2 px-4 rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition duration-150 text-sm">
             เข้าสู่ระบบ
           </Link>
@@ -112,7 +116,9 @@ const Navbar: React.FC = () => {
                   ประวัติการอัพโหลด
                 </Link>
                 <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">โหมดมืด</div>
-                <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
+                <Link href="/setting" className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  ตั้งค่า
+                </Link>
                 <div
                   onClick={handleLogout}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
