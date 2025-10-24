@@ -5,6 +5,7 @@ import Image from "next/image";
 import BookImg from "../images/book.png";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../auth";
 
 // --- ICONS ---
 const EyeIcon = (props) => (
@@ -30,34 +31,58 @@ export default function LoginPage() {
 
   const router = useRouter();
 
+  //เจมส์ : เรียกใช้ function login จาก auth.tsx
+  const { login } = useAuth();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: user_email,
         password: user_password,
       });
 
-      setLoading(false);
+      // console.log(authData);
 
-      if (error) {
-        alert("❌ ล็อกอินไม่สำเร็จ: " + error.message);
-        console.error(error);
+      if (authError) {
+        alert("❌ ล็อกอินไม่สำเร็จ: " + authError.message);
+        console.error(authError);
+        setLoading(false);
         return;
       }
 
-      if (data?.user) {
-        alert("✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + user_email);
-        router.push("/"); // ไปหน้า app/page.tsx (home)
+      if (authData?.user) {
+        const supabaseUserId = authData.user.id;
+
+        // console.log(supabaseUserId);
+
+        const { data: userData, error: profileError } = await supabase
+          .from('user_tb')
+          .select('*')
+          .eq('user_id', supabaseUserId)
+          .single();
+
+        if (profileError) {
+          console.error("Error fetching user profile:", profileError);
+          alert("❌ เข้าสู่ระบบสำเร็จ แต่ดึงข้อมูลผู้ใช้ไม่สำเร็จ");
+        } else if (userData) {
+          // console.log(userData);
+          login(userData);
+
+          alert("✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + userData.username || user_email);
+          router.push("/");
+        }
       } else {
         alert("❌ ไม่พบผู้ใช้");
       }
+
     } catch (err) {
-      setLoading(false);
       console.error(err);
-      alert("❌ เกิดข้อผิดพลาด: " + err.message);
+      alert("❌ เกิดข้อผิดพลาดที่ไม่คาดคิด");
+    } finally {
+      setLoading(false);
     }
   };
 

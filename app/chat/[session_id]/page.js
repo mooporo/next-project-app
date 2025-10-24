@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/app/lib/supabaseClient';
 import axios from 'axios';
+import { useAuth } from "../../auth";
 
 const ChatPage = () => {
   const [message, setMessage] = useState('');
@@ -13,6 +14,9 @@ const ChatPage = () => {
 
   //เจมส์ : เก็บ param(uuidv4) ที่ส่งจาก action ของปุ่ม "แชทใหม่" ที่อยู่บน Drawer
   const { session_id } = useParams();
+
+  //เจมส์ : เรียกข้อมูล user
+  const { user } = useAuth();
 
   // console.log(messages.length);
   //  console.log(session_id);
@@ -96,17 +100,12 @@ const ChatPage = () => {
     //เจมส์ : ตรวจสอบว่า messages มี ความยาวมากกว่า 0 หรือไม่ ถ้าใช่ จะสร้าง session ใหม่
     if (Array.isArray(messages) && messages.length === 0) {
       try {
-        const formData = new FormData();
-        formData.append('session_id', session_id);
-        formData.append('user_id', 129);
-        formData.append('session_name', currentMessage);
-
         const { data, error } = await supabase
           .from('chat_session_tb')
           .insert([
             {
               session_id: session_id,
-              user_id: 129,
+              user_id: user?.user_id,
               session_name: currentMessage
             }
           ]);
@@ -129,7 +128,6 @@ const ChatPage = () => {
     setMessage('');
 
     const formData = new FormData();
-    formData.append('user_id', 129);
     formData.append('session_id', session_id);
     formData.append('role', 'user');
     formData.append('content', currentMessage); // ใช้ currentMessage ที่เก็บไว้

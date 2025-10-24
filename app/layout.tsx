@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Prompt } from "next/font/google";
 import "./globals.css";
 import Wrapper from "./components/Wrapper";
+//เจมส์ : เพิ่ม file ตรวจสอบการ login
+import { AuthProvider } from "./auth"
 
 const prompt = Prompt({
   subsets: ["thai", "latin"],
@@ -36,7 +38,10 @@ export default function RootLayout({
       <body
         className={`${prompt.className} flex`}
       >
+        {/* //เจมส์ : เพิ่มตรวจสอบการ login */}
+        <AuthProvider>
           <Wrapper>{children}</Wrapper>
+        </AuthProvider>
       </body>
     </html>
   );
