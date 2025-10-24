@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation"; // ต้อง import useRouter
 
-// --- mock data ---
+// --- mock data สำหรับใช้ทดสอบ ResearchCard Component ---
 const researchData = [
   { id: 1, coverColor: "bg-indigo-600", title: "การพัฒนาระบบแนะนำร้านอาหาร...", author: "สมศักดิ์ รักษ์ใจ", views: 1204, comments: 15, date: "17 ต.ค. 2568" },
   { id: 2, coverColor: "bg-green-600", title: "ผลกระทบของ Climate Change ...", author: "อลิสา ใจดี", views: 980, comments: 8, date: "28 ก.ย. 2568" },
@@ -15,9 +15,11 @@ const researchData = [
   { id: 9, coverColor: "bg-teal-600", title: "อนาคตของพลังงานหมุนเวียนในเอเชีย", author: "ปลา วาฬ", views: 1100, comments: 18, date: "22 มี.ค. 2569" },
 ];
 
-// --- keywords ---
+// KLA : keywords for dropdown
 const keywords = ["AI", "Big Data", "Blockchain", "Web Design", "Climate Change", "พลังงานหมุนเวียน"];
 
+
+// --- Research Card Component  ---
 const ResearchCard = ({ item }) => (
   <div className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300">
     <div className={`h-40 ${item.coverColor} flex items-center justify-center`}>
@@ -48,6 +50,7 @@ const ResearchCard = ({ item }) => (
   </div>
 );
 
+// KLA : Pagination Component ใช้สำหรับแบ่งหน้า 1 2 3 ...
 const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -83,11 +86,19 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
 export default function SearchPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const [inputTerm, setInputTerm] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedKeyword, setSelectedKeyword] = useState("");
+  const [inputTerm, setInputTerm] = useState(""); //KLA :คำค้นหาจาก input
+  const [searchTerm, setSearchTerm] = useState(""); // KLA : คำค้นหาที่ใช้กรองข้อมูล
+  const [selectedKeyword, setSelectedKeyword] = useState(""); //  KLA :คีย์เวิร์ดที่เลือกจาก dropdown
   const itemsPerPage = 6;
 
+  // KLA : ดึงข้อมูลจาก Supabase หรือ API มาเก็บในตัวแปร researchData
+  // สำหรับตัวอย่างนี้ใช้ข้อมูล mock data ข้างบนไปก่อน
+  // ------------------------------------------------------------------------
+
+
+
+
+  // KLA : กรองข้อมูลตามคำค้นหาและคีย์เวิร์ดที่เลือก
   const filteredData = researchData.filter(
     (item) =>
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -97,20 +108,24 @@ export default function SearchPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
+  // KLA : ฟังก์ชันเปลี่ยนหน้า
   const handlePageChange = (page) => {
     if (page < 1 || page > Math.ceil(filteredData.length / itemsPerPage)) return;
     setCurrentPage(page);
   };
 
+  // KLA : ฟังก์ชันใช้สำหรับการค้นหางานวิจัย
   const handleSearch = () => {
     setSearchTerm(inputTerm);
     setCurrentPage(1);
   };
 
+  // KLA : ฟังก์ชันจับการกดปุ่ม Enter ในช่องค้นหา
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
   };
 
+  // KLA : ฟังก์ชันล้างการค้นหา
   const handleClear = () => {
     setInputTerm("");
     setSelectedKeyword("");
@@ -125,7 +140,7 @@ export default function SearchPage() {
         <header className="flex justify-between items-center mb-6 pt-4">
           <h1 className="text-3xl font-bold text-gray-800">คลังงานวิจัย</h1>
           <button
-            onClick={() => router.push("/upload")}
+            onClick={() => router.push("/upload")} // KLA : เปลี่ยนเส้นทางไปยังหน้าอัพโหลด
             className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 flex items-center space-x-2"
           >
             <span>อัพโหลดงานวิจัย</span>
@@ -144,16 +159,16 @@ export default function SearchPage() {
               placeholder="ค้นหาด้วยชื่อเรื่อง..."
               className="w-full focus:outline-none text-gray-700"
               value={inputTerm}
-              onChange={(e) => setInputTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
+              onChange={(e) => setInputTerm(e.target.value)} // KLA : อัพเดตคำค้นหา
+              onKeyDown={handleKeyDown} // KLA : จับการกดปุ่ม Enter
             />
           </div>
 
           <select
             value={selectedKeyword}
             onChange={(e) => {
-              setSelectedKeyword(e.target.value);
-              setCurrentPage(1);
+              setSelectedKeyword(e.target.value); // KLA : อัพเดตคีย์เวิร์ดที่เลือก
+              setCurrentPage(1); // KLA : กลับไปหน้าแรกเมื่อเปลี่ยนคีย์เวิร์ด
             }}
             className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
           >
@@ -166,15 +181,15 @@ export default function SearchPage() {
           </select>
 
           <button
-            onClick={handleSearch}
+            onClick={handleSearch} // KLA : เรียกใช้ฟังก์ชันค้นหา
             className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 min-w-[100px]"
           >
             ค้นหา
           </button>
           
-          {/* Gay : ปุ่มล้าง */}
+          
           <button
-            onClick={handleClear}
+            onClick={handleClear} // KLA : เรียกใช้ฟังก์ชันล้างการค้นหา
             className="bg-red-600 text-white text-gray-700 px-6 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 min-w-[100px]"
           >
             ล้างการค้นหา
