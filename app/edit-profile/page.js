@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-const STORAGE_BUCKET = "avatars"; // change only if your bucket name differs
+const STORAGE_BUCKET = "user_bk"; 
 
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
