@@ -1,33 +1,42 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // ต้อง import useRouter
+import { supabase } from "../lib/supabaseClient"; // ✅ KLA : import Supabase client
 
 // --- mock data สำหรับใช้ทดสอบ ResearchCard Component ---
-const researchData = [
-  { id: 1, coverColor: "bg-indigo-600", title: "การพัฒนาระบบแนะนำร้านอาหาร...", author: "สมศักดิ์ รักษ์ใจ", views: 1204, comments: 15, date: "17 ต.ค. 2568" },
-  { id: 2, coverColor: "bg-green-600", title: "ผลกระทบของ Climate Change ...", author: "อลิสา ใจดี", views: 980, comments: 8, date: "28 ก.ย. 2568" },
-  { id: 3, coverColor: "bg-purple-600", title: "ศึกษาแนวคิด Blockchain กับระบบ...", author: "วิทยา พัฒนาดี", views: 765, comments: 22, date: "1 ต.ค. 2568" },
-  { id: 4, coverColor: "bg-red-500", title: "เทคนิคการทำครัวซองต์ยุคใหม่", author: "มานี มีสุข", views: 550, comments: 10, date: "5 ต.ค. 2568" },
-  { id: 5, coverColor: "bg-yellow-600", title: "การจัดการข้อมูล Big Data ในองค์กร", author: "ชูใจ ใจดี", views: 1500, comments: 30, date: "10 พ.ย. 2568" },
-  { id: 6, coverColor: "bg-sky-600", title: "ปัญญาประดิษฐ์กับการแพทย์แผนไทย", author: "สมชาย ชอบเรียน", views: 800, comments: 5, date: "18 ธ.ค. 2568" },
-  { id: 7, coverColor: "bg-pink-600", title: "พฤติกรรมผู้บริโภคออนไลน์ Gen Z", author: "กอล์ฟ ซ่าส์", views: 2000, comments: 50, date: "1 ม.ค. 2569" },
-  { id: 8, coverColor: "bg-orange-600", title: "การออกแบบเว็บไซต์ที่เข้าถึงง่าย (A11Y)", author: "โอ๊ต ตันติ", views: 900, comments: 12, date: "15 ก.พ. 2569" },
-  { id: 9, coverColor: "bg-teal-600", title: "อนาคตของพลังงานหมุนเวียนในเอเชีย", author: "ปลา วาฬ", views: 1100, comments: 18, date: "22 มี.ค. 2569" },
-];
+// / --- mock data สำหรับใช้ทดสอบ ResearchCard Component ---
+// const researchData = [
+//   { id: 1, coverColor: "bg-indigo-600", title: "การพัฒนาระบบแนะนำร้านอาหาร...", author: "สมศักดิ์ รักษ์ใจ", views: 1204, comments: 15, date: "17 ต.ค. 2568" },
+//   { id: 2, coverColor: "bg-green-600", title: "ผลกระทบของ Climate Change ...", author: "อลิสา ใจดี", views: 980, comments: 8, date: "28 ก.ย. 2568" },
+//   { id: 3, coverColor: "bg-purple-600", title: "ศึกษาแนวคิด Blockchain กับระบบ...", author: "วิทยา พัฒนาดี", views: 765, comments: 22, date: "1 ต.ค. 2568" },
+//   { id: 4, coverColor: "bg-red-500", title: "เทคนิคการทำครัวซองต์ยุคใหม่", author: "มานี มีสุข", views: 550, comments: 10, date: "5 ต.ค. 2568" },
+//   { id: 5, coverColor: "bg-yellow-600", title: "การจัดการข้อมูล Big Data ในองค์กร", author: "ชูใจ ใจดี", views: 1500, comments: 30, date: "10 พ.ย. 2568" },
+//   { id: 6, coverColor: "bg-sky-600", title: "ปัญญาประดิษฐ์กับการแพทย์แผนไทย", author: "สมชาย ชอบเรียน", views: 800, comments: 5, date: "18 ธ.ค. 2568" },
+//   { id: 7, coverColor: "bg-pink-600", title: "พฤติกรรมผู้บริโภคออนไลน์ Gen Z", author: "กอล์ฟ ซ่าส์", views: 2000, comments: 50, date: "1 ม.ค. 2569" },
+//   { id: 8, coverColor: "bg-orange-600", title: "การออกแบบเว็บไซต์ที่เข้าถึงง่าย (A11Y)", author: "โอ๊ต ตันติ", views: 900, comments: 12, date: "15 ก.พ. 2569" },
+//   { id: 9, coverColor: "bg-teal-600", title: "อนาคตของพลังงานหมุนเวียนในเอเชีย", author: "ปลา วาฬ", views: 1100, comments: 18, date: "22 มี.ค. 2569" },
+// ];
 
 // KLA : keywords for dropdown
 const keywords = ["AI", "Big Data", "Blockchain", "Web Design", "Climate Change", "พลังงานหมุนเวียน"];
 
-
 // --- Research Card Component  ---
-const ResearchCard = ({ item }) => (
-  <div className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300">
-    <div className={`h-40 ${item.coverColor} flex items-center justify-center`}>
-      <span className="text-white text-2xl font-semibold opacity-80">Research Cover</span>
+const ResearchCard = ({ item, onClick }) => (
+  <div
+    className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer"
+    onClick={() => onClick(item)} // ✅ เมื่อคลิก card จะเรียก handleView
+  >
+    <div className="h-40 flex items-center justify-center bg-gray-200">
+      <img
+        src={item.paper_image || "/no-image.png"}
+        alt={item.paper_title}
+        className="h-full w-full object-cover"
+      />
     </div>
     <div className="p-4 space-y-2">
-      <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">{item.title}</h3>
-      <p className="text-sm text-gray-500 truncate">โดย: {item.author}</p>
+      <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
+        {item.paper_title}
+      </h3>
       <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm text-gray-400">
         <div className="flex space-x-4">
           <div className="flex items-center space-x-1">
@@ -35,16 +44,12 @@ const ResearchCard = ({ item }) => (
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
-            <span>{item.views.toLocaleString()}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span>{item.comments}</span>
+            <span>{item.paper_views?.toLocaleString() || 0}</span>
           </div>
         </div>
-        <span className="text-xs">{item.date}</span>
+        <span className="text-xs">
+          {item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}
+        </span>
       </div>
     </div>
   </div>
@@ -66,7 +71,9 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
       {pages.map((page) => (
         <button
           key={page}
-          className={`h-8 w-8 rounded-lg font-semibold ${page === currentPage ? "bg-blue-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-100"}`}
+          className={`h-8 w-8 rounded-lg font-semibold ${
+            page === currentPage ? "bg-blue-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-100"
+          }`}
           onClick={() => onPageChange(page)}
         >
           {page}
@@ -91,22 +98,65 @@ export default function SearchPage() {
   const [selectedKeyword, setSelectedKeyword] = useState(""); //  KLA :คีย์เวิร์ดที่เลือกจาก dropdown
   const itemsPerPage = 6;
 
-  // KLA : ดึงข้อมูลจาก Supabase หรือ API มาเก็บในตัวแปร researchData
-  // สำหรับตัวอย่างนี้ใช้ข้อมูล mock data ข้างบนไปก่อน
-  // ------------------------------------------------------------------------
+  // 🟢 KLA : ดึงข้อมูลจาก Supabase จริง
+  const [researchData, setResearchData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
 
+  // KLA : ฟังก์ชันดึงข้อมูลงานวิจัยจาก Supabase
+  const fetchResearchData = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("paper_tb")
+      .select("paper_id, user_id, paper_title, paper_image, paper_views, created_at") // เลือกเฉพาะฟิลด์ที่ต้องการมาเพื่อแสดงผล
+      .order("created_at", { ascending: false }); // เรียงลำดับจากใหม่ไปเก่า
 
+    if (error) {
+      console.error("❌ Error fetching data:", error);  
+    } else {
+      setResearchData(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchResearchData();
+  }, []);
+
+  // KLA : เมื่อคลิกการ์ด → เพิ่ม paper_views +1
+  const handleView = async (item) => {
+    const newViews = (item.paper_views || 0) + 1;
+
+    const { error } = await supabase
+      .from("paper_tb")
+      .update({ paper_views: newViews })
+      .eq("paper_id", item.paper_id);
+
+    if (error) {
+      console.error("❌ Error updating views:", error);
+      return;
+    }
+
+    // อัปเดตใน state เพื่อให้เห็นผลทันที
+    setResearchData((prev) =>
+      prev.map((r) =>
+        r.id === item.id ? { ...r, paper_views: newViews } : r
+      )
+    );
+
+    // ไปหน้าแสดงรายละเอียด (ภายหลังจะสร้างจริง)
+    router.push(`/research/${item.id}`);
+  };
 
   // KLA : กรองข้อมูลตามคำค้นหาและคีย์เวิร์ดที่เลือก
   const filteredData = researchData.filter(
     (item) =>
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedKeyword ? item.title.toLowerCase().includes(selectedKeyword.toLowerCase()) : true)
+      item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (selectedKeyword ? item.paper_title?.toLowerCase().includes(selectedKeyword.toLowerCase()) : true)
   );
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage; // KLA : คำนวณดัชนีเริ่มต้นของหน้าปัจจุบัน
+  const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage); // KLA : ดึงข้อมูลของหน้าปัจจุบัน
 
   // KLA : ฟังก์ชันเปลี่ยนหน้า
   const handlePageChange = (page) => {
@@ -134,6 +184,7 @@ export default function SearchPage() {
   };
 
   return (
+    // KLA : หน้า Search Page
     <div className="min-h-screen bg-gray-50 font-[Inter] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -164,6 +215,7 @@ export default function SearchPage() {
             />
           </div>
 
+          {/* KLA : Dropdown สำหรับเลือกคีย์เวิร์ด */}
           <select
             value={selectedKeyword}
             onChange={(e) => {
@@ -187,7 +239,6 @@ export default function SearchPage() {
             ค้นหา
           </button>
           
-          
           <button
             onClick={handleClear} // KLA : เรียกใช้ฟังก์ชันล้างการค้นหา
             className="bg-red-600 text-white text-gray-700 px-6 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 min-w-[100px]"
@@ -197,10 +248,12 @@ export default function SearchPage() {
         </div>
 
         {/* Research Grid */}
-        {currentItems.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-500 py-12">กำลังโหลดข้อมูล...</p>
+        ) : currentItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {currentItems.map((item) => (
-              <ResearchCard key={item.id} item={item} />
+              <ResearchCard key={item.id} item={item} onClick={handleView} />
             ))}
           </div>
         ) : (
