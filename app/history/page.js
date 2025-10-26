@@ -9,7 +9,7 @@ const Navbar = () => (
   <div className="bg-blue-600 w-full h-16 shadow-lg fixed top-0 left-0 z-10"></div>
 );
 
-// ✅ Component สำหรับ Dropdown Filter (แก้ใช้ options ต่างกันแล้ว)
+// ✅ Component สำหรับ Dropdown Filter
 const FilterDropdown = ({ title, options }) => (
   <select
     className="border border-gray-300 rounded-lg p-2 text-gray-700 bg-white shadow-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 text-sm md:text-base"
@@ -96,22 +96,35 @@ export default function HistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // ✅ ดึงข้อมูลจาก Supabase
+  // ✅ ดึงข้อมูลจาก Supabase เฉพาะของ user ที่ล็อกอินอยู่
   useEffect(() => {
     const fetchPapers = async () => {
       setLoading(true);
+
+      // ✅ ดึง user ปัจจุบัน
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.warn("No user logged in");
+        setPapers([]);
+        setLoading(false);
+        return;
+      }
+
+      // ✅ ดึงเฉพาะข้อมูลของ user นี้
       const { data, error } = await supabase
         .from("paper_tb")
-        .select(
-          `
+        .select(`
           paper_id,
           paper_title,
           created_at,
           paper_status,
           paper_type_id,
           paper_category_id
-        `
-        )
+        `)
+        .eq("user_id", user.id) // ✅ เฉพาะของตัวเอง
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -125,7 +138,7 @@ export default function HistoryPage() {
               dateStyle: "medium",
               timeStyle: "short",
             }),
-            version: "1.0", // ไม่มีใน table → ใช้ mock
+            version: "1.0",
             status:
               item.paper_status === 1
                 ? "ตรวจรอบ"
@@ -137,6 +150,7 @@ export default function HistoryPage() {
           }))
         );
       }
+
       setLoading(false);
     };
 
