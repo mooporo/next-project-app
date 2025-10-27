@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Upload, ChevronRight, ChevronLeft, Edit, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../auth";
 
 // ✅ Component: Navbar สีฟ้าเต็มความกว้าง
 const Navbar = () => (
@@ -96,14 +97,18 @@ export default function HistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  const { user } = useAuth();
+
   // ✅ ดึงข้อมูลจาก Supabase
   useEffect(() => {
     const fetchPapers = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("paper_tb")
-        .select(
-          `
+
+      try {
+        const { data, error } = await supabase
+          .from("paper_tb")
+          .select(
+            `
           paper_id,
           paper_title,
           created_at,
@@ -111,37 +116,42 @@ export default function HistoryPage() {
           paper_type_id,
           paper_category_id
         `
-        )
-        .order("created_at", { ascending: false });
+          )
+          .eq("user_id", user?.user_id)
+          .order("created_at", { ascending: false });
 
-      if (error) {
+        if (error) {
+          console.error("Your papers not found:", error);
+        } else {
+          setPapers(
+            data.map((item) => ({
+              id: item.paper_id,
+              title: item.paper_title,
+              date: new Date(item.created_at).toLocaleString("th-TH", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }),
+              version: "1.0", // ไม่มีใน table → ใช้ mock
+              status:
+                item.paper_status === 1
+                  ? "ตรวจรอบ"
+                  : item.paper_status === 2
+                    ? "อนุมัติ"
+                    : item.paper_status === 3
+                      ? "ต้องการแก้ไข"
+                      : "ไม่ทราบสถานะ",
+            }))
+          );
+        }
+      } catch (error) {
         console.error("Error fetching papers:", error);
-      } else {
-        setPapers(
-          data.map((item) => ({
-            id: item.paper_id,
-            title: item.paper_title,
-            date: new Date(item.created_at).toLocaleString("th-TH", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }),
-            version: "1.0", // ไม่มีใน table → ใช้ mock
-            status:
-              item.paper_status === 1
-                ? "ตรวจรอบ"
-                : item.paper_status === 2
-                ? "อนุมัติ"
-                : item.paper_status === 3
-                ? "ต้องการแก้ไข"
-                : "ไม่ทราบสถานะ",
-          }))
-        );
       }
+
       setLoading(false);
     };
 
     fetchPapers();
-  }, []);
+  }, [user?.user_id]);
 
   const totalItems = papers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -221,9 +231,8 @@ export default function HistoryPage() {
               .map((page) => (
                 <button
                   key={page}
-                  className={`min-w-[40px] px-2 py-2 font-semibold rounded-lg transition duration-150 ${
-                    page === currentPage ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`min-w-[40px] px-2 py-2 font-semibold rounded-lg transition duration-150 ${page === currentPage ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
+                    }`}
                   onClick={() => setCurrentPage(page)}
                 >
                   {page}

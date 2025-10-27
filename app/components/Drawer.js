@@ -2,10 +2,10 @@
 
 //เจมส์ : เพิ่ม uuidv4 เพื่อเจนรหัส session ใหม่ทุกครั้งที่มีการกด "แชทใหม่"
 import { v4 as uuidv4 } from "uuid";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
-import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User, LogIn, UserPlus } from "lucide-react";
+import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User, LogIn, UserPlus, MoreVertical, Edit, Pin, PinOff, Trash2 } from "lucide-react";
 import { useAuth } from "../auth";
 
 // ================= Drawer Data ================= //เจมส์ : เพิ่ม path
@@ -15,7 +15,7 @@ const mainMenuItems = [
 ];
 
 const functionMenuItems = [
-  { name: "ดึงข้อมูล", icon: Settings, key: "extract", path: "/extraction" },
+  { name: "ดึงข้อมูล", icon: Settings, key: "extract", path: "/upload" },
   { name: "เปรียบเทียบเนื้อหา", icon: Shuffle, key: "compare", path: "/comparison" },
   { name: "สร้างแผนภาพ", icon: LayoutList, key: "diagram", path: "/visualization" },
 ];
@@ -46,19 +46,199 @@ const DrawerItem = ({ icon: Icon, label, isActive, onClick, disabled }) => {
   );
 };
 
-const HistoryItem = ({ title, isActive, onClick }) => (
-  <div
-    onClick={onClick}
-    className={`flex items-center py-2 px-3 pl-6 cursor-pointer rounded-lg transition-colors ${isActive
-      ? "bg-blue-100 text-blue-700 font-semibold"
-      : "text-gray-600 hover:bg-gray-100"
-      } text-sm truncate`}
-    title={title}
-  >
-    <span className="mr-2">•</span>
-    {title}
-  </div>
-);
+// ================= History Items =================
+const HistoryItem = ({
+  sessionId,
+  title,
+  isActive,
+  onClick,
+  isSessionMenuOpen,
+  setIsSessionMenuOpen,
+  onRenameSubmit,
+  isPinned,
+  onPinned,
+  onDelete,
+}) => {
+
+  const menuRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(title);
+
+  //useEffect ของ isSessionMenuOpen
+  useEffect(() => {
+    const handleClickOutsideSessionMenu = (e) => {
+      if (isSessionMenuOpen && menuRef.current && !menuRef.current.contains(e.target)) {
+        setIsSessionMenuOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutsideSessionMenu);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideSessionMenu);
+    };
+  }, [isSessionMenuOpen, setIsSessionMenuOpen]);
+
+  //useEffect ของ isEditing
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleRenameOutsideClick = (event) => {
+      // ถ้าคลิกนอก input (และไม่ได้คลิกที่ปุ่ม MoreVertical หรือปุ่ม Rename ในเมนู)
+      if (inputRef.current && !inputRef.current.contains(event.target)) {
+        // บันทึกชื่อ (ถ้ามีการเปลี่ยนแปลง) หรือยกเลิก
+        if (draftTitle !== title) {
+          handleSaveRename();
+        } else {
+          setIsEditing(false);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleRenameOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleRenameOutsideClick);
+    };
+  }, [isEditing, draftTitle, title]);
+
+  //================ ใช้ใน Parent =================//
+  const handleSaveRename = () => {
+    if (draftTitle.trim() === "" || draftTitle === title) {
+      // ถ้าว่างเปล่าหรือชื่อไม่เปลี่ยน ให้ยกเลิก
+      setDraftTitle(title);
+    } else {
+      onRenameSubmit(sessionId, draftTitle);
+    }
+    setIsEditing(false);
+  };
+
+  const handlePinClick = (e) => {
+    e.stopPropagation();
+    onPinned(sessionId, isPinned);
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    onDelete(sessionId);
+  }
+  //================ ใช้ใน Parent =================//
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSaveRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      setDraftTitle(title); // คืนค่าเป็นชื่อเดิม
+      setIsEditing(false);
+    }
+  };
+
+  const handleStartRename = (e) => {
+    e.stopPropagation();
+    setIsSessionMenuOpen(null); // ปิดเมนู
+    setDraftTitle(title); // ตั้งค่า Input ด้วยชื่อเดิม
+    setIsEditing(true);
+
+    // โฟกัส Input ทันทีเมื่อเปลี่ยนสถานะ
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select(); // เลือกข้อความทั้งหมด
+    }, 0);
+  };
+
+  const handleSessionMenuClick = (e) => {
+    e.stopPropagation();
+    setIsSessionMenuOpen(isSessionMenuOpen ? null : sessionId);
+  };
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <div
+        onClick={isEditing ? (e) => e.stopPropagation() : onClick}
+        className={`flex items-center py-2 px-3 pl-6 cursor-pointer rounded-lg transition-colors ${isActive
+          ? "bg-blue-100 text-blue-700 font-semibold"
+          : "text-gray-600 hover:bg-gray-100"
+          } text-sm truncate`}
+        title={title}
+      >
+        <span className="mr-2">•</span>
+        {/* สลับการแสดงผล: Input กับ Span */}
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={draftTitle}
+            onChange={(e) => setDraftTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-grow bg-transparent border-none focus:ring-0 focus:border-b-blue-500 border-b-2 border-transparent outline-none p-0 -ml-0.5"
+          />
+        ) : (
+          <span className="truncate">{title}</span>
+        )}
+
+        {isPinned === true && (
+          <span className="ml-auto text-gray-500">
+            <Pin className="h-4 w-4" />
+          </span>
+        )}
+
+        <button
+          className={`p-1 rounded cursor-pointer transition-colors ${isSessionMenuOpen ? 'bg-gray-200' : 'hover:bg-gray-100'} ${isPinned === true ? 'ml-2' : 'ml-auto'}`}
+          aria-label="More options"
+          onClick={handleSessionMenuClick}
+        >
+          <MoreVertical className="h-4 w-4 text-gray-500" />
+        </button>
+      </div>
+
+      {/* Dropdown Menu (Popup) - ใช้ isSessionMenuOpen เพื่อควบคุม */}
+      {isSessionMenuOpen && (
+        <div
+          className="absolute right-0 top-0 mt-10 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right"
+        >
+          <div className="py-1">
+            {/* ตัวเลือก: เปลี่ยนชื่อ */}
+            <button
+              onClick={handleStartRename}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <Edit className="h-4 w-4 mr-2" /> เปลี่ยนชื่อ
+            </button>
+            {/* ตัวเลือก: ปักหมุด */}
+            {isPinned === false ? (
+              <button
+                onClick={handlePinClick}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <Pin className="h-4 w-4 mr-2" /> ปักหมุด
+              </button>
+            ) : (
+              <button
+                onClick={handlePinClick}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <PinOff className="h-4 w-4 mr-2" /> เลิกปักหมุด
+              </button>
+            )
+            }
+            {/* ตัวเลือก: ลบ */}
+            <button
+              onClick={handleDeleteClick}
+              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> ลบ
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+// ================= History Items =================
 
 //เจมส์ : เพิ่ม useEffect สำหรับเรียกค่า isOpen จาก Wrapper.js
 /**
@@ -68,8 +248,6 @@ const HistoryItem = ({ title, isActive, onClick }) => (
 const Drawer = ({ onToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeMenuKey, setActiveMenuKey] = useState("home");
-  const [chatHistory, setChatHistory] = useState([]);
-  const [chatLoading, setChatLoading] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   //เจมส์ : เพิ่มตัวแปรเก็บ router
@@ -77,6 +255,11 @@ const Drawer = ({ onToggle }) => {
 
   //เจมส์ : เรียกใช้ function จาก auth.tsx
   const { user, logout } = useAuth();
+
+  //-----------------เจมส์ : เกี่ยวกับ chat-session-----------------
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [isSessionMenuOpen, setIsSessionMenuOpen] = useState(false);
 
   //เจมส์ : เพิ่ม useEffect สำหรับเรียกค่า isOpen จาก Wrapper.js
   useEffect(() => {
@@ -160,6 +343,57 @@ const Drawer = ({ onToggle }) => {
     router.replace('/login');
   };
 
+  const handleSessionRenameSubmit = async (sessionId, newTitle) => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_session_tb')
+        .update({ session_name: newTitle })
+        .eq('session_id', sessionId);
+      if (error) {
+        console.error('Error updating session title:', error);
+      } else {
+        // console.log('Session title updated successfully:', newTitle);
+        getAllChatSessionByUserId();
+      }
+    } catch (error) {
+      console.error('Error updating session title:', error);
+    }
+  };
+
+  const handleSessionPinned = async (sessionId, isPinned) => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_session_tb')
+        .update({ is_pinned: !isPinned })
+        .eq('session_id', sessionId);
+      if (error) {
+        console.error('Error Pinning session title:', error);
+      } else {
+        // console.log('Pin Session updated successfully:', !isPinned);
+        getAllChatSessionByUserId();
+      }
+    } catch (error) {
+      console.error('Error Pinning session title:', error);
+    }
+  }
+
+  const handleSessionDelete = async (sessionId) => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_session_tb')
+        .delete()
+        .eq('session_id', sessionId);
+      if (error) {
+        console.error('Error deleting session:', error);
+      } else {
+        console.log('Session deleted successfully:', sessionId);
+        getAllChatSessionByUserId();
+      }
+    } catch (error) {
+      console.error('Error deleting session:', error);
+    }
+  }
+
   return (
     <>
       {/* Hamburger */} {/*เจมส์ : แก้ไข UI ปุ่มให้ hover ได้*/}
@@ -170,15 +404,12 @@ const Drawer = ({ onToggle }) => {
         ☰
       </button>
 
-      {/*เจมส์ : ตัด Overlay ออกไปแล้ว*/}
-
       {/* Drawer */}
       <div
-        className={`fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl overflow-hidden z-50 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl overflow-hidden z-50 transform transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex-grow p-4 space-y-6 overflow-y-auto">
 
-          {/*เจมส์ : เอาปุ่มมาใส่ใน Drawer*/}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 text-2xl text-black rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
@@ -198,8 +429,8 @@ const Drawer = ({ onToggle }) => {
                   label={item.name}
                   isActive={activeMenuKey === item.key}
                   onClick={() => {
-                    setActiveMenuKey(item.key)
-                    router.push(item.path)
+                    setActiveMenuKey(item.key);
+                    router.push(item.path);
                   }
                   }
                 />
@@ -219,7 +450,11 @@ const Drawer = ({ onToggle }) => {
                   label={item.name}
                   disabled={!user}
                   isActive={activeMenuKey === item.key}
-                  onClick={() => setActiveMenuKey(item.key)}
+                  onClick={() => {
+                    setActiveMenuKey(item.key);
+                    router.push(item.path);
+                  }
+                  }
                 />
               ))}
             </div>
@@ -227,7 +462,6 @@ const Drawer = ({ onToggle }) => {
 
           <hr className="border-gray-200" />
 
-          {/* ✅ แก้เฉพาะปุ่ม “แชทใหม่” ให้ลิงก์ไป /chat */} {/*เจมส์ : เพิ่ม Link ไป /chat/$session_id*/}
           <button
             onClick={handleClickNewChat}
             className="w-full flex items-center justify-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">
@@ -243,9 +477,17 @@ const Drawer = ({ onToggle }) => {
               {chatHistory.map((item) => (
                 <HistoryItem
                   key={item.session_id}
+                  sessionId={item.session_id}
                   title={item.session_name}
-                  isActive={chatHistory === item.session_id}
                   onClick={() => router.push(`/chat/${item.session_id}`)}
+
+                  // Props สำหรับ Menu Management
+                  isSessionMenuOpen={isSessionMenuOpen === item.session_id}
+                  setIsSessionMenuOpen={setIsSessionMenuOpen}
+                  onRenameSubmit={handleSessionRenameSubmit}
+                  isPinned={item.is_pinned}
+                  onPinned={handleSessionPinned}
+                  onDelete={handleSessionDelete}
                 />
               ))}
             </div>
@@ -271,7 +513,7 @@ const Drawer = ({ onToggle }) => {
               {user ? (
                 <>
                   <div onClick={() => router.push("/profile")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ดูโปรไฟล์</div>
-                  <div onClick={() => { }} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
+                  <div onClick={() => router.push("/history")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
                   <div onClick={() => { }} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
                   <div onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">ออกจากระบบ</div>
                 </>
