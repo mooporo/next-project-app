@@ -41,8 +41,8 @@ const ResearchCard = ({ item, onClick }) => (
         <div className="flex space-x-4">
           <div className="flex items-center space-x-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-              <circle cx="12" cy="12" r="3"/>
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
             <span>{item.paper_views?.toLocaleString() || 0}</span>
           </div>
@@ -71,9 +71,8 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
       {pages.map((page) => (
         <button
           key={page}
-          className={`h-8 w-8 rounded-lg font-semibold ${
-            page === currentPage ? "bg-blue-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-100"
-          }`}
+          className={`h-8 w-8 rounded-lg font-semibold ${page === currentPage ? "bg-blue-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-100"
+            }`}
           onClick={() => onPageChange(page)}
         >
           {page}
@@ -98,7 +97,7 @@ export default function SearchPage() {
   const [selectedKeyword, setSelectedKeyword] = useState(""); //  KLA :คีย์เวิร์ดที่เลือกจาก dropdown
   const itemsPerPage = 6;
 
-  // 🟢 KLA : ดึงข้อมูลจาก Supabase จริง
+  //  KLA : ดึงข้อมูลจาก Supabase จริง
   const [researchData, setResearchData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -112,7 +111,7 @@ export default function SearchPage() {
       .order("created_at", { ascending: false }); // เรียงลำดับจากใหม่ไปเก่า
 
     if (error) {
-      console.error("❌ Error fetching data:", error);  
+      console.error("❌ Error fetching data:", error);
     } else {
       setResearchData(data || []);
     }
@@ -140,12 +139,13 @@ export default function SearchPage() {
     // อัปเดตใน state เพื่อให้เห็นผลทันที
     setResearchData((prev) =>
       prev.map((r) =>
-        r.id === item.id ? { ...r, paper_views: newViews } : r
+        r.paper_id === item.paper_id ? { ...r, paper_views: newViews } : r
       )
     );
 
+
     // ไปหน้าแสดงรายละเอียด (ภายหลังจะสร้างจริง)
-    router.push(`/research/${item.id}`);
+    router.push(`/research/${item.paper_id}`);
   };
 
   // KLA : กรองข้อมูลตามคำค้นหาและคีย์เวิร์ดที่เลือก
@@ -238,7 +238,7 @@ export default function SearchPage() {
           >
             ค้นหา
           </button>
-          
+
           <button
             onClick={handleClear} // KLA : เรียกใช้ฟังก์ชันล้างการค้นหา
             className="bg-red-600 text-white text-gray-700 px-6 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 min-w-[100px]"
@@ -253,7 +253,7 @@ export default function SearchPage() {
         ) : currentItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {currentItems.map((item) => (
-              <ResearchCard key={item.id} item={item} onClick={handleView} />
+              <ResearchCard key={item.paper_id} item={item} onClick={handleView} />
             ))}
           </div>
         ) : (
