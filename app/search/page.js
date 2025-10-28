@@ -3,23 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // ต้อง import useRouter
 import { supabase } from "../lib/supabaseClient"; // ✅ KLA : import Supabase client
 
-// --- mock data สำหรับใช้ทดสอบ ResearchCard Component ---
-// / --- mock data สำหรับใช้ทดสอบ ResearchCard Component ---
-// const researchData = [
-//   { id: 1, coverColor: "bg-indigo-600", title: "การพัฒนาระบบแนะนำร้านอาหาร...", author: "สมศักดิ์ รักษ์ใจ", views: 1204, comments: 15, date: "17 ต.ค. 2568" },
-//   { id: 2, coverColor: "bg-green-600", title: "ผลกระทบของ Climate Change ...", author: "อลิสา ใจดี", views: 980, comments: 8, date: "28 ก.ย. 2568" },
-//   { id: 3, coverColor: "bg-purple-600", title: "ศึกษาแนวคิด Blockchain กับระบบ...", author: "วิทยา พัฒนาดี", views: 765, comments: 22, date: "1 ต.ค. 2568" },
-//   { id: 4, coverColor: "bg-red-500", title: "เทคนิคการทำครัวซองต์ยุคใหม่", author: "มานี มีสุข", views: 550, comments: 10, date: "5 ต.ค. 2568" },
-//   { id: 5, coverColor: "bg-yellow-600", title: "การจัดการข้อมูล Big Data ในองค์กร", author: "ชูใจ ใจดี", views: 1500, comments: 30, date: "10 พ.ย. 2568" },
-//   { id: 6, coverColor: "bg-sky-600", title: "ปัญญาประดิษฐ์กับการแพทย์แผนไทย", author: "สมชาย ชอบเรียน", views: 800, comments: 5, date: "18 ธ.ค. 2568" },
-//   { id: 7, coverColor: "bg-pink-600", title: "พฤติกรรมผู้บริโภคออนไลน์ Gen Z", author: "กอล์ฟ ซ่าส์", views: 2000, comments: 50, date: "1 ม.ค. 2569" },
-//   { id: 8, coverColor: "bg-orange-600", title: "การออกแบบเว็บไซต์ที่เข้าถึงง่าย (A11Y)", author: "โอ๊ต ตันติ", views: 900, comments: 12, date: "15 ก.พ. 2569" },
-//   { id: 9, coverColor: "bg-teal-600", title: "อนาคตของพลังงานหมุนเวียนในเอเชีย", author: "ปลา วาฬ", views: 1100, comments: 18, date: "22 มี.ค. 2569" },
-// ];
-
-// KLA : keywords for dropdown
-const keywords = ["AI", "Big Data", "Blockchain", "Web Design", "Climate Change", "พลังงานหมุนเวียน"];
-
 // --- Research Card Component  ---
 const ResearchCard = ({ item, onClick }) => (
   <div
@@ -94,13 +77,12 @@ export default function SearchPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [inputTerm, setInputTerm] = useState(""); //KLA :คำค้นหาจาก input
   const [searchTerm, setSearchTerm] = useState(""); // KLA : คำค้นหาที่ใช้กรองข้อมูล
-  const [selectedKeyword, setSelectedKeyword] = useState(""); //  KLA :คีย์เวิร์ดที่เลือกจาก dropdown
+  const [sortOption, setSortOption] = useState("date"); // KLA : ตัวเลือกการเรียงข้อมูล
   const itemsPerPage = 6;
 
   //  KLA : ดึงข้อมูลจาก Supabase จริง
   const [researchData, setResearchData] = useState([]);
   const [loading, setLoading] = useState(true);
-
 
   // KLA : ฟังก์ชันดึงข้อมูลงานวิจัยจาก Supabase
   const fetchResearchData = async () => {
@@ -143,24 +125,34 @@ export default function SearchPage() {
       )
     );
 
-
     // ไปหน้าแสดงรายละเอียด (ภายหลังจะสร้างจริง)
     router.push(`/research/${item.paper_id}`);
   };
 
-  // KLA : กรองข้อมูลตามคำค้นหาและคีย์เวิร์ดที่เลือก
+  // KLA : กรองข้อมูลตามคำค้นหา
   const filteredData = researchData.filter(
     (item) =>
-      item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedKeyword ? item.paper_title?.toLowerCase().includes(selectedKeyword.toLowerCase()) : true)
+      item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // KLA : ฟังก์ชันเรียงข้อมูล
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (sortOption === "views") {
+      return (b.paper_views || 0) - (a.paper_views || 0);
+    } else if (sortOption === "date") {
+      return new Date(b.created_at) - new Date(a.created_at);
+    } else if (sortOption === "title") {
+      return a.paper_title.localeCompare(b.paper_title);
+    }
+    return 0;
+  });
+
   const startIndex = (currentPage - 1) * itemsPerPage; // KLA : คำนวณดัชนีเริ่มต้นของหน้าปัจจุบัน
-  const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage); // KLA : ดึงข้อมูลของหน้าปัจจุบัน
+  const currentItems = sortedData.slice(startIndex, startIndex + itemsPerPage); // KLA : ดึงข้อมูลของหน้าปัจจุบัน
 
   // KLA : ฟังก์ชันเปลี่ยนหน้า
   const handlePageChange = (page) => {
-    if (page < 1 || page > Math.ceil(filteredData.length / itemsPerPage)) return;
+    if (page < 1 || page > Math.ceil(sortedData.length / itemsPerPage)) return;
     setCurrentPage(page);
   };
 
@@ -178,7 +170,7 @@ export default function SearchPage() {
   // KLA : ฟังก์ชันล้างการค้นหา
   const handleClear = () => {
     setInputTerm("");
-    setSelectedKeyword("");
+    setSortOption("date");
     setSearchTerm("");
     setCurrentPage(1);
   };
@@ -215,21 +207,18 @@ export default function SearchPage() {
             />
           </div>
 
-          {/* KLA : Dropdown สำหรับเลือกคีย์เวิร์ด */}
+          {/* KLA : เพื่มฟังก์ชัน  Dropdown สำหรับเลือกการเรียงลำดับ แทนที่ keyword */}
           <select
-            value={selectedKeyword}
+            value={sortOption}
             onChange={(e) => {
-              setSelectedKeyword(e.target.value); // KLA : อัพเดตคีย์เวิร์ดที่เลือก
-              setCurrentPage(1); // KLA : กลับไปหน้าแรกเมื่อเปลี่ยนคีย์เวิร์ด
+              setSortOption(e.target.value); // KLA : อัพเดตตัวเลือกเรียงข้อมูล
+              setCurrentPage(1); // KLA : กลับไปหน้าแรกเมื่อเปลี่ยนการเรียง
             }}
             className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
           >
-            <option value="">-- เลือกคีย์เวิร์ด --</option>
-            {keywords.map((kw) => (
-              <option key={kw} value={kw}>
-                {kw}
-              </option>
-            ))}
+            <option value="date">เรียงจากวันที่อัปโหลด</option>
+            <option value="views">เรียงจากยอดวิว</option>
+            <option value="title">เรียงตามตัวอักษร</option>
           </select>
 
           <button
@@ -265,15 +254,15 @@ export default function SearchPage() {
           <span className="font-medium text-gray-700">
             แสดง{" "}
             <span className="text-blue-600">
-              {filteredData.length === 0
+              {sortedData.length === 0
                 ? 0
-                : `${startIndex + 1} - ${Math.min(startIndex + itemsPerPage, filteredData.length)}`}
+                : `${startIndex + 1} - ${Math.min(startIndex + itemsPerPage, sortedData.length)}`}
             </span>{" "}
-            จาก {filteredData.length} รายการ
+            จาก {sortedData.length} รายการ
           </span>
 
           <Pagination
-            totalItems={filteredData.length}
+            totalItems={sortedData.length}
             itemsPerPage={itemsPerPage}
             currentPage={currentPage}
             onPageChange={handlePageChange}

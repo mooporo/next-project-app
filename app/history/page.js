@@ -5,31 +5,22 @@ import { Search, Upload, ChevronRight, ChevronLeft, Edit, Trash2 } from "lucide-
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth";
 
-// ✅ Component: Navbar สีฟ้าเต็มความกว้าง
-const Navbar = () => (
-  <div className="bg-blue-600 w-full h-16 shadow-lg fixed top-0 left-0 z-10"></div>
-);
-
-// ✅ Component สำหรับ Dropdown Filter
-const FilterDropdown = ({ title, options }) => (
+// KLA : เพิ่ม Sort Dropdown Component
+const SortDropdown = ({ value, onChange }) => (
   <select
-    className="border border-gray-300 rounded-lg p-2 text-gray-700 bg-white shadow-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 text-sm md:text-base"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className="border border-gray-300 rounded-lg p-2 text-gray-700 bg-white shadow-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 text-sm md:text-base w-full"
   >
-    <option value="" disabled>
-      {title}
-    </option>
-    {options.map((opt, idx) => (
-      <option key={idx} value={opt.value}>
-        {opt.label}
-      </option>
-    ))}
+    <option value="date">เรียงจากวันที่อัปโหลด</option>
+    <option value="name">เรียงตามชื่อ</option>
   </select>
 );
 
-// ✅ Component สำหรับ Card รายการอัปโหลด
+// Upload Card
 const UploadCard = ({ title, id, date, version, status }) => {
   let statusClass = "";
-  let buttonAction = { icon: Edit, text: "แก้ไข", color: "text-gray-600 hover:text-blue-600" };
+  const buttonAction = { icon: Edit, text: "แก้ไข", color: "text-gray-600 hover:text-blue-600" };
 
   switch (status) {
     case "ตรวจรอบ":
@@ -45,27 +36,21 @@ const UploadCard = ({ title, id, date, version, status }) => {
       statusClass = "bg-gray-100 text-gray-800 border border-gray-300";
   }
 
+  const Icon = buttonAction.icon;
+
   return (
     <div className="bg-white p-6 border border-gray-100 rounded-xl shadow-md flex flex-col justify-between h-full hover:shadow-xl transition duration-300">
       <div>
         <div className="flex justify-between items-start mb-3">
           <h3 className="text-lg font-bold text-gray-900 mr-4 leading-snug line-clamp-2 min-h-[50px]">{title}</h3>
-          <span
-            className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass} whitespace-nowrap flex-shrink-0`}
-          >
+          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass} whitespace-nowrap flex-shrink-0`}>
             {status}
           </span>
         </div>
         <div className="text-sm text-gray-600 space-y-1">
-          <p>
-            ID: <span className="font-mono text-gray-700">{id}</span>
-          </p>
-          <p>
-            อัปโหลดเมื่อ: <span className="font-medium">{date}</span>
-          </p>
-          <p>
-            เวอร์ชัน: <span className="font-medium">{version}</span>
-          </p>
+          <p>ID: <span className="font-mono text-gray-700">{id}</span></p>
+          <p>อัปโหลดเมื่อ: <span className="font-medium">{date}</span></p>
+          <p>เวอร์ชัน: <span className="font-medium">{version}</span></p>
         </div>
       </div>
 
@@ -74,7 +59,7 @@ const UploadCard = ({ title, id, date, version, status }) => {
           className={`text-sm font-medium flex items-center space-x-1 ${buttonAction.color} transition duration-150`}
           onClick={() => console.log(`Action: ${buttonAction.text} ${id}`)}
         >
-          <buttonAction.icon className="w-4 h-4" />
+          <Icon className="w-4 h-4" />
           <span>แก้ไข</span>
         </button>
 
@@ -90,46 +75,38 @@ const UploadCard = ({ title, id, date, version, status }) => {
   );
 };
 
-// ✅ Component หลักสำหรับ Page
+// ✅ History Page
 export default function HistoryPage() {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 6; // KLA : จำกัดจำนวนรายการต่อหน้าไว้ที่ 6
 
+  const [inputValue, setInputValue] = useState(""); // สำหรับเก็บค่าที่พิมพ์
+  const [search, setSearch] = useState(""); // สำหรับค้นหาจริง
+  const [sortField, setSortField] = useState("date"); // name / date / type
   const { user } = useAuth();
 
-  // ✅ ดึงข้อมูลจาก Supabase
+  // Fetch papers
   useEffect(() => {
+    if (!user?.user_id) return;
     const fetchPapers = async () => {
       setLoading(true);
-
       try {
         const { data, error } = await supabase
           .from("paper_tb")
-          .select(`
-            paper_id,
-            paper_title,
-            created_at,
-            paper_status,
-            paper_type_id,
-            paper_category_id
-          `)
-          .eq("user_id", user?.user_id)
+          .select(`paper_id, paper_title, created_at, paper_status, paper_type_id`)
+          .eq("user_id", user.user_id)
           .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Your papers not found:", error);
-        } else {
+        if (error) console.error("Error fetching papers:", error);
+        else {
           setPapers(
             data.map((item) => ({
               id: item.paper_id,
               title: item.paper_title,
-              date: new Date(item.created_at).toLocaleString("th-TH", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              }),
-              version: "1.0", // mock data
+              date: new Date(item.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }),
+              version: "1.0",
               status:
                 item.paper_status === 1
                   ? "ตรวจรอบ"
@@ -138,29 +115,45 @@ export default function HistoryPage() {
                     : item.paper_status === 3
                       ? "ต้องการแก้ไข"
                       : "ไม่ทราบสถานะ",
+              type: item.paper_type_id,
             }))
           );
         }
       } catch (error) {
         console.error("Error fetching papers:", error);
       }
-
       setLoading(false);
     };
-
     fetchPapers();
   }, [user?.user_id]);
 
-  const totalItems = papers.length;
+  // KLA : เพิ่ม Search + Sort + Pagination
+  const filteredData = papers
+    .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortField === "name") return a.title.localeCompare(b.title);
+      if (sortField === "date") return new Date(b.date) - new Date(a.date);
+      if (sortField === "type") return a.type.localeCompare(b.type);
+      return 0;
+    });
+
+  const totalItems = filteredData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIdx = (currentPage - 1) * itemsPerPage;
-  const currentData = papers.slice(startIdx, startIdx + itemsPerPage);
+  const currentData = filteredData.slice(startIdx, startIdx + itemsPerPage);
+
+  const handleSearch = () => setCurrentPage(1);
+  const handleClear = () => {
+    setInputValue("");
+    setSearch("");
+    setSortField("date");
+    setCurrentPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 font-inter">
-      <Navbar />
-
       <div className="p-4 sm:p-8 mt-24 max-w-7xl mx-auto">
+        {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">ประวัติการอัปโหลด</h1>
           <button className="bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-150 flex items-center space-x-2 w-full sm:w-auto text-base">
@@ -169,53 +162,68 @@ export default function HistoryPage() {
           </button>
         </header>
 
-        {/* ✅ ส่วนค้นหา + ตัวกรอง */}
+        {/* KLA : ทำให้ SearchBar ใช้งานได้ และเมื่อกด Enter เพื่อค้นหา */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 items-stretch md:items-center bg-white p-4 rounded-xl shadow-md border border-gray-200">
-          <div className="flex items-center border border-gray-300 rounded-xl p-3 flex-grow max-w-full md:max-w-xl bg-gray-50 shadow-inner">
+          {/* Search Bar */}
+          <div className="flex items-center border border-gray-300 rounded-xl p-3 flex-grow md:flex-[2] bg-gray-50 shadow-inner">
             <Search className="w-5 h-5 text-gray-500 mr-3" />
             <input
               type="text"
               placeholder="ค้นหางานวิจัย..."
               className="flex-grow text-gray-700 focus:outline-none placeholder-gray-400 bg-gray-50"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { // KLA : เมื่อกด Enter
+                  setSearch(inputValue);
+                  handleSearch();
+                }
+              }}
             />
           </div>
-          <div className="flex flex-wrap gap-3 md:ml-auto">
-            <FilterDropdown
-              title="เรียงตามชื่อ"
-              options={[{ label: "เรียงตามชื่อ", value: "name" }]}
-            />
-            <FilterDropdown
-              title="เรียงตามวันที่อัปโหลด"
-              options={[{ label: "เรียงตามวันที่อัปโหลด", value: "date" }]}
-            />
-            <FilterDropdown
-              title="ประเภทงานทั้งหมด"
-              options={[{ label: "ประเภทงานทั้งหมด", value: "type" }]}
-            />
+
+          {/* KLA : เพื่ม sortDropdown เหมื่อนหน้าsearch*/}
+          <div className="flex md:flex-[1]">
+            <SortDropdown value={sortField} onChange={(val) => { setSortField(val); handleSearch(); }} />
+          </div>
+
+          {/* KLA: เพิ่ม ปุ่มค้นหาและล้าง */}
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-2 flex-[1.5]">
+            <button
+              onClick={() => { setSearch(inputValue); handleSearch(); }}
+              className="bg-blue-600 text-white px-17.5 py-3 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 w-full sm:w-auto text-lg"
+            >
+              ค้นหา
+            </button>
+            <button
+              onClick={handleClear}
+              className="bg-red-600 text-white px-17.5 py-3 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 w-full sm:w-auto text-lg"
+            >
+              ยกเลิก
+            </button>
           </div>
         </div>
 
-        {/* ✅ Grid แสดงรายการ */}
+        {/* Grid */}
         {loading ? (
           <p className="text-center text-gray-500 py-10">กำลังโหลดข้อมูล...</p>
         ) : currentData.length === 0 ? (
           <p className="text-center text-gray-500 py-10">ยังไม่มีข้อมูลอัปโหลด</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {currentData.map((data, index) => (
-              <UploadCard key={index} {...data} />
+            {currentData.map((data) => (
+              <UploadCard key={data.id} {...data} />
             ))}
           </div>
         )}
 
-        {/* ✅ Pagination */}
+        {/* KLA  : เพิ่มตัวแบ่งจำนวนหน้าหากมีหลายหน้า */}
         <div className="flex flex-col sm:flex-row justify-between items-center py-4">
-          <p className="text-sm text-gray-600 mb-4 sm:mb-0">
-            แสดง {startIdx + 1}-{Math.min(startIdx + itemsPerPage, totalItems)} จากทั้งหมด{" "}
-            <span className="font-bold text-gray-800">{totalItems}</span> รายการ
-          </p>
+          <p className="text-sm text-gray-600 mb-4 sm:mb-0"> 
+            แสดง {startIdx + 1}-{Math.min(startIdx + itemsPerPage, totalItems)} จากทั้งหมด <span className="font-bold text-gray-800">{totalItems}</span> รายการ
+          </p> 
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-wrap">
             <button
               className="p-2 border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-50 transition duration-150"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
@@ -224,19 +232,16 @@ export default function HistoryPage() {
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .slice(0, 3)
-              .map((page) => (
-                <button
-                  key={page}
-                  className={`min-w-[40px] px-2 py-2 font-semibold rounded-lg transition duration-150 ${
-                    page === currentPage ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                className={`min-w-[40px] px-2 py-2 font-semibold rounded-lg transition duration-150 ${page === currentPage ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
                   }`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ))}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </button>
+            ))}
 
             <button
               className="p-2 border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-50 transition duration-150"

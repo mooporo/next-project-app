@@ -43,6 +43,7 @@ const FileUploadDropZone = ({ icon: Icon, title, description, buttonText, accept
   </div>
 );
 
+
 const UploadPage = () => {
 
   const router = useRouter(); // KLA : สร้าง instance router
@@ -66,6 +67,92 @@ const UploadPage = () => {
       if (session?.user?.id) setUserId(session.user.id);
     });
   }, []);
+
+  // KLA: เพิ่มฟังก์ชันสำหรับบันทึกเป็นฉบับร่าง
+  const handleSaveDraft = async () => {
+    if (!formData.title || !formData.abstract) {
+      alert("กรุณากรอกชื่อเรื่องและบทคัดย่อก่อนบันทึกฉบับร่าง");
+      return;
+    }
+
+    if (!userId) {
+      alert("ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบก่อนบันทึก");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      let paperFileUrl = "";
+      let coverImgUrl = "";
+
+      // KLA: ถ้ามีไฟล์ PDF ให้บันทึก
+      if (paperFile) {
+        const { data, error } = await supabase.storage
+          .from("paper_bk")
+          .upload(`draft_pdfs/${Date.now()}_${paperFile.name}`, paperFile);
+
+        if (error) {
+          console.error("Error uploading draft PDF:", error);
+          alert("เกิดข้อผิดพลาดตอนอัปโหลด PDF (ฉบับร่าง)");
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("paper_bk")
+          .getPublicUrl(data.path);
+        paperFileUrl = urlData?.publicUrl || "";
+      }
+
+      // KLA: ถ้ามีรูปปก
+      if (coverImg) {
+        const { data, error } = await supabase.storage
+          .from("paper_bk")
+          .upload(`draft_covers/${Date.now()}_${coverImg.name}`, coverImg);
+
+        if (error) {
+          console.error("Error uploading draft cover:", error);
+          alert("เกิดข้อผิดพลาดตอนอัปโหลดรูป (ฉบับร่าง)");
+          return;
+        }
+
+        const { data: coverUrlData } = supabase.storage
+          .from("paper_bk")
+          .getPublicUrl(data.path);
+        coverImgUrl = coverUrlData?.publicUrl || "";
+      }
+
+      // KLA บันทึกลงตาราง paper_tb
+      const { error } = await supabase.from("paper_tb").insert([
+        {
+          user_id: userId,
+          paper_title: formData.title,
+          paper_abstract: formData.abstract,
+          paper_file: paperFileUrl,
+          paper_image: coverImgUrl,
+          paper_type_id: formData.researchType === "journal" ? 1 : 2,
+          paper_category_id: 1,
+          paper_status: 0, // 0 = draft
+          paper_views: 0,
+        },
+      ]);
+
+      if (error) {
+        console.error("เกิดข้อผิดพลาดตอนบันทึกฉบับร่าง:", error);
+        alert("เกิดข้อผิดพลาดตอนบันทึกฉบับร่าง: " + error.message);
+        return;
+      }
+
+      alert("บันทึกฉบับร่างสำเร็จ!");
+      setFormData({ title: "", abstract: "", keywords: "", researchType: "", coAuthors: "" });
+      setPaperFile(null);
+      setCoverImg(null);
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   // KLA : เมือจัดการการเปลี่ยนแปลงข้อมูลฟอร์ม
   const handleChange = (e) => {
@@ -108,7 +195,7 @@ const UploadPage = () => {
         try {
           const vectorForm = new FormData();
           vectorForm.append("title", vectorForm.title);
-          vectorForm.append("abstract", vectorForm.abstract);
+          vectorForm.append("abstract", vectorForm.abstract); // 
           vectorForm.append("keywords", vectorForm.keywords);
           vectorForm.append("researchType", vectorForm.researchType);
           vectorForm.append("coAuthors", vectorForm.coAuthors);
@@ -400,17 +487,19 @@ const UploadPage = () => {
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
+            onClick={handleSaveDraft} // KLA: เพิ่ม event handler
+            disabled={loading}
             className="px-6 py-3 border border-gray-300 text-base font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out shadow-sm"
           >
             บันทึกเป็นฉบับร่าง
           </button>
+
           <button
             type="button"
             onClick={handleSubmit}
             disabled={loading}
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
           >
-            {/* // KLA : แสดงไอคอนโหลดขณะกำลังอัปโหลด */}
             <Upload size={18} className="mr-2 -ml-1" />
             {loading ? "กำลังอัปโหลด..." : "อัปโหลดและส่งตรวจสอบ"}
           </button>
