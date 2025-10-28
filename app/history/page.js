@@ -18,7 +18,7 @@ const SortDropdown = ({ value, onChange }) => (
 );
 
 // Upload Card
-const UploadCard = ({ title, id, date, version, status }) => {
+const UploadCard = ({ title, id, date, version, status, onDelete }) => { // ✅ เพิ่ม onDelete
   let statusClass = "";
   const buttonAction = { icon: Edit, text: "แก้ไข", color: "text-gray-600 hover:text-blue-600" };
 
@@ -65,7 +65,7 @@ const UploadCard = ({ title, id, date, version, status }) => {
 
         <button
           className="text-sm font-medium text-gray-500 hover:text-red-600 transition duration-150 flex items-center space-x-1"
-          onClick={() => console.log(`Action: Delete ${id}`)}
+          onClick={() => onDelete(id)} // ✅ เรียก onDelete
         >
           <Trash2 className="w-4 h-4" />
           <span>ลบ</span>
@@ -127,6 +127,38 @@ export default function HistoryPage() {
     fetchPapers();
   }, [user?.user_id]);
 
+  // KLA: เพิ่มฟังก์ชันลบข้อมูลงานวิจัย ทั้งไฟล์และ metadata ใน database
+  const handleDelete = async (paperId, filePath) => {
+  if (!confirm("คุณแน่ใจว่าจะลบงานวิจัยนี้?")) return;
+
+  try {
+    //  ลบไฟล์จาก Supabase Storage
+    if (filePath) {
+      const { error: storageError } = await supabase.storage
+        .from('papers')   // ชื่อ bucket
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error("Error deleting file:", storageError);
+        alert("เกิดข้อผิดพลาดในการลบไฟล์");
+        return;
+      }
+    }
+
+    //  ลบ metadata ใน database
+    const { error } = await supabase.from("paper_tb").delete().eq("paper_id", paperId);
+    if (error) {
+      alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
+      return;
+    }
+
+    setPapers((prev) => prev.filter((p) => p.id !== paperId));
+    alert("ลบงานวิจัยเรียบร้อยแล้ว");
+  } catch (err) {
+    console.error(err);
+    alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+  }
+};
   // KLA : เพิ่ม Search + Sort + Pagination
   const filteredData = papers
     .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
@@ -162,7 +194,7 @@ export default function HistoryPage() {
           </button>
         </header>
 
-        {/* KLA : ทำให้ SearchBar ใช้งานได้ และเมื่อกด Enter เพื่อค้นหา */}
+        {/* SearchBar, Sort, Buttons */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 items-stretch md:items-center bg-white p-4 rounded-xl shadow-md border border-gray-200">
           {/* Search Bar */}
           <div className="flex items-center border border-gray-300 rounded-xl p-3 flex-grow md:flex-[2] bg-gray-50 shadow-inner">
@@ -174,7 +206,7 @@ export default function HistoryPage() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") { // KLA : เมื่อกด Enter
+                if (e.key === "Enter") {
                   setSearch(inputValue);
                   handleSearch();
                 }
@@ -182,12 +214,12 @@ export default function HistoryPage() {
             />
           </div>
 
-          {/* KLA : เพื่ม sortDropdown เหมื่อนหน้าsearch*/}
+          {/* Sort Dropdown */}
           <div className="flex md:flex-[1]">
             <SortDropdown value={sortField} onChange={(val) => { setSortField(val); handleSearch(); }} />
           </div>
 
-          {/* KLA: เพิ่ม ปุ่มค้นหาและล้าง */}
+          {/* Search + Clear */}
           <div className="flex flex-col sm:flex-row gap-3 md:gap-2 flex-[1.5]">
             <button
               onClick={() => { setSearch(inputValue); handleSearch(); }}
@@ -212,12 +244,12 @@ export default function HistoryPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {currentData.map((data) => (
-              <UploadCard key={data.id} {...data} />
+              <UploadCard key={data.id} {...data} onDelete={handleDelete} /> // ✅ ส่ง onDelete
             ))}
           </div>
         )}
 
-        {/* KLA  : เพิ่มตัวแบ่งจำนวนหน้าหากมีหลายหน้า */}
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row justify-between items-center py-4">
           <p className="text-sm text-gray-600 mb-4 sm:mb-0"> 
             แสดง {startIdx + 1}-{Math.min(startIdx + itemsPerPage, totalItems)} จากทั้งหมด <span className="font-bold text-gray-800">{totalItems}</span> รายการ
