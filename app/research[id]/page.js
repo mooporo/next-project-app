@@ -1,9 +1,6 @@
 "use client";
 
 import React from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 
 // Icons
 const DownloadIcon = (props) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
@@ -90,18 +87,6 @@ const CommentsSection = ({ comments }) => (
 export default function Page() {
   const { title, author, date, abstract, stats, mainAuthor, tags, comments } = researchData;
   const [commentsData, setCommentsData] = React.useState(comments);
-
-  React.useEffect(() => {
-    try {
-      // Optional Firebase setup
-      const firebaseConfig = {
-        apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: ""
-      };
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      signInAnonymously(auth).catch(console.error);
-    } catch (e) { console.warn("Firebase not configured"); }
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 font-[Inter]">

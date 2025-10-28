@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "../lib/supabaseClient"; // KLA : import supabase client
 import { useRouter } from "next/navigation"; // KLA : import useRouter ด้านบน
-
+import axios from "axios";
 
 // --- Reusable Form Field Component ---
 const FormField = ({ label, required, children, helperText }) => (
@@ -103,6 +103,32 @@ const UploadPage = () => {
       // KLA : อัปโหลดไฟล์ PDF ไปยัง Supabase Storage
       let paperFileUrl = "";
       if (paperFile) {
+
+        //เจมส์ : เพิ่ม webhook ส่งให้ n8n แปลงเอกสารเก็บเข้า vectordb
+        try {
+          const vectorForm = new FormData();
+          vectorForm.append("title", vectorForm.title);
+          vectorForm.append("abstract", vectorForm.abstract);
+          vectorForm.append("keywords", vectorForm.keywords);
+          vectorForm.append("researchType", vectorForm.researchType);
+          vectorForm.append("coAuthors", vectorForm.coAuthors);
+          vectorForm.append("paperFile", paperFile);
+
+          const res = await axios.post('http://localhost:5678/webhook/postpaper', vectorForm)
+          console.log(res)
+
+          if (res.status === 200) {
+            console.log('เก็บข้อมูลเข้า vectordb สำเร็จ');
+          } else {
+            console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จ');
+            return;
+          }
+
+        } catch (error) {
+          console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จจากเหตุไม่คาดฝัน');
+          return;
+        }
+
         try {
           console.log("เริ่มอัปโหลด PDF:", paperFile.name, paperFile.size, paperFile.type);
 
