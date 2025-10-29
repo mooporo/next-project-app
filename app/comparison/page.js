@@ -173,7 +173,15 @@ export default function ComparisonPage() {
             onSearchChange={setSearchQuery}
             onSelectResearch={handleSelectResearchClick}
           />
-          <ShowSearchPopup />
+          
+          {/* ✅ แก้เฉพาะตรงนี้ — เพิ่ม props ให้เหมือนตัวแรก */}
+          <ShowSearchPopup
+            Plus={Plus}
+            papers={papers}
+            currentSearchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSelectResearch={handleSelectResearchClick}
+          />
 
           <p className="text-gray-700 font-medium mb-2">
             เลือกงานวิจัยเพื่อเปรียบเทียบป
