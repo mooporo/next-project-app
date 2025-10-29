@@ -111,7 +111,7 @@ const ShowSearchPopup = ({ Plus, onSearchChange, currentSearchQuery, onSelectRes
             ))
           ) : (
             <div className="p-3 text-center text-gray-500">
-              ไม่พบผลลัพธ์ที่ตรงกับ "{currentSearchQuery}"
+              ไม่พบผลลัพธ์ที่ตรงกับ &quot;{currentSearchQuery}&quot;
             </div>
           )}
         </div>
