@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, Eye, MessageSquare, Plus } from "lucide-react";
+import { Search, Eye, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 
 const mockResearchData = [
@@ -190,20 +190,27 @@ export default function ComparisonPage() {
       ) : (
 
         <div className="bg-white rounded-2xl shadow-md w-full md:w-[700px] p-5 relative border border-gray-100 flex flex-col mb-10">
+          {/* ปุ่มปิด (Close Button) - ตำแหน่ง Absolute */}
+          <button
+            onClick={() => setSelectedPaper(null)}
+            className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors duration-200 z-10"
+            aria-label="ปิดรายละเอียดงานวิจัย"
+          >
+            <Trash2 className="h-6 w-6"/>
+          </button>
+          {/* สังเกต: เราให้ div ตัวแม่เป็น relative เพื่อให้ปุ่ม absolute ทำงานได้ถูกต้อง */}
+
           {/* ปก */}
           <div className="bg-blue-500 text-white h-60 rounded-xl flex items-center justify-center text-xl font-semibold mb-4 overflow-hidden">
-            {selectedPaper.paper_image ?
-              (
-                  <img
-                    src={selectedPaper.paper_image}
-                    alt={selectedPaper.paper_title}
-                    className="object-cover w-full"
-                  />
-              )
-              :
-              (
-                  <p>{selectedPaper.paper_title}</p>
-              )}
+            {selectedPaper.paper_image ? (
+              <img
+                src={selectedPaper.paper_image}
+                alt={selectedPaper.paper_title}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <p>{selectedPaper.paper_title}</p>
+            )}
           </div>
 
           {/* ชื่อเรื่อง */}
