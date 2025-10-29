@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/app/lib/supabaseClient';
 import axios from 'axios';
 import { useAuth } from "../../auth";
+import { N8N_TUNNEL_URL } from '@/app/lib/config';
 
 const ChatPage = () => {
   const [message, setMessage] = useState('');
@@ -17,9 +18,6 @@ const ChatPage = () => {
 
   //เจมส์ : เรียกข้อมูล user
   const { user } = useAuth();
-
-  // console.log(messages.length);
-  //  console.log(session_id);
 
   //เจมส์ : เพิ่มโหลดประวัติการสนทนาเมื่อเข้าหน้าจอใหม่
   useEffect(() => {
@@ -112,7 +110,7 @@ const ChatPage = () => {
 
         if (error) {
           console.error('Error create new session:', error);
-        }else{
+        } else {
           console.log(data);
         }
 
@@ -133,7 +131,7 @@ const ChatPage = () => {
     formData.append('content', currentMessage); // ใช้ currentMessage ที่เก็บไว้
 
     try {
-      const res = await axios.post('http://localhost:5678/webhook/chat', formData);
+      const res = await axios.post(`${N8N_TUNNEL_URL}/webhook/chat`, formData);
       console.log(res.data);
 
       // เพิ่มข้อความที่ตอบกลับมาจาก server
@@ -184,12 +182,11 @@ const ChatPage = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
 
-
       {/* Main Content Container */}
       <div className="flex-1 flex flex-col">
 
         {/* Header (ถูกคงไว้) */}
-        <header className="p-6 md:p-8 w-full bg-white shadow-md z-20">
+        <header className="p-6 md:p-8 w-full bg-white shadow-md z-20 flex flex-row">
           <h1 className="text-xl font-bold text-gray-800 ml-16 md:ml-20">
             Siam Archive
           </h1>

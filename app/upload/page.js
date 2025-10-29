@@ -201,7 +201,7 @@ const UploadPage = () => {
           vectorForm.append("coAuthors", vectorForm.coAuthors);
           vectorForm.append("paperFile", paperFile);
 
-          const res = await axios.post('http://localhost:5678/webhook/postpaper', vectorForm)
+          const res = await axios.post(`${N8N_TUNNEL_URL}/webhook/postpaper`, vectorForm)
           console.log(res)
 
           if (res.status === 200) {

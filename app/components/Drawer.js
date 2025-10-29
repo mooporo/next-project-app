@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import { Home, Notebook, Settings, Shuffle, LayoutList, Plus, User, LogIn, UserPlus, MoreVertical, Edit, Pin, PinOff, Trash2 } from "lucide-react";
 import { useAuth } from "../auth";
+import AIHealth from "../lib/checkai";
 
 // ================= Drawer Data ================= //
 const mainMenuItems = [
@@ -229,6 +230,9 @@ const Drawer = ({ onToggle }) => {
   const router = useRouter();
   const { user, logout } = useAuth();
 
+  //เจมส์ : เก็บค่าการตรวจสอบ AI
+  const { isOnline, isLoading } = AIHealth();
+
   //-----------------เจมส์ : เกี่ยวกับ chat-session-----------------
   const [chatHistory, setChatHistory] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -354,12 +358,23 @@ const Drawer = ({ onToggle }) => {
       >
         <div className="flex-grow p-4 space-y-6 overflow-y-auto">
 
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-2xl text-black rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
-          >
-            ☰
-          </button>
+          <div className="flex flex-row items-center">
+
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-2xl text-black rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+            >
+              ☰
+            </button>
+
+            <div className="status-container ml-auto">
+              {isLoading && <p>🚀 กำลังตรวจสอบ...</p>}
+              {!isLoading && isOnline && <p className="text-green-500">✅ AI ออนไลน์</p>}
+              {!isLoading && !isOnline && <p className="text-red-500">❌ AI ออฟไลน์</p>}
+            </div>
+
+          </div>
+
 
           {/* ===== เนื้อหา ===== */}
           <section>
