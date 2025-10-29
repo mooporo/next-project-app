@@ -24,12 +24,17 @@ type ResearchItem = {
 
 // --- Feature Card ---
 const FeatureCard: React.FC<Feature> = ({ icon: Icon, title, subtitle }) => (
-  <div className="bg-white text-center p-8 rounded-xl shadow-lg border border-gray-100 transition duration-300 transform hover:shadow-xl">
-    <div className="mx-auto w-14 h-14 flex items-center justify-center mb-4 text-blue-600 rounded-full bg-blue-50">
-      <Icon size={28} strokeWidth={2} />
+  <div className="group relative bg-white/70 backdrop-blur-lg p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 transition-all duration-500 hover:shadow-[0_10px_40px_rgb(59,130,246,0.3)] hover:-translate-y-2">
+    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-50 to-white opacity-0 group-hover:opacity-100 transition duration-700"></div>
+    <div className="relative z-10">
+      <div className="mx-auto w-16 h-16 flex items-center justify-center mb-5 text-blue-600 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 shadow-inner">
+        <Icon size={30} strokeWidth={2.2} />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2 tracking-tight">
+        {title}
+      </h3>
+      <p className="text-gray-500 text-sm leading-relaxed">{subtitle}</p>
     </div>
-    <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
-    <p className="text-gray-500 text-sm">{subtitle}</p>
   </div>
 );
 
@@ -44,20 +49,20 @@ const ResearchCard: React.FC<ResearchItem> = ({
   comments,
 }) => (
   <Link href={`/งานวิจัย/${id}`}>
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden cursor-pointer transition duration-300 hover:shadow-lg">
+    <div className="group bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_10px_40px_rgb(59,130,246,0.25)]">
       <div
-        className={`${color} h-28 p-4 flex items-center justify-center text-center`}
+        className={`${color} h-32 p-4 flex items-center justify-center text-center bg-gradient-to-br from-blue-700 to-blue-500`}
       >
-        <span className="text-white text-lg font-bold">Research Cover</span>
+        <span className="text-white text-lg font-bold tracking-wide drop-shadow-md">
+          Research Cover
+        </span>
       </div>
-      <div className="p-4 space-y-2">
-        <h4 className="text-gray-800 text-sm font-semibold line-clamp-2 min-h-[40px] leading-tight">
+      <div className="p-5 space-y-3">
+        <h4 className="text-gray-800 text-base font-semibold line-clamp-2 leading-snug">
           {title}
         </h4>
-        <div className="text-xs text-gray-500 pt-1">
-          <p>{author}</p>
-        </div>
-        <div className="flex justify-between items-center border-t border-gray-100 pt-3 text-xs text-gray-500 mt-4">
+        <div className="text-xs text-gray-500">{author}</div>
+        <div className="flex justify-between items-center border-t border-gray-100 pt-3 text-xs text-gray-500">
           <div className="flex items-center space-x-3">
             <div className="flex items-center">
               <svg
@@ -95,7 +100,7 @@ const ResearchCard: React.FC<ResearchItem> = ({
               <span>{comments}</span>
             </div>
           </div>
-          <span className="text-xs text-gray-500">{date}</span>
+          <span className="text-xs text-gray-400">{date}</span>
         </div>
       </div>
     </div>
@@ -152,29 +157,30 @@ export default function Page() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-['Inter',_sans-serif]">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 font-['Poppins',_sans-serif]">
       <main>
         {/* Hero Section */}
         <section className="relative h-[550px] overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A] to-[#3B82F6] opacity-95"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#3B82F6] opacity-95"></div>
           <div className="absolute inset-0 max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-start text-white z-[1]">
-            <div className="w-full md:w-3/5 space-y-6 pt-10 md:pt-0">
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
-                ยินดีต้อนรับสู่ <span className="block">Siam Archive</span>
+            <div className="w-full md:w-3/5 space-y-6 pt-10 md:pt-0 animate-fade-in-up">
+              <h1 className="text-5xl md:text-6xl font-extrabold leading-tight drop-shadow-md">
+                ยินดีต้อนรับสู่{" "}
+                <span className="block text-blue-100">Siam Archive</span>
               </h1>
-              <p className="text-lg md:text-xl font-light max-w-md">
+              <p className="text-lg md:text-xl font-light max-w-md text-blue-50 leading-relaxed">
                 สถานที่ที่เปิดโอกาสในการเข้าถึงแหล่งข้อมูล ศึกษา และสร้างคุณค่าทางปัญญาของคุณ
               </p>
               <Link
                 href="/search"
-                className="inline-block bg-white text-blue-600 font-semibold py-3 px-8 rounded-xl shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-[1.05]"
+                className="inline-block bg-white text-blue-700 font-semibold py-3 px-10 rounded-2xl shadow-lg hover:bg-blue-50 hover:-translate-y-1 hover:shadow-blue-300/50 transition-all duration-300"
               >
                 เริ่มต้นใช้งาน
               </Link>
             </div>
-            <div className="w-full md:w-2/5 flex justify-center md:justify-start pt-12 md:pt-0 md:pl-16">
-              <div className="bg-white text-gray-800 p-10 w-full max-w-sm h-[320px] flex items-center justify-center rounded-2xl shadow-2xl transform transition duration-500 hover:shadow-blue-500/50">
-                <h2 className="text-2xl font-bold text-center text-blue-600">
+            <div className="w-full md:w-2/5 flex justify-center md:justify-start pt-12 md:pt-0 md:pl-16 animate-fade-in-up delay-200">
+              <div className="bg-white text-gray-800 p-10 w-full max-w-sm h-[320px] flex items-center justify-center rounded-3xl shadow-2xl hover:shadow-blue-400/40 transition-all duration-500 hover:-translate-y-1 backdrop-blur-md">
+                <h2 className="text-2xl font-bold text-center text-blue-600 tracking-wide">
                   Academic Research
                 </h2>
               </div>
@@ -182,20 +188,23 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-20 bg-white">
+        {/* Features */}
+        <section className="py-24 bg-gradient-to-b from-white to-blue-50">
           <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">
+            <h2 className="text-4xl font-bold text-center text-gray-800 mb-3">
               แพลตฟอร์มที่ออกแบบมาเพื่อคุณ
             </h2>
-            <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto">
+            <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto leading-relaxed">
               เราออกแบบมาเพื่อเป็นเครื่องมือและบริการจัดการงานวิจัยให้คุณเข้าถึงง่ายและมีประสิทธิภาพ ด้วยระบบที่ใช้งานง่าย
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {features.map((feature, index) => {
                 const linkHref =
-                  feature.title === "ค้นหาง่าย" ? "/search" : feature.title === "อัปโหลดเอกสาร" ? "/upload" : "#"; // KLA : เพิ่มลิงก์ไปหน้าต่างๆ
-
+                  feature.title === "ค้นหาง่าย"
+                    ? "/search"
+                    : feature.title === "อัปโหลดเอกสาร"
+                    ? "/upload"
+                    : "#";
                 return (
                   <Link key={index} href={linkHref}>
                     <FeatureCard {...feature} />
@@ -206,12 +215,11 @@ export default function Page() {
           </div>
         </section>
 
-
-        {/* Latest Research Section */}
-        <section className="py-20 bg-gray-50">
+        {/* Latest Research */}
+        <section className="py-24 bg-gray-50/80">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800">
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-800">
                 งานวิจัยล่าสุด
               </h2>
               <Link
@@ -224,7 +232,7 @@ export default function Page() {
                 <span>→</span>
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
               {researchItems.map((item, index) => (
                 <ResearchCard key={index} {...item} />
               ))}
@@ -232,16 +240,18 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Footer CTA */}
-        <section className="bg-blue-600 py-16">
-          <div className="max-w-5xl mx-auto px-6 text-center text-white space-y-4">
-            <h2 className="text-3xl font-bold">เริ่มต้นแบ่งปันผลงานของคุณ</h2>
-            <p className="text-lg font-light max-w-xl mx-auto">
+        {/* CTA */}
+        <section className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 py-24">
+          <div className="max-w-5xl mx-auto px-6 text-center text-white space-y-5">
+            <h2 className="text-4xl font-bold tracking-tight drop-shadow">
+              เริ่มต้นแบ่งปันผลงานของคุณ
+            </h2>
+            <p className="text-lg font-light max-w-xl mx-auto text-blue-100 leading-relaxed">
               สำหรับทุกงานวิจัยที่คุณจะทำ และค้นคว้าแหล่งงานวิจัยของทุกคน
             </p>
             <Link
               href="/register"
-              className="bg-white text-blue-600 font-bold py-3 px-10 rounded-xl shadow-lg hover:bg-gray-100 transition duration-300 mt-4 transform hover:scale-[1.05]"
+              className="bg-white text-blue-600 font-bold py-3 px-10 rounded-2xl shadow-lg hover:bg-blue-50 hover:-translate-y-1 hover:shadow-blue-300/50 transition-all duration-300"
             >
               สมัครสมาชิกเลย
             </Link>
@@ -250,8 +260,8 @@ export default function Page() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 py-4">
-        <div className="text-center text-gray-400 text-xs">
+      <footer className="bg-gradient-to-br from-gray-900 via-gray-950 to-black py-6 border-t border-gray-800">
+        <div className="text-center text-gray-400 text-xs tracking-wide">
           © 2025 Siam Archive. สงวนลิขสิทธิ์.
         </div>
       </footer>
