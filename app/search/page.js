@@ -4,39 +4,66 @@ import { useRouter } from "next/navigation"; // ต้อง import useRouter
 import { supabase } from "../lib/supabaseClient"; // ✅ KLA : import Supabase client
 
 // --- Research Card Component  ---
-const ResearchCard = ({ item, onClick }) => (
-  <div
-    className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer"
-    onClick={() => onClick(item)} // ✅ เมื่อคลิก card จะเรียก handleView
-  >
-    <div className="h-40 flex items-center justify-center bg-gray-200">
-      <img
-        src={item.paper_image || "/no-image.png"}
-        alt={item.paper_title}
-        className="h-full w-full object-cover"
-      />
-    </div>
-    <div className="p-4 space-y-2">
-      <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
-        {item.paper_title}
-      </h3>
-      <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm text-gray-400">
-        <div className="flex space-x-4">
-          <div className="flex items-center space-x-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            <span>{item.paper_views?.toLocaleString() || 0}</span>
+const ResearchCard = ({ item, onClick }) => {
+  //KLA เพิ่ม: ฟังก์ชันสุ่มสีพื้นหลัง
+  const colors = [
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-indigo-500",
+    "bg-yellow-500",
+    "bg-orange-500",
+    "bg-teal-500",
+  ];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+  return (
+    <div
+      className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer"
+      onClick={() => onClick(item)} // ✅ เมื่อคลิก card จะเรียก handleView
+    >
+      <div className="h-40 flex items-center justify-center bg-gray-200">
+        {item.paper_image ? (
+          <img
+            src={item.paper_image}
+            alt={item.paper_title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          // ✅ ถ้าไม่มีรูป → แสดงพื้นหลังสีสุ่มพร้อมชื่อเรื่อง
+          <div
+            className={`h-full w-full flex items-center justify-center text-center text-white font-bold text-lg p-3 ${randomColor}`}
+          >
+            <span className="line-clamp-2 leading-snug">
+              {item.paper_title}
+            </span>
           </div>
+        )}
+      </div>
+
+      <div className="p-4 space-y-2">
+        <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
+          {item.paper_title}
+        </h3>
+        <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm text-gray-400">
+          <div className="flex space-x-4">
+            <div className="flex items-center space-x-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span>{item.paper_views?.toLocaleString() || 0}</span>
+            </div>
+          </div>
+          <span className="text-xs">
+            {item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}
+          </span>
         </div>
-        <span className="text-xs">
-          {item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}
-        </span>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // KLA : Pagination Component ใช้สำหรับแบ่งหน้า 1 2 3 ...
 const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => {
@@ -242,7 +269,7 @@ export default function SearchPage() {
         ) : currentItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {currentItems.map((item) => (
-              <ResearchCard key={item.paper_id} item={item} onClick={handleView} />
+              <ResearchCard key={item.paper_id} item={item} onClick={handleView} /> // KLA : ส่งฟังก์ชัน handleView ไปยัง ResearchCard
             ))}
           </div>
         ) : (

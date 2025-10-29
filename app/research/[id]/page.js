@@ -36,6 +36,7 @@ const KeywordTag = ({ label }) => (
   </span>
 );
 
+// Comment Component  จ
 const Comment = ({ user, text, date }) => (
   <div className="flex space-x-4 py-4 border-b last:border-b-0">
     <UserCircle className="w-8 h-8 text-gray-400 flex-shrink-0 mt-1" />
@@ -49,6 +50,7 @@ const Comment = ({ user, text, date }) => (
   </div>
 );
 
+// Comment Form Component จุดแสดงความคิดเห็น
 const CommentForm = () => {
   const [comment, setComment] = useState("");
 
@@ -163,7 +165,7 @@ export default function ResearchDetailPage() {
               {research.paper_title || "ไม่มีชื่อเรื่อง"}
             </h1>
             <div className="text-sm text-gray-500 flex flex-wrap space-x-4 mt-2">
-              <span>โดย: {research.user_id || "ไม่ระบุผู้เขียน"}</span>
+              <span>โดย: {research.user_id || "ไม่ระบุผู้เขียน"}</span> {/* //  */}
               <span>
                 วันที่เผยแพร่:{" "}
                 {research.created_at
@@ -173,7 +175,8 @@ export default function ResearchDetailPage() {
             </div>
           </header>
 
-          <div className="w-full h-72 rounded-xl overflow-hidden shadow-lg bg-blue-600 flex items-center justify-center">
+          {/* KLA : รูปภาพปกงานวิจัย */}
+          <div className="w-full h-72 rounded-xl overflow-hidden shadow-lg flex items-center justify-center relative">
             {research.paper_image ? (
               <img
                 src={research.paper_image}
@@ -181,10 +184,29 @@ export default function ResearchDetailPage() {
                 className="object-cover w-full h-full"
               />
             ) : (
-              <span className="text-white text-3xl font-bold">Research Cover</span>
+              // KLA เพิ่ม ถ้าไม่มีรูปให้สุ่มสีพื้นหลัง พร้อมชื่อเรื่องตรงกลาง
+              <div
+                className="w-full h-full flex items-center justify-center text-center px-6"
+                style={{
+                  backgroundColor: [
+                    "#2563EB", // blue-600
+                    "#9333EA", // purple-600
+                    "#DB2777", // pink-600
+                    "#059669", // green-600
+                    "#EA580C", // orange-600
+                    "#1E3A8A", // indigo-900
+                    "#047857", // emerald-700
+                  ][Math.floor(Math.random() * 7)],
+                }}
+              >
+                <span className="text-white text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
+                  {research.paper_title || "ไม่มีชื่อเรื่อง"} 
+                </span>
+              </div>
             )}
           </div>
 
+          {/* KLA  :  ส่วนแสดงบทคัดย่อ */}
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-3">บทคัดย่อ (Abstract)</h2>
             <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
@@ -192,6 +214,7 @@ export default function ResearchDetailPage() {
             </p>
           </section>
 
+          {/* // KLA : ส่วนแสดงไฟล์ PDF */}
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-3">ไฟล์เอกสาร (PDF)</h2>
             {research.paper_file ? (
@@ -216,6 +239,7 @@ export default function ResearchDetailPage() {
             </div>
           </section>
 
+          {/* Comment */}
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-6">คอมเมนต์</h2>
             <CommentForm />
