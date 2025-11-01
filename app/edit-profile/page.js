@@ -14,8 +14,9 @@ export default function EditProfilePage() {
     user_fullname: "",
     user_email: "",
     user_birthdate: "",
-    user_org_id: null,
-    user_type_id: null,
+    user_org_id: "",
+    user_type_id: "",
+    bio: "",
     current_password: "",
     new_password: "",
     confirm_new_password: "",
@@ -53,8 +54,9 @@ export default function EditProfilePage() {
           user_fullname: profileData.user_fullname || "",
           user_email: profileData.user_email || (user.email || ""),
           user_birthdate: profileData.user_birthdate || "",
-          user_org_id: profileData.user_org_id || null,
-          user_type_id: profileData.user_type_id || null,
+          user_org_id: profileData.user_org_id || "",
+          user_type_id: profileData.user_type_id || "",
+          bio: profileData.bio || "",
           user_image: profileData.user_image || "",
         }));
 
@@ -171,6 +173,9 @@ export default function EditProfilePage() {
       const updates = {
         user_fullname: form.user_fullname,
         user_birthdate: form.user_birthdate || null,
+        user_org_id: form.user_org_id || null,
+        user_type_id: form.user_type_id || null,
+        bio: form.bio || null,
         user_image: finalImagePath || null,
       };
 
@@ -207,7 +212,7 @@ export default function EditProfilePage() {
   return (
     <div className="min-h-screen flex justify-center items-start py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="w-full max-w-3xl flex flex-col items-start">
-        {/* Header ยังคงอยู่นอกกรอบ และชิดซ้าย */}
+        {/* Header */}
         <div className="w-full mb-6 text-left">
           <h1 className="text-3xl font-bold text-gray-800">แก้ไขโปรไฟล์</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -291,15 +296,39 @@ export default function EditProfilePage() {
                 <p className="text-xs text-gray-500">ไม่สามารถแก้ไขอีเมลได้</p>
               </div>
 
-              {/* วันเกิด */}
+              {/* สังกัด / มหาวิทยาลัย */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">วันเกิด</label>
+                <label className="text-sm font-medium text-gray-700">สังกัด / มหาวิทยาลัย</label>
                 <input
-                  type="date"
-                  name="user_birthdate"
-                  value={form.user_birthdate || ""}
+                  type="text"
+                  name="user_org_id"
+                  value={form.user_org_id || ""}
                   onChange={handleInputChange}
                   className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
+                />
+              </div>
+
+              {/* ตำแหน่งทางวิชาการ */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">ตำแหน่งทางวิชาการ</label>
+                <input
+                  type="text"
+                  name="user_type_id"
+                  value={form.user_type_id || ""}
+                  onChange={handleInputChange}
+                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
+                />
+              </div>
+
+              {/* ประวัติโดยย่อ */}
+              <div className="mt-4 space-y-1 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">ประวัติโดยย่อ</label>
+                <textarea
+                  name="bio"
+                  value={form.bio || ""}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full p-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
             </div>
