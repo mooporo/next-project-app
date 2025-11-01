@@ -257,6 +257,7 @@ const Drawer = ({ onToggle }) => {
         .from("chat_session_tb")
         .select("*")
         .eq("user_id", user.user_id)
+        .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -437,10 +438,10 @@ const Drawer = ({ onToggle }) => {
                   onClick={() => router.push(`/chat/${item.session_id}`)}
                   isSessionMenuOpen={isSessionMenuOpen === item.session_id}
                   setIsSessionMenuOpen={setIsSessionMenuOpen}
-                  onRenameSubmit={handleSessionRenameSubmit}
-                  isPinned={item.is_pinned}
-                  onPinned={handleSessionPinned}
-                  onDelete={handleSessionDelete}
+                  onRenameSubmit={handleSessionRenameSubmit} //เมื่อเปลี่ยนชื่อ
+                  isPinned={item.is_pinned} //เอาไว้โชว์ session ที่ปักหมุดไปแล้ว
+                  onPinned={handleSessionPinned} //เมื่อปักหมุด
+                  onDelete={handleSessionDelete} //เมื่อลบ
                 />
               ))}
             </div>

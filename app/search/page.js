@@ -1,42 +1,131 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation"; // ต้อง import useRouter
 import { supabase } from "../lib/supabaseClient"; // ✅ KLA : import Supabase client
+import { Edit, MoreHorizontalIcon, Pin, PinOff, Trash2 } from "lucide-react";
+import { useAuth } from "../auth"; //เจมส์ : เพิ่ม useAuth เพิ่มเรียกใช้ user state
 
 // --- Research Card Component  ---
-const ResearchCard = ({ item, onClick }) => (
-  <div
-    className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer"
-    onClick={() => onClick(item)} // ✅ เมื่อคลิก card จะเรียก handleView
-  >
-    <div className="h-40 flex items-center justify-center bg-gray-200">
-      <img
-        src={item.paper_image || "/no-image.png"}
-        alt={item.paper_title}
-        className="h-full w-full object-cover"
-      />
-    </div>
-    <div className="p-4 space-y-2">
-      <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
-        {item.paper_title}
-      </h3>
-      <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm text-gray-400">
-        <div className="flex space-x-4">
-          <div className="flex items-center space-x-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            <span>{item.paper_views?.toLocaleString() || 0}</span>
+const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
+
+  const [cardMenuState, setCardMenuState] = useState(false);
+  const menuRef = useRef(null);
+
+  const handleToggleMenu = (e) => {
+    e.stopPropagation();
+    setCardMenuState(prev => !prev);
+  };
+
+  const handlePinClick = (e) => {
+    e.stopPropagation();
+    onPinned(paperId, isPinned); //เด่วมาเพิ่ม isPinned
+  };
+
+  // Logic to handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setCardMenuState(false);
+      }
+    };
+
+    if (cardMenuState) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [cardMenuState]);
+
+  const handleCardClick = (e) => {
+    if (cardMenuState) {
+      setCardMenuState(false);
+    } else {
+      onClick(item);
+    }
+  };
+
+
+  return ( //เจมส์ : ครอบด้วย return
+    <div
+      className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer relative"
+      onClick={handleCardClick}
+    >
+      <div className="h-40 flex items-center justify-center bg-gray-200">
+        <img
+          src={item.paper_image || "/no-image.png"}
+          alt={item.paper_title}
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <div className="p-4 space-y-2">
+        <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
+          {item.paper_title}
+        </h3>
+        <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm text-gray-400">
+          <div className="flex space-x-4">
+            <div className="flex items-center space-x-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span>{item.paper_views?.toLocaleString() || 0}</span>
+            </div>
+          </div>
+          <span className="text-xs">
+            {item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}
+          </span>
+          {/*เจมส์ : เพิ่มปุ่มเลือก popup*/}
+          <button
+            className={`rounded rounded-2xl hover:bg-gray-100 cursor-pointer transition-colors`}
+            aria-label="More options"
+            onClick={handleToggleMenu}
+          >
+            <MoreHorizontalIcon className="h-7 w-7 text-gray-500" />
+          </button>
+        </div>
+      </div>
+      {cardMenuState && (
+        <div
+          ref={menuRef}
+          className="absolute right-2 bottom-10 mt-10 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="py-1">
+            {/* <button
+              onClick={handleMenuItemClick(handleStartRename)}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <Edit className="h-4 w-4 mr-2" /> เปลี่ยนชื่อ
+            </button> */}
+            {isPinned === false ? (
+              <button
+                onClick={handlePinClick}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <Pin className="h-4 w-4 mr-2" /> ปักหมุด
+              </button>
+            ) : (
+              <button
+                onClick={handlePinClick}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <PinOff className="h-4 w-4 mr-2" /> เลิกปักหมุด
+              </button>
+            )}
+            {/* <button
+              onClick={handleMenuItemClick(handleDeleteClick)}
+              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> ลบ
+            </button> */}
           </div>
         </div>
-        <span className="text-xs">
-          {item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}
-        </span>
-      </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // KLA : Pagination Component ใช้สำหรับแบ่งหน้า 1 2 3 ...
 const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => {
@@ -84,25 +173,70 @@ export default function SearchPage() {
   const [researchData, setResearchData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const { user } = useAuth(); // เจมส์ : เพิ่ม user state
+  const [pinnedPapers, setPinnedPapers] = useState([]); // เจมส์ : เพิ่ม user state
+
+  const [pinnedIds, setPinnedIds] = useState(new Set());
+
+  const fetchPinnedData = async () => {
+
+    try {
+      const { data, error } = await supabase
+        .from('paper_pin_mtb')
+        .select('paper_id')
+        .eq('user_id', user?.user_id);
+
+      if (error) {
+        console.error("Has no pinned", error);
+        return new Set();
+      }
+
+      console.log(data);
+      return new Set(data.map(item => item.paper_id));
+
+    } catch (error) {
+      console.error("Has no pinned", error);
+      return new Set();
+    }
+
+  };
+
   // KLA : ฟังก์ชันดึงข้อมูลงานวิจัยจาก Supabase
   const fetchResearchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+
+    // เจมส์ : ดึงข้อมูลการปักหมุดของผู้ใช้นี้
+    const fetchedPinnedIds = await fetchPinnedData(user?.user_id);
+    setPinnedIds(fetchedPinnedIds);
+
+    const { data: papers, error } = await supabase
       .from("paper_tb")
       .select("paper_id, user_id, paper_title, paper_image, paper_views, created_at") // เลือกเฉพาะฟิลด์ที่ต้องการมาเพื่อแสดงผล
       .order("created_at", { ascending: false }); // เรียงลำดับจากใหม่ไปเก่า
 
     if (error) {
       console.error("❌ Error fetching data:", error);
+      setResearchData(papers || []);
     } else {
-      setResearchData(data || []);
+      const combinedData = (papers || []).map(paper => {
+        //แปลง paper_id เป็น String และใช้ .trim() ก่อนนำไปเทียบกับ Set
+        const paperIdAsString = String(paper.paper_id).trim();
+        const is_pinned = fetchedPinnedIds.has(paperIdAsString);
+
+        return {
+          ...paper,
+          is_pinned: is_pinned,
+        };
+      });
+      setResearchData(combinedData);
+      console.log(combinedData);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchResearchData();
-  }, []);
+    if (user?.user_id) fetchResearchData();
+  }, [user?.user_id]); //เจมส์ : เพิ่มให้ useEffect รอ user_id
 
   // KLA : เมื่อคลิกการ์ด → เพิ่ม paper_views +1
   const handleView = async (item) => {
@@ -175,6 +309,33 @@ export default function SearchPage() {
     setCurrentPage(1);
   };
 
+  //เจมส์ : เพิ่ม function ปักหมุด
+  const handlePinClick = async (paperId, isPinned) => {
+    try {
+      if (isPinned == true) {
+        const { error } = await supabase
+          .from('paper_pin_mtb')
+          .delete()
+          .eq('paper_id', paperId)
+          .eq('user_id', user?.user_id)
+        if (!error) fetchResearchData();
+      }
+      if (isPinned == false) {
+        const { error } = await supabase
+          .from('paper_pin_mtb')
+          .insert([
+            {
+              user_id: user?.user_id,
+              paper_id: paperId,
+            }
+          ])
+        if (!error) fetchResearchData();
+      }
+    } catch (error) {
+      console.error('Swap pin state error:', error);
+    }
+  }
+
   return (
     // KLA : หน้า Search Page
     <div className="min-h-screen bg-gray-50 font-[Inter] p-4 sm:p-6 lg:p-8">
@@ -242,7 +403,15 @@ export default function SearchPage() {
         ) : currentItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {currentItems.map((item) => (
-              <ResearchCard key={item.paper_id} item={item} onClick={handleView} />
+              <ResearchCard
+                key={item.paper_id}
+                item={item}
+                onClick={handleView}
+                //เจมส์ : เพิ่ม prop อื่นๆ
+                paperId={item.paper_id}
+                isPinned={item.is_pinned}
+                onPinned={handlePinClick}
+              />
             ))}
           </div>
         ) : (
