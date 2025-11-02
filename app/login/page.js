@@ -44,8 +44,6 @@ export default function LoginPage() {
         password: user_password,
       });
 
-      // console.log(authData);
-
       if (authError) {
         alert("❌ ล็อกอินไม่สำเร็จ: " + authError.message);
         console.error(authError);
@@ -55,8 +53,6 @@ export default function LoginPage() {
 
       if (authData?.user) {
         const supabaseUserId = authData.user.id;
-
-        // console.log(supabaseUserId);
 
         const { data: userData, error: profileError } = await supabase
           .from('user_tb')
@@ -68,9 +64,7 @@ export default function LoginPage() {
           console.error("Error fetching user profile:", profileError);
           alert("❌ เข้าสู่ระบบสำเร็จ แต่ดึงข้อมูลผู้ใช้ไม่สำเร็จ");
         } else if (userData) {
-          // console.log(userData);
           login(userData);
-
           alert("✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ " + userData.username || user_email);
           router.push("/");
         }
@@ -140,6 +134,27 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
+
+          {/* ✅ จัดตำแหน่งใหม่ให้สวยงาม */}
+          <div className="mt-8 flex flex-col items-center space-y-3">
+            <p className="text-sm text-gray-600 text-center">
+              ยังไม่มีบัญชี?{" "}
+              <span
+                onClick={() => router.push("/register")}
+                className="text-blue-600 hover:underline cursor-pointer"
+              >
+                ลงทะเบียนผู้ใช้
+              </span>
+            </p>
+
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              ← ย้อนกลับ
+            </button>
+          </div>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import BookImg from "../images/book.png";
 import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 const GoogleIcon = (props) => (
   <svg {...props} viewBox="0 0 48 48" width="20" height="20">
@@ -18,6 +19,8 @@ const GoogleIcon = (props) => (
 );
 
 export default function RegisterPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     username: "",
     user_email: "",
@@ -47,7 +50,6 @@ export default function RegisterPage() {
     }
 
     try {
-      // สร้างบัญชีผู้ใช้ใน Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.user_email,
         password: formData.user_password,
@@ -58,10 +60,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // ได้ user id จาก Auth
       const user_id = authData.user.id;
 
-      // ใส่ข้อมูลเพิ่มเติมลง user_tb **ไม่ต้องเก็บรหัสผ่าน**
       const { data, error } = await supabase.from("user_tb").insert([
         {
           user_id,
@@ -107,14 +107,13 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex font-['Inter']">
-      <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-white z-10">
-        <div className="w-full max-w-md">
+      <div className="w-full md:w-1/2 flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-white z-10">
+        <div className="w-full max-w-md mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center md:text-left">
             ลงทะเบียนผู้ใช้
           </h1>
 
           <form onSubmit={handleRegister} className="space-y-4">
-            {/* Username */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
               <input
@@ -129,7 +128,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Full Name */}
             <div>
               <label htmlFor="user_fullname" className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
               <input
@@ -144,7 +142,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label htmlFor="user_email" className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
               <input
@@ -159,7 +156,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Birthdate */}
             <div>
               <label htmlFor="user_birthdate" className="block text-sm font-medium text-gray-700 mb-1">วัน/เดือน/ปี เกิด</label>
               <input
@@ -173,7 +169,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* User Type */}
             <div>
               <label htmlFor="user_type_id" className="block text-sm font-medium text-gray-700 mb-1">ประเภทผู้ใช้</label>
               <select
@@ -190,7 +185,6 @@ export default function RegisterPage() {
               </select>
             </div>
 
-            {/* User Org */}
             <div>
               <label htmlFor="user_org_id" className="block text-sm font-medium text-gray-700 mb-1">สังกัด</label>
               <select
@@ -207,7 +201,6 @@ export default function RegisterPage() {
               </select>
             </div>
 
-            {/* Password */}
             <div>
               <label htmlFor="user_password" className="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
               <input
@@ -222,7 +215,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">ยืนยันรหัสผ่าน</label>
               <input
@@ -237,8 +229,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            
-            {/* Register Button */}
             <div>
               <button
                 type="submit"
@@ -249,9 +239,19 @@ export default function RegisterPage() {
             </div>
           </form>
         </div>
+
+        {/* 🔹 ปุ่มย้อนกลับ (อยู่ล่างสุดของหน้า) */}
+        <div className="w-full max-w-md mx-auto mt-8 text-center">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            ← ย้อนกลับ
+          </button>
+        </div>
       </div>
 
-      {/* รูปภาพด้านขวา */}
       <div className="hidden md:block md:w-1/2 relative overflow-hidden">
         <Image src={BookImg} alt="หนังสือและเอกสารวิจัย" fill className="object-cover" priority />
       </div>
