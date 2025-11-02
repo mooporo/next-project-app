@@ -62,23 +62,29 @@ const ResearchItem = ({ item }) => (
   </div>
 );
 
-const ResearchList = ({ items }) => (
-  <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-    <div className="flex justify-between items-center border-b pb-4 mb-4">
-      <h3 className="text-xl font-bold text-gray-800">ผลงานวิจัยล่าสุด</h3>
-      <button className="text-blue-600 font-medium text-sm flex items-center hover:text-blue-700 transition duration-150">
-        ดูทั้งหมด
-        <ChevronRight size={16} className="ml-1" />
-      </button>
+const ResearchList = ({ items }) => {
+  const router = useRouter(); // เพิ่ม router สำหรับปุ่มดูทั้งหมด
+  return (
+    <div className="w-full bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+      <div className="flex justify-between items-center border-b pb-4 mb-4">
+        <h3 className="text-xl font-bold text-gray-800">ผลงานวิจัยล่าสุด</h3>
+        <button
+          onClick={() => router.push('/history')} // ลิงก์ไปหน้า history
+          className="text-blue-600 font-medium text-sm flex items-center hover:text-blue-700 transition duration-150"
+        >
+          ดูทั้งหมด
+          <ChevronRight size={16} className="ml-1" />
+        </button>
+      </div>
+      <div className="space-y-1">
+        {items.map(item => (
+          <ResearchItem key={item.paper_id} item={item} />
+        ))}
+      </div>
+      <div className="pt-4"></div>
     </div>
-    <div className="space-y-1">
-      {items.map(item => (
-        <ResearchItem key={item.paper_id} item={item} />
-      ))}
-    </div>
-    <div className="pt-4"></div>
-  </div>
-);
+  );
+};
 
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState({

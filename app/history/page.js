@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Upload, ChevronRight, ChevronLeft, Edit, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth";
+import { useRouter } from "next/navigation"; // เพิ่ม useRouter
 
 // KLA : เพิ่ม Sort Dropdown Component
 const SortDropdown = ({ value, onChange }) => (
@@ -86,6 +87,7 @@ export default function HistoryPage() {
   const [search, setSearch] = useState(""); // สำหรับค้นหาจริง
   const [sortField, setSortField] = useState("date"); // name / date / type
   const { user } = useAuth();
+  const router = useRouter(); // ✅ เพิ่ม router สำหรับปุ่มอัปโหลด
 
   // Fetch papers
   useEffect(() => {
@@ -129,36 +131,37 @@ export default function HistoryPage() {
 
   // KLA: เพิ่มฟังก์ชันลบข้อมูลงานวิจัย ทั้งไฟล์และ metadata ใน database
   const handleDelete = async (paperId, filePath) => {
-  if (!confirm("คุณแน่ใจว่าจะลบงานวิจัยนี้?")) return;
+    if (!confirm("คุณแน่ใจว่าจะลบงานวิจัยนี้?")) return;
 
-  try {
-    //  ลบไฟล์จาก Supabase Storage
-    if (filePath) {
-      const { error: storageError } = await supabase.storage
-        .from('papers')   // ชื่อ bucket
-        .remove([filePath]);
+    try {
+      //  ลบไฟล์จาก Supabase Storage
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from('papers')   // ชื่อ bucket
+          .remove([filePath]);
 
-      if (storageError) {
-        console.error("Error deleting file:", storageError);
-        alert("เกิดข้อผิดพลาดในการลบไฟล์");
+        if (storageError) {
+          console.error("Error deleting file:", storageError);
+          alert("เกิดข้อผิดพลาดในการลบไฟล์");
+          return;
+        }
+      }
+
+      //  ลบ metadata ใน database
+      const { error } = await supabase.from("paper_tb").delete().eq("paper_id", paperId);
+      if (error) {
+        alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
         return;
       }
-    }
 
-    //  ลบ metadata ใน database
-    const { error } = await supabase.from("paper_tb").delete().eq("paper_id", paperId);
-    if (error) {
-      alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
-      return;
+      setPapers((prev) => prev.filter((p) => p.id !== paperId));
+      alert("ลบงานวิจัยเรียบร้อยแล้ว");
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     }
+  };
 
-    setPapers((prev) => prev.filter((p) => p.id !== paperId));
-    alert("ลบงานวิจัยเรียบร้อยแล้ว");
-  } catch (err) {
-    console.error(err);
-    alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-  }
-};
   // KLA : เพิ่ม Search + Sort + Pagination
   const filteredData = papers
     .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
@@ -188,7 +191,10 @@ export default function HistoryPage() {
         {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">ประวัติการอัปโหลด</h1>
-          <button className="bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-150 flex items-center space-x-2 w-full sm:w-auto text-base">
+          <button
+            onClick={() => router.push('/upload')} // ✅ ลิงก์ไปหน้า upload
+            className="bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-150 flex items-center space-x-2 w-full sm:w-auto text-base"
+          >
             <Upload className="w-5 h-5" />
             <span>อัปโหลดไฟล์งานวิจัย</span>
           </button>
