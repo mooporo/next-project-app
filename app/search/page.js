@@ -49,21 +49,21 @@ const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
 
   return ( //เจมส์ : ครอบด้วย return
     <div
-      className="bg-white rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer relative"
+      className="bg-white rounded-xl shadow-md hover:shadow-2xl transition duration-300 cursor-pointer relative overflow-hidden border border-gray-100"
       onClick={handleCardClick}
     >
-      <div className="h-40 flex items-center justify-center bg-gray-200">
+      <div className="h-40 flex items-center justify-center bg-gray-100 overflow-hidden">
         <img
           src={item.paper_image || "/no-image.png"}
           alt={item.paper_title}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-300"
         />
       </div>
       <div className="p-4 space-y-2">
         <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
           {item.paper_title}
         </h3>
-        <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm text-gray-400">
+        <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500">
           <div className="flex space-x-4">
             <div className="flex items-center space-x-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -78,48 +78,36 @@ const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
           </span>
           {/*เจมส์ : เพิ่มปุ่มเลือก popup*/}
           <button
-            className={`rounded rounded-2xl hover:bg-gray-100 cursor-pointer transition-colors`}
+            className={`rounded-full hover:bg-gray-100 cursor-pointer transition-colors p-1`}
             aria-label="More options"
             onClick={handleToggleMenu}
           >
-            <MoreHorizontalIcon className="h-7 w-7 text-gray-500" />
+            <MoreHorizontalIcon className="h-6 w-6 text-gray-600" />
           </button>
         </div>
       </div>
       {cardMenuState && (
         <div
           ref={menuRef}
-          className="absolute right-2 bottom-10 mt-10 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right"
+          className="absolute right-2 bottom-10 mt-10 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="py-1">
-            {/* <button
-              onClick={handleMenuItemClick(handleStartRename)}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <Edit className="h-4 w-4 mr-2" /> เปลี่ยนชื่อ
-            </button> */}
             {isPinned === false ? (
               <button
                 onClick={handlePinClick}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               >
-                <Pin className="h-4 w-4 mr-2" /> ปักหมุด
+                <Pin className="h-4 w-4 mr-2 text-blue-600" /> ปักหมุด
               </button>
             ) : (
               <button
                 onClick={handlePinClick}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               >
-                <PinOff className="h-4 w-4 mr-2" /> เลิกปักหมุด
+                <PinOff className="h-4 w-4 mr-2 text-red-500" /> เลิกปักหมุด
               </button>
             )}
-            {/* <button
-              onClick={handleMenuItemClick(handleDeleteClick)}
-              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4 mr-2" /> ลบ
-            </button> */}
           </div>
         </div>
       )}
@@ -132,9 +120,9 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
   return (
-    <div className="flex justify-end items-center space-x-1 text-sm">
+    <div className="flex justify-end items-center space-x-1 text-sm mt-4">
       <button
-        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50 transition-colors"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
@@ -144,14 +132,14 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
         <button
           key={page}
           className={`h-8 w-8 rounded-lg font-semibold ${page === currentPage ? "bg-blue-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-100"
-            }`}
+            } transition-colors`}
           onClick={() => onPageChange(page)}
         >
           {page}
         </button>
       ))}
       <button
-        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50 transition-colors"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
@@ -353,7 +341,7 @@ export default function SearchPage() {
 
         {/* Search Bar */}
         <div className="bg-white p-4 rounded-xl shadow-lg mb-8 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 items-stretch">
-          <div className="flex items-center border border-gray-300 rounded-lg flex-grow px-3 py-2">
+          <div className="flex items-center border border-gray-300 rounded-lg flex-grow px-3 py-2 bg-gray-50">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 mr-2">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
@@ -361,7 +349,7 @@ export default function SearchPage() {
             <input
               type="text"
               placeholder="ค้นหาด้วยชื่อเรื่อง..."
-              className="w-full focus:outline-none text-gray-700"
+              className="w-full focus:outline-none bg-gray-50 text-gray-700"
               value={inputTerm}
               onChange={(e) => setInputTerm(e.target.value)} // KLA : อัพเดตคำค้นหา
               onKeyDown={handleKeyDown} // KLA : จับการกดปุ่ม Enter
@@ -375,7 +363,7 @@ export default function SearchPage() {
               setSortOption(e.target.value); // KLA : อัพเดตตัวเลือกเรียงข้อมูล
               setCurrentPage(1); // KLA : กลับไปหน้าแรกเมื่อเปลี่ยนการเรียง
             }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px] bg-white"
           >
             <option value="date">เรียงจากวันที่อัปโหลด</option>
             <option value="views">เรียงจากยอดวิว</option>
@@ -391,7 +379,7 @@ export default function SearchPage() {
 
           <button
             onClick={handleClear} // KLA : เรียกใช้ฟังก์ชันล้างการค้นหา
-            className="bg-red-600 text-white text-gray-700 px-6 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 min-w-[100px]"
+            className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 min-w-[100px]"
           >
             ล้างการค้นหา
           </button>
