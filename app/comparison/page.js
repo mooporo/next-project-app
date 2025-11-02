@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Search, Eye, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../auth";
 
 const mockResearchData = [
   { id: 1, title: "การวิเคราะห์ปัจจัยที่มีผลต่อการยอมรับ AI ในองค์กร", year: 2023 },
@@ -103,7 +104,7 @@ const ShowSearchPopup = ({ Plus, onSearchChange, currentSearchQuery, onSelectRes
                 type="checkbox"
                 id="pin-toggle"
                 className="sr-only peer"
-                onChange={onPinnedEnabledClick}
+                onClick={onPinnedEnabledClick}
               />
 
               {/* Visual Switch (ตัวสไลด์) - ส่วนที่คุณคลิกแล้วไม่ทำงาน */}
@@ -146,43 +147,93 @@ const ShowSearchPopup = ({ Plus, onSearchChange, currentSearchQuery, onSelectRes
 export default function ComparisonPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [papers, setPapers] = useState([]);
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [isPinnedEnabled, setIsPinnedEnabled] = useState(false);
 
-  //โหลดข้อมูล paper จาก supabase เพื่อส่งเป็น props ไปให้ ShowSearchPopup
-  useEffect(() => {
+  const [papers, setPapers] = useState(null);
+  const [pinPaper, setPinPaper] = useState([]);
+  const [unpinPaper, setUnpinPaper] = useState([]);
 
-    const getAllPapers = async () => {
-      const { data, error } = await supabase
-        .from('paper_tb')
-        .select(`
+  const { user } = useAuth();
+
+  const getAllPapers = async () => {
+    const { data, error } = await supabase
+      .from('paper_tb')
+      .select(`
                     *,
                     users:user_id ( 
                         user_fullname,
                         user_email 
                     )
                 `)
-        .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error(error);
-      } else {
-        console.log(data);
+    if (error) {
+      console.error(error);
+    } else {
+      // console.log(data);
+      setPinPaper(data);
+
+      if(!papers){
         setPapers(data);
       }
     }
-    getAllPapers();
-  }, []);
+  }
 
-  const handleSelectResearchClick = (paper) => {
-    setSelectedPaper(paper);
-    console.log(paper);
-  };
+  const getAllPinnedPapers = async () => {
+    const { data, error } = await supabase
+      .from('paper_pin_mtb')
+      .select(`
+                paper_tb:paper_id ( 
+                    *,
+                    users:user_id ( 
+                        user_fullname,
+                        user_email 
+                    )
+                )
+            `)
+      .eq('user_id', user?.user_id)
+      .order('created_at', { referencedTable: 'paper_tb', ascending: false });
+
+    if (error) {
+      console.error("",error);
+    } else {
+      const cleanData = data.filter(item => item.paper_tb)
+      .map(item =>({
+        ...item.paper_tb,
+      })) || [];
+
+      // console.log(cleanData);
+      setUnpinPaper(cleanData);
+    }
+  }
+
+  //โหลดข้อมูล paper จาก supabase เพื่อส่งเป็น props ไปให้ ShowSearchPopup
+  useEffect(() => {
+    if(!user?.user_id) return;
+    
+    getAllPapers();
+    getAllPinnedPapers();
+  }, [user?.user_id]);
 
   const handlePinnedEnabledClick = () => {
     setIsPinnedEnabled(!isPinnedEnabled);
-    console.log(isPinnedEnabled);
+
+      if (isPinnedEnabled === true) {
+        setPapers(pinPaper);
+      }
+      if (isPinnedEnabled === false) {
+        setPapers(unpinPaper);
+      }
+
+    // console.log(isPinnedEnabled);
+  };
+
+  const handleSelectResearchClick = (paper) => {
+    setSelectedPaper(paper);
+    setIsPinnedEnabled(false);
+    console.log(paper);
+    // console.log(isPinnedEnabled)
   };
 
   return (
