@@ -24,8 +24,8 @@ type ResearchItem = {
 
 // --- Feature Card ---
 const FeatureCard: React.FC<Feature> = ({ icon: Icon, title, subtitle }) => (
-  <div className="bg-white text-center p-8 rounded-2xl shadow-md hover:shadow-2xl border border-gray-100 transition duration-300 hover:-translate-y-1">
-    <div className="mx-auto w-16 h-16 flex items-center justify-center mb-5 text-blue-600 rounded-full bg-blue-50 shadow-inner">
+  <div className="bg-white text-center p-8 rounded-2xl shadow-md hover:shadow-2xl border border-gray-100 transition duration-300 hover:-translate-y-1 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-blue-100/80 fade-in">
+    <div className="mx-auto w-16 h-16 flex items-center justify-center mb-5 text-blue-600 rounded-full bg-blue-50 shadow-inner hover:rotate-6 transition-transform duration-300">
       <Icon size={30} strokeWidth={2} />
     </div>
     <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
@@ -43,8 +43,8 @@ const ResearchCard: React.FC<ResearchItem> = ({
   views,
   comments,
 }) => (
-  <Link href={`/งานวิจัย/${id}`}>
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden cursor-pointer transition duration-300 hover:shadow-xl hover:-translate-y-1">
+  <Link href={`/งานวิจัย/${id}`} className="group">
+    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden cursor-pointer transition duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-300 fade-in">
       <div
         className={`${color} h-28 p-4 flex items-center justify-center text-center`}
       >
@@ -53,7 +53,7 @@ const ResearchCard: React.FC<ResearchItem> = ({
         </span>
       </div>
       <div className="p-5 space-y-2">
-        <h4 className="text-gray-800 text-sm font-semibold line-clamp-2 min-h-[40px] leading-snug">
+        <h4 className="text-gray-800 text-sm font-semibold line-clamp-2 min-h-[40px] leading-snug group-hover:text-blue-600 transition-colors">
           {title}
         </h4>
         <div className="text-xs text-gray-500">
@@ -156,10 +156,10 @@ export default function Page() {
       <main>
         {/* Hero Section */}
         <section
-          className="relative h-[550px] overflow-hidden bg-cover bg-center"
+          className="relative h-[550px] overflow-hidden bg-cover bg-center bg-fixed fade-in"
           style={{ backgroundImage: "url('/backgroud2.png')" }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#60A5FA] opacity-40"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A]/90 via-[#2563EB]/80 to-[#60A5FA]/70 opacity-40"></div>
           <div className="absolute inset-0 max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-white z-[1]">
             <div className="w-full md:w-3/5 space-y-6 pt-10 md:pt-0">
               <h1 className="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
@@ -170,7 +170,7 @@ export default function Page() {
               </p>
               <Link
                 href="/search"
-                className="inline-block bg-white text-blue-600 font-semibold py-3 px-8 rounded-xl shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-[1.05]"
+                className="inline-block bg-white text-blue-600 font-semibold py-3 px-8 rounded-xl shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-[1.05] hover:shadow-blue-200/50 hover:scale-110 transition-transform duration-300"
               >
                 เริ่มต้นใช้งาน
               </Link>
@@ -178,7 +178,7 @@ export default function Page() {
 
             {/* รูป Siam Archive */}
             <div className="w-full md:w-2/5 flex justify-center md:justify-end pt-12 md:pt-0">
-              <div className="bg-white p-2 rounded-2xl shadow-2xl w-[320px] h-[320px] flex items-center justify-center hover:shadow-blue-400/40 transition duration-500 overflow-hidden">
+              <div className="bg-white p-2 rounded-2xl shadow-2xl w-[320px] h-[320px] flex items-center justify-center hover:shadow-blue-400/40 transition duration-500 overflow-hidden fade-in">
                 <div className="relative w-full h-full">
                   <Image
                     src="/siam_archive.png"
@@ -195,7 +195,7 @@ export default function Page() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-white fade-in">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">
               แพลตฟอร์มที่ออกแบบมาเพื่อคุณ
@@ -222,7 +222,7 @@ export default function Page() {
         </section>
 
         {/* Latest Research Section */}
-        <section className="py-20 bg-gray-50">
+        <section className="py-20 bg-gray-50 fade-in">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold text-gray-800">งานวิจัยล่าสุด</h2>
@@ -243,7 +243,7 @@ export default function Page() {
         </section>
 
         {/* Footer CTA */}
-        <section className="bg-blue-600 py-16">
+        <section className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-500 py-16 fade-in">
           <div className="max-w-5xl mx-auto px-6 text-center text-white space-y-4">
             <h2 className="text-3xl font-bold">เริ่มต้นแบ่งปันผลงานของคุณ</h2>
             <p className="text-lg font-light max-w-xl mx-auto">
@@ -251,7 +251,7 @@ export default function Page() {
             </p>
             <Link
               href="/register"
-              className="bg-white text-blue-600 font-bold py-3 px-10 rounded-xl shadow-lg hover:bg-gray-100 transition duration-300 mt-4 transform hover:scale-[1.05]"
+              className="bg-white text-blue-600 font-bold py-3 px-10 rounded-xl shadow-lg hover:bg-gray-100 transition duration-300 mt-4 transform hover:scale-[1.05] hover:shadow-blue-300/50 hover:-translate-y-1 transition-transform duration-300"
             >
               สมัครสมาชิกเลย
             </Link>
@@ -260,8 +260,8 @@ export default function Page() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 py-4">
-        <div className="text-center text-gray-400 text-xs">
+      <footer className="bg-gray-900 border-t border-gray-700 py-4 fade-in">
+        <div className="text-center text-gray-400 text-xs hover:text-gray-200 transition-colors duration-200">
           © 2025 Siam Archive. สงวนลิขสิทธิ์.
         </div>
       </footer>

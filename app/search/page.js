@@ -49,31 +49,45 @@ const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
 
   return ( //เจมส์ : ครอบด้วย return
     <div
-      className="bg-white rounded-xl shadow-md hover:shadow-2xl transition duration-300 cursor-pointer relative overflow-hidden border border-gray-100"
+      className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition duration-300 cursor-pointer relative overflow-hidden border border-gray-100 hover:-translate-y-1 transform hover:scale-102"
       onClick={handleCardClick}
     >
       <div className="h-40 flex items-center justify-center bg-gray-100 overflow-hidden">
         <img
           src={item.paper_image || "/no-image.png"}
           alt={item.paper_title}
-          className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-300"
+          className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500"
         />
       </div>
       <div className="p-4 space-y-2">
-        <h3 className="text-gray-900 font-bold text-lg leading-snug truncate">
+        <h3 className="text-gray-900 font-bold text-lg leading-snug truncate hover:text-blue-600 transition-colors duration-300">
           {item.paper_title}
         </h3>
+
+        {/* 🔹 เพิ่มชื่อผู้ใช้ */}
+        <p className="text-sm text-gray-500 truncate">
+          โดย: {item.user_fullname || "ไม่ระบุชื่อ"}
+        </p>
+
         <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500">
           <div className="flex space-x-4">
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 text-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <span>{item.paper_views?.toLocaleString() || 0}</span>
+              <span className="font-medium">{item.paper_views?.toLocaleString() || 0}</span>
+            </div>
+
+            {/* 🔹 เพิ่มจำนวนคอมเมนต์ */}
+            <div className="flex items-center space-x-1 text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="font-medium">{item.comment_count || 0}</span>
             </div>
           </div>
-          <span className="text-xs">
+          <span className="text-xs text-gray-400 italic">
             {item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}
           </span>
           {/*เจมส์ : เพิ่มปุ่มเลือก popup*/}
@@ -82,28 +96,28 @@ const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
             aria-label="More options"
             onClick={handleToggleMenu}
           >
-            <MoreHorizontalIcon className="h-6 w-6 text-gray-600" />
+            <MoreHorizontalIcon className="h-6 w-6 text-gray-600 hover:text-blue-600 transition-colors" />
           </button>
         </div>
       </div>
       {cardMenuState && (
         <div
           ref={menuRef}
-          className="absolute right-2 bottom-10 mt-10 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right"
+          className="absolute right-2 bottom-10 mt-10 w-44 rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right animate-fadeIn"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="py-1">
             {isPinned === false ? (
               <button
                 onClick={handlePinClick}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
               >
                 <Pin className="h-4 w-4 mr-2 text-blue-600" /> ปักหมุด
               </button>
             ) : (
               <button
                 onClick={handlePinClick}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
               >
                 <PinOff className="h-4 w-4 mr-2 text-red-500" /> เลิกปักหมุด
               </button>
@@ -122,7 +136,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
   return (
     <div className="flex justify-end items-center space-x-1 text-sm mt-4">
       <button
-        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-50 transition-colors"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
@@ -139,7 +153,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
         </button>
       ))}
       <button
-        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+        className="h-8 w-8 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-50 transition-colors"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
@@ -153,6 +167,7 @@ export default function SearchPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [inputTerm, setInputTerm] = useState(""); //KLA :คำค้นหาจาก input
+  const [keywordTerm, setKeywordTerm] = useState(""); // เจมส์ : เพิ่ม state สำหรับช่องเลือกคีย์เวิร์ด
   const [searchTerm, setSearchTerm] = useState(""); // KLA : คำค้นหาที่ใช้กรองข้อมูล
   const [sortOption, setSortOption] = useState("date"); // KLA : ตัวเลือกการเรียงข้อมูล
   const itemsPerPage = 6;
@@ -197,23 +212,46 @@ export default function SearchPage() {
     const fetchedPinnedIds = await fetchPinnedData(user?.user_id);
     setPinnedIds(fetchedPinnedIds);
 
+    // 🔹 ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb
     const { data: papers, error } = await supabase
       .from("paper_tb")
-      .select("paper_id, user_id, paper_title, paper_image, paper_views, created_at") // เลือกเฉพาะฟิลด์ที่ต้องการมาเพื่อแสดงผล
-      .order("created_at", { ascending: false }); // เรียงลำดับจากใหม่ไปเก่า
+      .select(`
+        paper_id,
+        user_id,
+        paper_title,
+        paper_image,
+        paper_views,
+        created_at,
+        user_tb:user_id ( user_fullname )
+      `)
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("❌ Error fetching data:", error);
       setResearchData(papers || []);
     } else {
+      // 🔹 ดึงจำนวนคอมเมนต์ต่อ paper_id
+      // ✅ ของใหม่ (ดึงทุก comment แล้วนับใน JS)
+      const { data: commentsData, error: commentsError } = await supabase
+        .from("paper_comment_mtb")
+        .select("paper_id, comment_id");
+
+      if (commentsError) console.error("❌ Error fetching comments:", commentsError);
+
+      const commentCountMap = {};
+      (commentsData || []).forEach((c) => {
+        const pid = c.paper_id;
+        commentCountMap[pid] = (commentCountMap[pid] || 0) + 1;
+      });
+
       const combinedData = (papers || []).map(paper => {
-        //แปลง paper_id เป็น String และใช้ .trim() ก่อนนำไปเทียบกับ Set
         const paperIdAsString = String(paper.paper_id).trim();
         const is_pinned = fetchedPinnedIds.has(paperIdAsString);
-
         return {
           ...paper,
-          is_pinned: is_pinned,
+          is_pinned,
+          user_fullname: paper.user_tb?.user_fullname || "ไม่ระบุชื่อ",
+          comment_count: commentCountMap[paper.paper_id] || 0,
         };
       });
       setResearchData(combinedData);
@@ -251,10 +289,11 @@ export default function SearchPage() {
     router.push(`/research/${item.paper_id}`);
   };
 
-  // KLA : กรองข้อมูลตามคำค้นหา
+  // KLA : กรองข้อมูลตามคำค้นหา + keyword
   const filteredData = researchData.filter(
     (item) =>
-      item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase())
+      item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      item.paper_title?.toLowerCase().includes(keywordTerm.toLowerCase())
   );
 
   // KLA : ฟังก์ชันเรียงข้อมูล
@@ -292,6 +331,7 @@ export default function SearchPage() {
   // KLA : ฟังก์ชันล้างการค้นหา
   const handleClear = () => {
     setInputTerm("");
+    setKeywordTerm("");
     setSortOption("date");
     setSearchTerm("");
     setCurrentPage(1);
@@ -326,22 +366,24 @@ export default function SearchPage() {
 
   return (
     // KLA : หน้า Search Page
-    <div className="min-h-screen bg-gray-50 font-[Inter] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 font-[Inter] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header */} 
         <header className="flex justify-between items-center mb-6 pt-4">
-          <h1 className="text-3xl font-bold text-gray-800">คลังงานวิจัย</h1>
+          <h1 className="text-3xl font-bold text-gray-800 drop-shadow-sm">คลังงานวิจัย</h1>
           <button
             onClick={() => router.push("/upload")} // KLA : เปลี่ยนเส้นทางไปยังหน้าอัพโหลด
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 flex items-center space-x-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 flex items-center space-x-2 transform hover:scale-105"
           >
             <span>อัพโหลดงานวิจัย</span>
           </button>
         </header>
 
         {/* Search Bar */}
-        <div className="bg-white p-4 rounded-xl shadow-lg mb-8 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 items-stretch">
-          <div className="flex items-center border border-gray-300 rounded-lg flex-grow px-3 py-2 bg-gray-50">
+        <div className="bg-white p-4 rounded-xl shadow-xl mb-8 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 items-stretch">
+
+          {/* 🔹 ช่องค้นหาชื่อเรื่อง */}
+          <div className="flex items-center border border-gray-300 rounded-lg flex-grow px-3 py-2 bg-gray-50 shadow-inner">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 mr-2">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
@@ -351,80 +393,79 @@ export default function SearchPage() {
               placeholder="ค้นหาด้วยชื่อเรื่อง..."
               className="w-full focus:outline-none bg-gray-50 text-gray-700"
               value={inputTerm}
-              onChange={(e) => setInputTerm(e.target.value)} // KLA : อัพเดตคำค้นหา
-              onKeyDown={handleKeyDown} // KLA : จับการกดปุ่ม Enter
+              onChange={(e) => setInputTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
           </div>
 
-          {/* KLA : เพื่มฟังก์ชัน  Dropdown สำหรับเลือกการเรียงลำดับ แทนที่ keyword */}
+          {/* 🔹 ช่องเลือกคีย์เวิร์ด */}
+          <div className="flex items-center border border-gray-300 rounded-lg flex-grow px-3 py-2 bg-gray-50 shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 mr-2">
+              <path d="M3 7v7a1 1 0 0 0 1 1h7l7-7-7-7H4a1 1 0 0 0-1 1z" /> {/* เป็นไอคอนแท็ก */}
+            </svg>
+            <input
+              type="text"
+              placeholder="ค้นหาคีย์เวิร์ด"
+              className="w-full focus:outline-none bg-gray-50 text-gray-700"
+              value={keywordTerm}
+              onChange={(e) => setKeywordTerm(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+            />
+          </div>
+
+
+          {/* 🔹 Dropdown เลือกเรียงข้อมูล */}
           <select
             value={sortOption}
             onChange={(e) => {
-              setSortOption(e.target.value); // KLA : อัพเดตตัวเลือกเรียงข้อมูล
-              setCurrentPage(1); // KLA : กลับไปหน้าแรกเมื่อเปลี่ยนการเรียง
+              setSortOption(e.target.value);
+              setCurrentPage(1);
             }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px] bg-white"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px] bg-white shadow-sm hover:shadow-md transition duration-200"
           >
             <option value="date">เรียงจากวันที่อัปโหลด</option>
-            <option value="views">เรียงจากยอดวิว</option>
-            <option value="title">เรียงตามตัวอักษร</option>
+            <option value="views">เรียงตามยอดเข้าชม</option>
+            <option value="title">เรียงตามชื่อเรื่อง</option>
           </select>
 
+          {/* 🔹 ปุ่มค้นหา */}
           <button
-            onClick={handleSearch} // KLA : เรียกใช้ฟังก์ชันค้นหา
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 min-w-[100px]"
+            onClick={handleSearch}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150"
           >
             ค้นหา
           </button>
-
-          <button
-            onClick={handleClear} // KLA : เรียกใช้ฟังก์ชันล้างการค้นหา
-            className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 min-w-[100px]"
-          >
-            ล้างการค้นหา
-          </button>
         </div>
 
-        {/* Research Grid */}
+        {/* Research Card List */}
         {loading ? (
-          <p className="text-center text-gray-500 py-12">กำลังโหลดข้อมูล...</p>
-        ) : currentItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <p className="text-center text-gray-500">กำลังโหลดข้อมูล...</p>
+        ) : currentItems.length === 0 ? (
+          <p className="text-center text-gray-500">ไม่พบงานวิจัย</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentItems.map((item) => (
               <ResearchCard
                 key={item.paper_id}
                 item={item}
                 onClick={handleView}
-                //เจมส์ : เพิ่ม prop อื่นๆ
-                paperId={item.paper_id}
                 isPinned={item.is_pinned}
+                paperId={item.paper_id}
                 onPinned={handlePinClick}
               />
             ))}
           </div>
-        ) : (
-          <p className="text-center text-gray-500 py-12">ไม่พบงานวิจัยที่ตรงกับคำค้น</p>
         )}
 
-        {/* Footer */}
-        <div className="flex justify-between items-center text-sm text-gray-600 pb-8">
-          <span className="font-medium text-gray-700">
-            แสดง{" "}
-            <span className="text-blue-600">
-              {sortedData.length === 0
-                ? 0
-                : `${startIndex + 1} - ${Math.min(startIndex + itemsPerPage, sortedData.length)}`}
-            </span>{" "}
-            จาก {sortedData.length} รายการ
-          </span>
-
+        {/* Pagination */}
+        {sortedData.length > itemsPerPage && (
           <Pagination
             totalItems={sortedData.length}
             itemsPerPage={itemsPerPage}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />
-        </div>
+        )}
       </div>
     </div>
   );
