@@ -52,12 +52,34 @@ const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
       className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition duration-300 cursor-pointer relative overflow-hidden border border-gray-100 hover:-translate-y-1 transform hover:scale-102"
       onClick={handleCardClick}
     >
-      <div className="h-40 flex items-center justify-center bg-gray-100 overflow-hidden">
-        <img
-          src={item.paper_image || "/no-image.png"}
-          alt={item.paper_title}
-          className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500"
-        />
+      <div className="h-40 flex items-center justify-center overflow-hidden">
+        {item.paper_image ? (
+          <img
+            src={item.paper_image}
+            alt={item.paper_title}
+            className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          // KLA เพิ่ม ถ้าไม่มีรูปให้สุ่มสีพื้นหลัง พร้อมชื่อเรื่องตรงกลาง
+          <div
+            className="w-full h-full flex items-center justify-center text-center px-6"
+            style={{
+              backgroundColor: [
+                "#2563EB", // blue-600
+                "#9333EA", // purple-600
+                "#DB2777", // pink-600
+                "#059669", // green-600
+                "#EA580C", // orange-600
+                "#1E3A8A", // indigo-900
+                "#047857", // emerald-700
+              ][Math.floor(Math.random() * 7)],
+            }}
+          >
+            <span className="text-white text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
+              {item.paper_title || "ไม่มีชื่อเรื่อง"} 
+            </span>
+          </div>
+        )}
       </div>
       <div className="p-4 space-y-2">
         <h3 className="text-gray-900 font-bold text-lg leading-snug truncate hover:text-blue-600 transition-colors duration-300">
@@ -391,60 +413,61 @@ export default function SearchPage() {
             <input
               type="text"
               placeholder="ค้นหาด้วยชื่อเรื่อง..."
-              className="w-full focus:outline-none bg-gray-50 text-gray-700"
+              className="w-full bg-transparent outline-none text-gray-700 placeholder-gray-400"
               value={inputTerm}
               onChange={(e) => setInputTerm(e.target.value)}
               onKeyDown={handleKeyDown}
             />
           </div>
 
-          {/* 🔹 ช่องเลือกคีย์เวิร์ด */}
-          <div className="flex items-center border border-gray-300 rounded-lg flex-grow px-3 py-2 bg-gray-50 shadow-inner">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 mr-2">
-              <path d="M3 7v7a1 1 0 0 0 1 1h7l7-7-7-7H4a1 1 0 0 0-1 1z" /> {/* เป็นไอคอนแท็ก */}
-            </svg>
+          {/* 🔹 ช่องเลือก keyword */}
+          <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 shadow-inner">
             <input
               type="text"
-              placeholder="ค้นหาคีย์เวิร์ด"
-              className="w-full focus:outline-none bg-gray-50 text-gray-700"
+              placeholder="ค้นหาด้วย keyword..."
+              className="w-full bg-transparent outline-none text-gray-700 placeholder-gray-400"
               value={keywordTerm}
               onChange={(e) => setKeywordTerm(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
             />
           </div>
-
-
-          {/* 🔹 Dropdown เลือกเรียงข้อมูล */}
-          <select
-            value={sortOption}
-            onChange={(e) => {
-              setSortOption(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px] bg-white shadow-sm hover:shadow-md transition duration-200"
-          >
-            <option value="date">เรียงจากวันที่อัปโหลด</option>
-            <option value="views">เรียงตามยอดเข้าชม</option>
-            <option value="title">เรียงตามชื่อเรื่อง</option>
-          </select>
 
           {/* 🔹 ปุ่มค้นหา */}
           <button
             onClick={handleSearch}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition duration-150 shadow-md transform hover:scale-105"
           >
             ค้นหา
           </button>
+
+          {/* 🔹 ปุ่มล้าง */}
+          <button
+            onClick={handleClear}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition duration-150 shadow-md transform hover:scale-105"
+          >
+            ล้าง
+          </button>
+
+
+          {/* 🔹 เลือกการเรียงข้อมูล */}
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 shadow-inner text-gray-700"
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+          >
+            <option value="date">เรียงตามวันที่</option>
+            <option value="views">เรียงตามยอดวิว</option>
+            <option value="title">เรียงตามชื่อเรื่อง</option>
+          </select>
         </div>
 
-        {/* Research Card List */}
-        {loading ? (
-          <p className="text-center text-gray-500">กำลังโหลดข้อมูล...</p>
-        ) : currentItems.length === 0 ? (
-          <p className="text-center text-gray-500">ไม่พบงานวิจัย</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentItems.map((item) => (
+        {/* Research Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <p className="text-gray-500 col-span-full text-center py-20">กำลังโหลด...</p>
+          ) : currentItems.length === 0 ? (
+            <p className="text-gray-500 col-span-full text-center py-20">ไม่พบงานวิจัย</p>
+          ) : (
+            currentItems.map((item) => (
               <ResearchCard
                 key={item.paper_id}
                 item={item}
@@ -453,19 +476,17 @@ export default function SearchPage() {
                 paperId={item.paper_id}
                 onPinned={handlePinClick}
               />
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
 
         {/* Pagination */}
-        {sortedData.length > itemsPerPage && (
-          <Pagination
-            totalItems={sortedData.length}
-            itemsPerPage={itemsPerPage}
-            currentPage={currentPage}
-            onPageChange={handlePageChange}
-          />
-        )}
+        <Pagination
+          totalItems={sortedData.length}
+          itemsPerPage={itemsPerPage}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+        />
       </div>
     </div>
   );
