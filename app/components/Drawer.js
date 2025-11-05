@@ -454,8 +454,17 @@ const Drawer = ({ onToggle }) => {
             onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
             className="flex items-center p-2 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
           >
-            <div className="p-2 bg-gray-300 rounded-full">
-              <User className="w-5 h-5 text-gray-600" />
+            {/* Avatar เต็มวงกลม */}
+            <div className="p-0 bg-gray-300 rounded-full w-10 h-10 overflow-hidden">
+              {user?.user_image ? (
+                <img
+                  src={supabase.storage.from("user_bk").getPublicUrl(user.user_image).data.publicUrl}
+                  alt="User Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-full h-full text-gray-600" />
+              )}
             </div>
             <span className="ml-3 font-medium text-gray-800 truncate">
               {user ? user.username : "Guest"}

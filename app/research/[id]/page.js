@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import { Download, Archive, Eye, MessageSquare, UserCircle } from "lucide-react";
 
+const STORAGE_BUCKET = "user_bk";
+
 const StatItem = ({ Icon, count, label }) => (
   <div className="flex flex-col items-center p-3 sm:p-4 text-center">
     <Icon className="w-6 h-6 text-blue-600 mb-1" />
@@ -13,22 +15,56 @@ const StatItem = ({ Icon, count, label }) => (
   </div>
 );
 
-const AuthorBadge = ({ name, role, isPrimary }) => (
-  <div className="flex items-center p-4 border-b last:border-b-0">
-    <UserCircle className="w-10 h-10 text-gray-400 mr-4 flex-shrink-0" />
-    <div className="flex-grow">
-      <div className="font-semibold text-gray-800">{name}</div>
-      <div className="text-xs text-blue-600 mt-0.5 inline-block px-2 py-0.5 bg-blue-50 rounded-full">
-        {role}
+// --- AuthorBadge แสดงรูปผู้ใช้จริง ---
+const AuthorBadge = ({ name, role, isPrimary, userId }) => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (!userId) return;
+      try {
+        const { data: userData, error: userError } = await supabase
+          .from("user_tb")
+          .select("user_image")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (!userError && userData?.user_image) {
+          const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(userData.user_image);
+          setAvatarUrl(data.publicUrl);
+        }
+      } catch (err) {
+        console.error("Error fetching avatar:", err);
+      }
+    };
+    fetchAvatar();
+  }, [userId]);
+
+  return (
+    <div className="flex items-center p-4 border-b last:border-b-0">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          className="w-10 h-10 rounded-full mr-4 flex-shrink-0 object-cover"
+        />
+      ) : (
+        <UserCircle className="w-10 h-10 text-gray-400 mr-4 flex-shrink-0" />
+      )}
+      <div className="flex-grow">
+        <div className="font-semibold text-gray-800">{name}</div>
+        <div className="text-xs text-blue-600 mt-0.5 inline-block px-2 py-0.5 bg-blue-50 rounded-full">
+          {role}
+        </div>
       </div>
+      {isPrimary && (
+        <div className="text-sm font-medium text-gray-500 ml-4">
+          ผู้เขียนหลัก
+        </div>
+      )}
     </div>
-    {isPrimary && (
-      <div className="text-sm font-medium text-gray-500 ml-4">
-        ผู้เขียนหลัก
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 const KeywordTag = ({ label }) => (
   <span className="inline-block bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2 hover:bg-gray-200 transition">
@@ -36,19 +72,52 @@ const KeywordTag = ({ label }) => (
   </span>
 );
 
-// Comment Component  จ
-const Comment = ({ user, text, date }) => (
-  <div className="flex space-x-4 py-4 border-b last:border-b-0">
-    <UserCircle className="w-8 h-8 text-gray-400 flex-shrink-0 mt-1" />
-    <div className="flex-grow">
-      <div className="flex items-center justify-between mb-1">
-        <div className="font-semibold text-gray-800">{user}</div>
-        <div className="text-xs text-gray-400">{date}</div>
+// --- Comment แสดงรูปผู้ใช้จริง ---
+const Comment = ({ user, text, date, userId }) => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (!userId) return;
+      try {
+        const { data: userData, error: userError } = await supabase
+          .from("user_tb")
+          .select("user_image")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (!userError && userData?.user_image) {
+          const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(userData.user_image);
+          setAvatarUrl(data.publicUrl);
+        }
+      } catch (err) {
+        console.error("Error fetching avatar:", err);
+      }
+    };
+    fetchAvatar();
+  }, [userId]);
+
+  return (
+    <div className="flex space-x-4 py-4 border-b last:border-b-0">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={user}
+          className="w-8 h-8 rounded-full flex-shrink-0 mt-1 object-cover"
+        />
+      ) : (
+        <UserCircle className="w-8 h-8 text-gray-400 flex-shrink-0 mt-1" />
+      )}
+      <div className="flex-grow">
+        <div className="flex items-center justify-between mb-1">
+          <div className="font-semibold text-gray-800">{user}</div>
+          <div className="text-xs text-gray-400">{date}</div>
+        </div>
+        <p className="text-gray-600 text-sm leading-relaxed">{text}</p>
       </div>
-      <p className="text-gray-600 text-sm leading-relaxed">{text}</p>
     </div>
-  </div>
-);
+  );
+};
 
 // Comment Form Component จุดแสดงความคิดเห็น
 const CommentForm = () => {
@@ -87,6 +156,7 @@ export default function ResearchDetailPage() {
   const [research, setResearch] = useState(null);
   const [comments, setComments] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
+  const [authorName, setAuthorName] = useState(""); // ✅ เพิ่ม state สำหรับชื่อผู้เขียน
 
   useEffect(() => {
     if (!id) return;
@@ -103,6 +173,18 @@ export default function ResearchDetailPage() {
 
         setResearch(data || null);
         setErrorMsg(data ? "" : "ไม่พบข้อมูลงานวิจัย");
+
+        // ✅ ดึงชื่อจริงของผู้เขียนจาก user_tb
+        if (data?.user_id) {
+          const { data: userData, error: userError } = await supabase
+            .from("user_tb")
+            .select("user_fullname")
+            .eq("user_id", data.user_id)
+            .maybeSingle();
+          if (!userError && userData) {
+            setAuthorName(userData.user_fullname);
+          }
+        }
 
         if (data) {
           supabase
@@ -126,6 +208,7 @@ export default function ResearchDetailPage() {
           .select(`
             comment_id,
             paper_id,
+            user_id,
             comment,
             created_at,
             user_tb(user_fullname)
@@ -140,6 +223,7 @@ export default function ResearchDetailPage() {
           comment: c.comment,
           created_at: c.created_at,
           user_fullname: c.user_tb?.user_fullname || "ไม่ระบุชื่อ",
+          user_id: c.user_id, // ✅ เพิ่ม user_id สำหรับโหลดรูป
         }));
 
         setComments(formatted);
@@ -165,7 +249,7 @@ export default function ResearchDetailPage() {
               {research.paper_title || "ไม่มีชื่อเรื่อง"}
             </h1>
             <div className="text-sm text-gray-500 flex flex-wrap space-x-4 mt-2">
-              <span>โดย: {research.user_id || "ไม่ระบุผู้เขียน"}</span> {/* //  */}
+              <span>โดย: {authorName || research.user_id || "ไม่ระบุผู้เขียน"}</span> {/* ✅ แก้ให้แสดงชื่อจริง */}
               <span>
                 วันที่เผยแพร่:{" "}
                 {research.created_at
@@ -189,13 +273,13 @@ export default function ResearchDetailPage() {
                 className="w-full h-full flex items-center justify-center text-center px-6"
                 style={{
                   backgroundColor: [
-                    "#2563EB", // blue-600
-                    "#9333EA", // purple-600
-                    "#DB2777", // pink-600
-                    "#059669", // green-600
-                    "#EA580C", // orange-600
-                    "#1E3A8A", // indigo-900
-                    "#047857", // emerald-700
+                    "#2563EB",
+                    "#9333EA",
+                    "#DB2777",
+                    "#059669",
+                    "#EA580C",
+                    "#1E3A8A",
+                    "#047857",
                   ][Math.floor(Math.random() * 7)],
                 }}
               >
@@ -250,6 +334,7 @@ export default function ResearchDetailPage() {
                   user={c.user_fullname}
                   text={c.comment}
                   date={new Date(c.created_at).toLocaleString("th-TH")}
+                  userId={c.user_id} // ✅ ส่ง userId เพื่อโหลดรูป
                 />
               ))}
             </div>
@@ -290,9 +375,10 @@ export default function ResearchDetailPage() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">ผู้เขียนหลัก</h3>
             <AuthorBadge
-              name={research.user_id || "ไม่ระบุชื่อ"}
+              name={authorName || research.user_id || "ไม่ระบุชื่อ"} // ✅ แสดงชื่อจริงในผู้เขียนหลัก
               role="นักวิจัย"
               isPrimary
+              userId={research.user_id} // ✅ ส่ง userId เพื่อโหลดรูป
             />
           </div>
         </div>
