@@ -87,6 +87,7 @@ export default function ResearchDetailPage() {
   const [research, setResearch] = useState(null);
   const [comments, setComments] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
+  const [authorName, setAuthorName] = useState(""); // ✅ เพิ่ม state สำหรับชื่อผู้เขียน
 
   useEffect(() => {
     if (!id) return;
@@ -103,6 +104,18 @@ export default function ResearchDetailPage() {
 
         setResearch(data || null);
         setErrorMsg(data ? "" : "ไม่พบข้อมูลงานวิจัย");
+
+        // ✅ ดึงชื่อจริงของผู้เขียนจาก user_tb
+        if (data?.user_id) {
+          const { data: userData, error: userError } = await supabase
+            .from("user_tb")
+            .select("user_fullname")
+            .eq("user_id", data.user_id)
+            .maybeSingle();
+          if (!userError && userData) {
+            setAuthorName(userData.user_fullname);
+          }
+        }
 
         if (data) {
           supabase
@@ -165,7 +178,7 @@ export default function ResearchDetailPage() {
               {research.paper_title || "ไม่มีชื่อเรื่อง"}
             </h1>
             <div className="text-sm text-gray-500 flex flex-wrap space-x-4 mt-2">
-              <span>โดย: {research.user_id || "ไม่ระบุผู้เขียน"}</span> {/* //  */}
+              <span>โดย: {authorName || research.user_id || "ไม่ระบุผู้เขียน"}</span> {/* ✅ แก้ให้แสดงชื่อจริง */}
               <span>
                 วันที่เผยแพร่:{" "}
                 {research.created_at
@@ -189,13 +202,13 @@ export default function ResearchDetailPage() {
                 className="w-full h-full flex items-center justify-center text-center px-6"
                 style={{
                   backgroundColor: [
-                    "#2563EB", // blue-600
-                    "#9333EA", // purple-600
-                    "#DB2777", // pink-600
-                    "#059669", // green-600
-                    "#EA580C", // orange-600
-                    "#1E3A8A", // indigo-900
-                    "#047857", // emerald-700
+                    "#2563EB",
+                    "#9333EA",
+                    "#DB2777",
+                    "#059669",
+                    "#EA580C",
+                    "#1E3A8A",
+                    "#047857",
                   ][Math.floor(Math.random() * 7)],
                 }}
               >
@@ -290,7 +303,7 @@ export default function ResearchDetailPage() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">ผู้เขียนหลัก</h3>
             <AuthorBadge
-              name={research.user_id || "ไม่ระบุชื่อ"}
+              name={authorName || research.user_id || "ไม่ระบุชื่อ"} // ✅ แสดงชื่อจริงในผู้เขียนหลัก
               role="นักวิจัย"
               isPrimary
             />
