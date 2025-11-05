@@ -187,7 +187,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 font-inter">
-      <div className="p-4 sm:p-8 mt-24 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-8 max-w-7xl mx-auto">
         {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">ประวัติการอัปโหลด</h1>

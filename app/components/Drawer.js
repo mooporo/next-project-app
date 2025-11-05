@@ -488,6 +488,10 @@ const Drawer = ({ onToggle }) => {
                   <div onClick={() => router.push("/register")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center">
                     <UserPlus className="w-4 h-4 mr-2" /> ลงทะเบียน
                   </div>
+                  {/* ✅ เพิ่ม Admin */}
+                  <div onClick={() => router.push("/login-admin")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center">
+                    <LogIn className="w-4 h-4 mr-2" /> Admin
+                  </div>
                   <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
                 </>
               )}
