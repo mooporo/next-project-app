@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, Eye, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { Search, Eye, MessageSquare, Plus, Trash2, ArrowBigDownDash } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth";
 
@@ -174,7 +174,7 @@ export default function ComparisonPage() {
       // console.log(data);
       setPinPaper(data);
 
-      if(!papers){
+      if (!papers) {
         setPapers(data);
       }
     }
@@ -196,12 +196,12 @@ export default function ComparisonPage() {
       .order('created_at', { referencedTable: 'paper_tb', ascending: false });
 
     if (error) {
-      console.error("",error);
+      console.error("", error);
     } else {
       const cleanData = data.filter(item => item.paper_tb)
-      .map(item =>({
-        ...item.paper_tb,
-      })) || [];
+        .map(item => ({
+          ...item.paper_tb,
+        })) || [];
 
       // console.log(cleanData);
       setUnpinPaper(cleanData);
@@ -210,8 +210,8 @@ export default function ComparisonPage() {
 
   //โหลดข้อมูล paper จาก supabase เพื่อส่งเป็น props ไปให้ ShowSearchPopup
   useEffect(() => {
-    if(!user?.user_id) return;
-    
+    if (!user?.user_id) return;
+
     getAllPapers();
     getAllPinnedPapers();
   }, [user?.user_id]);
@@ -219,12 +219,12 @@ export default function ComparisonPage() {
   const handlePinnedEnabledClick = () => {
     setIsPinnedEnabled(!isPinnedEnabled);
 
-      if (isPinnedEnabled === true) {
-        setPapers(pinPaper);
-      }
-      if (isPinnedEnabled === false) {
-        setPapers(unpinPaper);
-      }
+    if (isPinnedEnabled === true) {
+      setPapers(pinPaper);
+    }
+    if (isPinnedEnabled === false) {
+      setPapers(unpinPaper);
+    }
 
     // console.log(isPinnedEnabled);
   };
@@ -240,9 +240,12 @@ export default function ComparisonPage() {
     // หน้าเปรียบเทียบ
     <div className="flex flex-col items-center">
       <div className="container min-h-screen flex flex-col items-center justify-center px-4">
-        <h1 className="text-2xl font-semibold mb-6 text-gray-800">
+        <h1 className="text-2xl font-semibold mb-2 text-gray-800 mt-10">
           เปรียบเทียบเอกสาร
         </h1>
+        <p className="mb-10 text-gray-600">
+          เลือกเอกสารที่คุณสนใจเพื่อค้นหาเอกสารที่ใกล้เคียงกัน โดยระบบจะตรวจสอบจากความใกล้เคียงกันของบทคัดย่อ
+        </p>
 
         {selectedPaper === null ? (
 
@@ -256,7 +259,6 @@ export default function ComparisonPage() {
               onSelectResearch={handleSelectResearchClick}
               onPinnedEnabledClick={handlePinnedEnabledClick}
             />
-            <ShowSearchPopup />
 
             <p className="text-gray-700 font-medium mb-2">
               เลือกเอกสารเพื่อเปรียบเทียบ
@@ -264,15 +266,11 @@ export default function ComparisonPage() {
             <p className="text-sm text-gray-500 mb-4">
               คลิกเพื่อค้นหาและเพิ่มเอกสารที่ต้องการ
             </p>
-            <button onClick={() => handleSelectResearchClick()} className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition cursor-pointer">
-              <Search size={16} />
-              <span>ค้นหาเอกสาร</span>
-            </button>
           </div>
 
         ) : (
 
-          <div className="bg-white rounded-2xl shadow-md w-full md:w-[700px] p-5 relative border border-gray-100 flex flex-col mb-10">
+          <div className="bg-white rounded-2xl shadow-md w-full md:w-[700px] p-6 relative border border-gray-100 flex flex-col">
             {/* ปุ่มปิด (Close Button) - ตำแหน่ง Absolute */}
             <button
               onClick={() => setSelectedPaper(null)}
@@ -343,17 +341,30 @@ export default function ComparisonPage() {
 
             {/* ปุ่มดูรายละเอียด */}
             <button className="w-full bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 transition mt-auto">
-              ดูรายละเอียด
+              เริ่มเปรียบเทียบ 🚀
             </button>
           </div>
 
         )}
+
+        <div className="flex flex-col gap-2 mt-5 mb-5">
+          <ArrowBigDownDash className="text-gray-500" />
+          <ArrowBigDownDash className="text-gray-500" />
+          <ArrowBigDownDash className="text-gray-500" />
+          <ArrowBigDownDash className="text-gray-500" />
+        </div>
+
+        <div className="bg-white border-2 border-dashed border-gray-500 rounded-2xl w-full md:w-[700px] p-6 flex flex-col justify-center items-center text-center shadow-sm mb-10">
+          <h1 className="text-gray-500 text-xl mb-2">รอการเปรียบเทียบ</h1>
+          <p className="text-gray-500">รายการเอกสารที่คล้ายคลึงจะแสดงเมื่อประมวลผลเสร็จสิ้น...</p>
+        </div>
+
       </div>
 
       {/* Footer */}
-      <footer className="w-full bg-gray-900 text-gray-300 text-sm text-center py-4 mt-auto">
+      {/* <footer className="w-full bg-gray-900 text-gray-300 text-sm text-center py-4 mt-auto">
         © 2025 Siam Archive. สงวนลิขสิทธิ์.
-      </footer>
+      </footer> */}
     </div >
   );
 }
