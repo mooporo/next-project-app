@@ -199,7 +199,6 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
 
   const { user } = useAuth(); // เจมส์ : เพิ่ม user state
-  const [pinnedPapers, setPinnedPapers] = useState([]); // เจมส์ : เพิ่ม user state
 
   const [pinnedIds, setPinnedIds] = useState(new Set());
 

@@ -5,6 +5,8 @@ import { Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "../lib/supabaseClient"; // KLA : import supabase client
 import { useRouter } from "next/navigation"; // KLA : import useRouter ด้านบน
 import axios from "axios";
+import { Switch } from "@mui/material";
+import { N8N_TUNNEL_URL } from '@/app/lib/config';
 
 // --- Reusable Form Field Component ---
 const FormField = ({ label, required, children, helperText }) => (
@@ -60,6 +62,49 @@ const UploadPage = () => {
   const [paperFile, setPaperFile] = useState(null); // KLA :  PDF file state
   const [coverImg, setCoverImg] = useState(null); // KLA : Cover image state
   const [loading, setLoading] = useState(false); // KLA : Loading state
+
+  //เจมส์ : เพิ่ม state เก็บค่า switch
+  const [isAutoGenEnabled, setIsAutoGenEnabled] = useState(false);
+
+  const handleSwitchChange = () => {
+    console.log(!isAutoGenEnabled);
+    setIsAutoGenEnabled(prev => !prev);
+  };
+
+  const handleAutoGenClick = async () => {
+    if (!paperFile) {
+      alert("กรุณาอัปโหลดไฟล์เอกสารก่อน");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("paperFile", paperFile);
+
+    try {
+      const res = await axios.post(`${N8N_TUNNEL_URL}/webhook/auto-gen`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json'
+        }
+      })
+
+      console.log(res.data);
+      if (res.data) {
+        setFormData(prev => ({
+          ...prev,
+          // อัปเดต title, abstract, keywords, authors ทั้งหมด
+          title: res.data.title || prev.title,
+          abstract: res.data.abstract || prev.abstract,
+          keywords: res.data.keywords || prev.keywords,
+          coAuthors: res.data.authors || prev.coAuthors,
+        }));
+      }
+      setIsAutoGenEnabled(prev => !prev);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // KLA : ดึง userId เมื่อ component โหลด
   useEffect(() => {
@@ -153,7 +198,6 @@ const UploadPage = () => {
   };
 
 
-
   // KLA : เมือจัดการการเปลี่ยนแปลงข้อมูลฟอร์ม
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -191,29 +235,27 @@ const UploadPage = () => {
       let paperFileUrl = "";
       if (paperFile) {
 
-        //เจมส์ : เพิ่ม webhook ส่งให้ n8n แปลงเอกสารเก็บเข้า vectordb
-        try {
-          const vectorForm = new FormData();
-          vectorForm.append("title", vectorForm.title);
-          vectorForm.append("abstract", vectorForm.abstract); // 
-          vectorForm.append("keywords", vectorForm.keywords);
-          vectorForm.append("researchType", vectorForm.researchType);
-          vectorForm.append("coAuthors", vectorForm.coAuthors);
-          vectorForm.append("paperFile", paperFile);
+        // KLA : อัปโหลดรูปปกถ้ามี
+        let coverImgUrl = "";
+        if (coverImg) {
+          try {
+            const { data, error } = await supabase.storage
+              .from("paper_bk")
+              .upload(`covers/${Date.now()}_${coverImg.name}`, coverImg);
 
-          const res = await axios.post(`${N8N_TUNNEL_URL}/webhook/postpaper`, vectorForm)
-          console.log(res)
+            if (error || !data) {
+              console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", error);
+              alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
+              return;
+            }
 
-          if (res.status === 200) {
-            console.log('เก็บข้อมูลเข้า vectordb สำเร็จ');
-          } else {
-            console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จ');
-            return;
+            const { data: coverUrlData } = supabase.storage.from("paper_bk").getPublicUrl(data.path);
+            coverImgUrl = coverUrlData?.publicUrl || "";
+
+          } catch (imgErr) {
+            console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", imgErr);
+            alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
           }
-
-        } catch (error) {
-          console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จจากเหตุไม่คาดฝัน');
-          return;
         }
 
         try {
@@ -246,45 +288,59 @@ const UploadPage = () => {
           alert("เกิดข้อผิดพลาดขณะอัปโหลด PDF");
           return;
         }
-      }
 
-      // KLA : อัปโหลดรูปปกถ้ามี
-      let coverImgUrl = "";
-      if (coverImg) {
+        //เจมส์ : เพิ่ม webhook ส่งให้ n8n แปลงเอกสารเก็บเข้า vectordb
         try {
-          const { data, error } = await supabase.storage
-            .from("paper_bk")
-            .upload(`covers/${Date.now()}_${coverImg.name}`, coverImg);
+          const vectorForm = new FormData();
+          vectorForm.append("user_id", userId);
+          vectorForm.append("paper_title", formData.title);
+          vectorForm.append("paper_abstract", formData.abstract);
+          vectorForm.append("paper_keywords", formData.keywords);
+          vectorForm.append("paper_file", paperFileUrl);
+          vectorForm.append("paper_image", coverImgUrl);
+          vectorForm.append("paper_type_id", formData.researchType);
+          vectorForm.append("paper_category_id", 1); //mock
+          vectorForm.append("paper_status", 1); //mock
+          vectorForm.append("paper_views", 30); //mock
+          vectorForm.append("paper_score", 3.14); //mock
+          vectorForm.append("paper_authors", formData.coAuthors);
+          vectorForm.append("paperFile", paperFile);
 
-          if (error || !data) {
-            console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", error);
-            alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
+          const res = await axios.post(`${N8N_TUNNEL_URL}/webhook-test/postpaper`, vectorForm, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json'
+            }
+          })
+          console.log(res)
+
+          if (res.status === 200) {
+            console.log('เก็บข้อมูลเข้า vectordb สำเร็จ');
+          } else {
+            console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จ');
             return;
           }
 
-          const { data: coverUrlData } = supabase.storage.from("paper_bk").getPublicUrl(data.path);
-          coverImgUrl = coverUrlData?.publicUrl || "";
-
-        } catch (imgErr) {
-          console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", imgErr);
-          alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
+        } catch (error) {
+          console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จจากเหตุไม่คาดฝัน');
+          return;
         }
       }
 
       // KLA : บันทึกข้อมูลลงฐานข้อมูล
-      const { error } = await supabase.from("paper_tb").insert([
-        {
-          user_id: userId, //ต้องไม่ null
-          paper_title: formData.title,
-          paper_abstract: formData.abstract,
-          paper_file: paperFileUrl, //ต้องไม่ null
-          paper_image: coverImgUrl,   // optional ถ้าไม่มีจะเป็น ""
-          paper_type_id: formData.researchType === "journal" ? 1 : 2,
-          paper_category_id: 1,
-          paper_status: 0,  //KLA : draft เป็น 0
-          paper_views: 0,
-        },
-      ]);
+      // const { error } = await supabase.from("paper_tb").insert([
+      //   {
+      //     user_id: userId, //ต้องไม่ null
+      //     paper_title: formData.title,
+      //     paper_abstract: formData.abstract,
+      //     paper_file: paperFileUrl, //ต้องไม่ null
+      //     paper_image: coverImgUrl,   // optional ถ้าไม่มีจะเป็น ""
+      //     paper_type_id: formData.researchType === "journal" ? 1 : 2,
+      //     paper_category_id: 1,
+      //     paper_status: 0,  //KLA : draft เป็น 0
+      //     paper_views: 0,
+      //   },
+      // ]);
 
       // KLA : ตรวจสอบข้อผิดพลาดจากการบันทึกข้อมูล
       if (error) {
@@ -311,51 +367,30 @@ const UploadPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-12 flex justify-center font-sans">
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 lg:p-10">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 pb-4 border-b border-gray-200">
-          อัปโหลดงานวิจัย
-        </h1>
-
-        {/* Main Information Section */}
-        <section className="mb-10 p-5 border border-gray-100 rounded-xl bg-white">
-          <h2 className="text-xl font-semibold text-gray-700 mb-5">ข้อมูลหลัก</h2>
-
-          <FormField label="ชื่อ​งานวิจัย (Title)" required>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="ระบุชื่อ​งานวิจัย​ของ​คุณ..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm"
-            />
-          </FormField>
-
-          <FormField label="บทคัดย่อ (Abstract)" required>
-            <textarea
-              rows={4}
-              name="abstract"
-              value={formData.abstract}
-              onChange={handleChange}
-              placeholder="ใส่บทคัดย่อหรือคำอธิบายสั้นๆ เกี่ยวกับงานวิจัย..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm"
-            />
-          </FormField>
-
-          <FormField label="คีย์เวิร์ด (Keywords)" required helperText="คั่นแต่ละคีย์เวิร์ดด้วยเครื่องหมายจุลภาค (comma)">
-            <input
-              type="text"
-              name="keywords"
-              value={formData.keywords}
-              onChange={handleChange}
-              placeholder="เช่น AI, Machine Learning, Data Science"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm"
-            />
-          </FormField>
-        </section>
+        {/*เจมส์ : เพิ่มปุ่ม switch สําหรับ auto-gen ข้อมูลเอกสาร*/}
+        <div className="flex flex-row items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 border-b border-gray-200">
+            อัปโหลดงานวิจัย
+          </h1>
+          <p className="ml-auto">เปิดโหมดสร้างข้อมูลเอกสารอัตโนมัติ</p>
+          <Switch
+            checked={isAutoGenEnabled}
+            onClick={handleSwitchChange}
+          />
+        </div>
 
         {/* KLA : Section สำหรับอัพโหลดไฟล์งานวิจัย */}
         <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-700 mb-5">ไฟล์งานวิจัย</h2>
+          <div className="flex flex-row items-center mb-3">
+            <h2 className="text-xl font-semibold text-gray-700">ไฟล์งานวิจัย</h2>
+            <button
+              onClick={handleAutoGenClick}
+              disabled={!isAutoGenEnabled}
+              className={`inline-flex items-center px-3 py-2 border border-transparent text-base font-medium rounded-full shadow-lg text-white ${!isAutoGenEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out ml-auto`}
+            >
+              Auto-Generate
+            </button>
+          </div>
 
           <div
             className={`relative border-2 border-dashed rounded-xl p-10 text-center transition duration-300 cursor-pointer
@@ -412,6 +447,47 @@ const UploadPage = () => {
           </div>
         </section>
 
+        {/* Main Information Section */}
+        <section className="mb-10 p-5 border border-gray-100 rounded-xl bg-white">
+          <h2 className="text-xl font-semibold text-gray-700 mb-5">ข้อมูลหลัก</h2>
+
+          <FormField label="ชื่อ​งานวิจัย (Title)" required>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              disabled={isAutoGenEnabled}
+              onChange={handleChange}
+              placeholder="ระบุชื่อ​งานวิจัย​ของ​คุณ..."
+              className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
+            />
+          </FormField>
+
+          <FormField label="บทคัดย่อ (Abstract)" required>
+            <textarea
+              rows={10}
+              name="abstract"
+              value={formData.abstract}
+              disabled={isAutoGenEnabled}
+              onChange={handleChange}
+              placeholder="ใส่บทคัดย่อหรือคำอธิบายสั้นๆ เกี่ยวกับงานวิจัย..."
+              className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
+            />
+          </FormField>
+
+          <FormField label="คีย์เวิร์ด (Keywords)" required helperText="คั่นแต่ละคีย์เวิร์ดด้วยเครื่องหมายจุลภาค (comma)">
+            <input
+              type="text"
+              name="keywords"
+              value={formData.keywords}
+              disabled={isAutoGenEnabled}
+              onChange={handleChange}
+              placeholder="เช่น AI, Machine Learning, Data Science"
+              className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
+            />
+          </FormField>
+        </section>
+
         {/* Additional Information Section */}
         <section className="mb-10 p-5 border border-gray-100 rounded-xl bg-white">
           <h2 className="text-xl font-semibold text-gray-700 mb-5">
@@ -440,9 +516,10 @@ const UploadPage = () => {
                   type="text"
                   name="coAuthors"
                   value={formData.coAuthors}
+                  disabled={isAutoGenEnabled}
                   onChange={handleChange}
                   placeholder="เช่น อลิสา ไอดี, วิทยา พัฒนาดี"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm"
+                  className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
                 />
               </FormField>
             </div>
