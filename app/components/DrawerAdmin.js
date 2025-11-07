@@ -36,8 +36,8 @@ const DrawerAdmin = ({ isOpen: parentIsOpen, onToggle }) => {
   const { user, logout } = useAuth();
 
   const adminMenu = [
-    { name: "ตรวจสอบ user", icon: User, key: "checkUser", path: "/admin/users" },
-    { name: "ตรวจสอบงานวิจัย", icon: Notebook, key: "checkResearch", path: "/admin/research" },
+    { name: "ตรวจสอบ user", icon: User, key: "checkUser", path: "/verify-user" }, // ✅ เปลี่ยน path ตรงนี้เท่านั้น
+    { name: "ตรวจสอบงานวิจัย", icon: Notebook, key: "checkResearch", path: "/verify-research" }, // ✅ แก้ตรงนี้
   ];
 
   const handleLogout = () => {
@@ -49,6 +49,13 @@ const DrawerAdmin = ({ isOpen: parentIsOpen, onToggle }) => {
   // sync กับ parent
   useEffect(() => {
     setIsOpen(parentIsOpen);
+
+    // ✅ เพิ่มโค้ดนี้ เพื่อเปลี่ยน active menu ตาม path ปัจจุบัน
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname;
+      if (currentPath.includes("/verify-user")) setActiveMenuKey("checkUser");
+      else if (currentPath.includes("/verify-research")) setActiveMenuKey("checkResearch");
+    }
   }, [parentIsOpen]);
 
   // แจ้ง Wrapper ทุกครั้งที่เปิด/ปิด drawer
