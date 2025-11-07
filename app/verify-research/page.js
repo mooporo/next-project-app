@@ -246,22 +246,75 @@ export default function VerifyResearchPage() {
             </div>
           </div>
 
-          {/* Grid */}
+          {/* ✅ Table View แทน Grid */}
           {loading ? (
             <p className="text-center text-gray-500 py-10">กำลังโหลดข้อมูล...</p>
           ) : currentData.length === 0 ? (
             <p className="text-center text-gray-500 py-10">ยังไม่มีงานวิจัยให้ตรวจสอบ</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {currentData.map((data) => (
-                <ResearchCard
-                  key={data.id}
-                  {...data}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onView={handleView}
-                />
-              ))}
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-8">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-900 font-semibold text-base">
+                  <tr>
+                    <th className="px-6 py-4 border-b">ID</th>
+                    <th className="px-6 py-4 border-b">ชื่อเรื่อง</th>
+                    <th className="px-6 py-4 border-b">ผู้ส่ง</th>
+                    <th className="px-6 py-4 border-b">วันที่อัปโหลด</th>
+                    <th className="px-6 py-4 border-b">สถานะ</th>
+                    <th className="px-6 py-4 border-b text-center">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentData.map((data) => (
+                    <tr key={data.id} className="hover:bg-gray-50 transition duration-150">
+                      <td className="px-6 py-4 border-b font-mono">{data.id}</td>
+                      <td className="px-6 py-4 border-b font-medium text-gray-900">{data.title}</td>
+                      <td className="px-6 py-4 border-b">{data.author}</td>
+                      <td className="px-6 py-4 border-b">{data.date}</td>
+                      <td className="px-6 py-4 border-b">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            data.status === "ตรวจรอบ"
+                              ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                              : data.status === "อนุมัติ"
+                              ? "bg-green-100 text-green-800 border border-green-300"
+                              : data.status === "ต้องการแก้ไข"
+                              ? "bg-red-100 text-red-800 border border-red-300"
+                              : "bg-gray-100 text-gray-800 border border-gray-300"
+                          }`}
+                        >
+                          {data.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 border-b text-center">
+                        <div className="flex justify-center space-x-3">
+                          <button
+                            onClick={() => handleView(data.id)}
+                            className="text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>ดู</span>
+                          </button>
+                          <button
+                            onClick={() => handleApprove(data.id)}
+                            className="text-green-600 hover:text-green-700 transition duration-150 flex items-center space-x-1"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            <span>อนุมัติ</span>
+                          </button>
+                          <button
+                            onClick={() => handleReject(data.id)}
+                            className="text-red-600 hover:text-red-700 transition duration-150 flex items-center space-x-1"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span>ไม่อนุมัติ</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 

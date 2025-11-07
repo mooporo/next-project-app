@@ -177,16 +177,43 @@ export default function VerifyUserPage() {
             </div>
           </div>
 
-          {/* Grid */}
+          {/* ✅ เปลี่ยนจาก Grid เป็น Table List */}
           {loading ? (
             <p className="text-center text-gray-500 py-10">กำลังโหลดข้อมูล...</p>
           ) : currentData.length === 0 ? (
             <p className="text-center text-gray-500 py-10">ยังไม่มีผู้ใช้ในระบบ</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {currentData.map((data) => (
-                <UploadCard key={data.id} {...data} onReject={handleReject} />
-              ))}
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-8">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-900 font-semibold text-base">
+                  <tr>
+                    <th className="px-6 py-4 border-b">ID</th>
+                    <th className="px-6 py-4 border-b">ชื่อผู้ใช้</th>
+                    <th className="px-6 py-4 border-b">อีเมล</th>
+                    <th className="px-6 py-4 border-b">วันที่สมัคร</th>
+                    <th className="px-6 py-4 border-b text-center">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentData.map((data) => (
+                    <tr key={data.id} className="hover:bg-gray-50 transition duration-150">
+                      <td className="px-6 py-4 border-b font-mono">{data.id}</td>
+                      <td className="px-6 py-4 border-b font-medium text-gray-900">{data.name}</td>
+                      <td className="px-6 py-4 border-b">{data.email}</td>
+                      <td className="px-6 py-4 border-b">{data.date}</td>
+                      <td className="px-6 py-4 border-b text-center">
+                        <button
+                          onClick={() => handleReject(data.id)}
+                          className="text-red-600 hover:text-red-800 font-medium flex items-center justify-center space-x-1 mx-auto"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          <span>ลบบัญชี</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
