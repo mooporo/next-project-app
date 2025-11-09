@@ -147,8 +147,9 @@ export default function VerifyResearchPage() {
     fetchAllPapers();
   };
 
+  // ✅ แก้เฉพาะตรงนี้เท่านั้น
   const handleView = (paperId) => {
-    router.push(`/verify-research/detail/${paperId}`);
+    router.push(`/admin-research/${paperId}`);
   };
 
   // Search + Sort + Pagination
