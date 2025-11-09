@@ -18,8 +18,9 @@ const SortDropdown = ({ value, onChange }) => (
   </select>
 );
 
-// Upload Card
-const UploadCard = ({ title, id, date, version, status, onDelete }) => { // ✅ เพิ่ม onDelete
+// KLA :Upload Card
+const UploadCard = ({ title, id, date, version, status, onDelete }) => {
+  const router = useRouter(); //  เพิ่ม router
   let statusClass = "";
   const buttonAction = { icon: Edit, text: "แก้ไข", color: "text-gray-600 hover:text-blue-600" };
 
@@ -56,17 +57,19 @@ const UploadCard = ({ title, id, date, version, status, onDelete }) => { // ✅ 
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end space-x-6">
+        {/* KLA :ปุ่มแก้ไข → ไปหน้า /research/[id]/edit */}
         <button
           className={`text-sm font-medium flex items-center space-x-1 ${buttonAction.color} transition duration-150`}
-          onClick={() => console.log(`Action: ${buttonAction.text} ${id}`)}
+          onClick={() => router.push(`/research/${id}/edit`)}
         >
           <Icon className="w-4 h-4" />
           <span>แก้ไข</span>
         </button>
 
+        {/* KLA  : ปุ่มลบ*/}
         <button
           className="text-sm font-medium text-gray-500 hover:text-red-600 transition duration-150 flex items-center space-x-1"
-          onClick={() => onDelete(id)} // ✅ เรียก onDelete
+          onClick={() => onDelete(id)}
         >
           <Trash2 className="w-4 h-4" />
           <span>ลบ</span>
@@ -257,9 +260,9 @@ export default function HistoryPage() {
 
         {/* Pagination */}
         <div className="flex flex-col sm:flex-row justify-between items-center py-4">
-          <p className="text-sm text-gray-600 mb-4 sm:mb-0"> 
+          <p className="text-sm text-gray-600 mb-4 sm:mb-0">
             แสดง {startIdx + 1}-{Math.min(startIdx + itemsPerPage, totalItems)} จากทั้งหมด <span className="font-bold text-gray-800">{totalItems}</span> รายการ
-          </p> 
+          </p>
 
           <div className="flex items-center space-x-1 flex-wrap">
             <button

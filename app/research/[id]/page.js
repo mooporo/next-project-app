@@ -119,19 +119,49 @@ const Comment = ({ user, text, date, userId }) => {
   );
 };
 
-// Comment Form Component จุดแสดงความคิดเห็น
-const CommentForm = () => {
+//  KLA : Comment Form Component จุดแสดงความคิดเห็น
+const CommentForm = ({ paperId, currentUser, onNewComment }) => {
   const [comment, setComment] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (comment.trim()) {
-      console.log("Submitted comment:", comment);
-      setComment("");
+    if (!comment.trim() || !currentUser?.user_id) return;
+
+    try {
+      // Insert คอมเมนต์ใหม่ลง comment_tb
+      const { data, error } = await supabase
+        .from("comment_tb")
+        .insert([
+          {
+            paper_id: paperId,
+            user_id: currentUser.user_id,
+            comment: comment.trim(),
+          },
+        ])
+        .select()
+        .maybeSingle(); // เลือกแถวที่ insert มา
+
+      if (error) throw error;
+
+      // เรียก callback เพื่ออัปเดต state ที่ parent
+      if (onNewComment && data) {
+        onNewComment({
+          comment_id: data.comment_id,
+          comment: data.comment,
+          created_at: data.created_at,
+          user_fullname: currentUser.user_fullname,
+          user_id: currentUser.user_id,
+        });
+      }
+
+      setComment(""); // เคลียร์ textarea
+    } catch (err) {
+      console.error("Error adding comment:", err);
     }
   };
 
   return (
+    // KLA : ฟอร์มแสดงความคิดเห็น
     <form onSubmit={handleSubmit} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
       <div className="text-sm font-medium text-gray-700 mb-2">แสดงความคิดเห็นของคุณ</div>
       <textarea
@@ -151,15 +181,37 @@ const CommentForm = () => {
   );
 };
 
+
+
 export default function ResearchDetailPage() {
   const { id } = useParams();
-  const [research, setResearch] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [research, setResearch] = useState(null);// KLA : ตั้งค่าเริ่มต้นเป็น null
+  const [comments, setComments] = useState([]); // KLA : เพิ่ม state สำหรับคอมเมนต์
+  const [errorMsg, setErrorMsg] = useState("");// KLA : ข้อความแสดงข้อผิดพลาด
   const [authorName, setAuthorName] = useState(""); // ✅ เพิ่ม state สำหรับชื่อผู้เขียน
+  const [downloadCount, setDownloadCount] = useState(0); // KLA : เพิ่ม state สำหรับนับดาวน์โหลด
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // KLA : ฟังก์ชันจัดการการดาวน์โหลดไฟล์ PDF
+  const handleDownload = () => {
+    if (!research?.paper_file) {
+      console.warn("⚠️ ไม่มีไฟล์ PDF ให้ดาวน์โหลด");
+      return;
+    }
+
+    // KLA : เปิดลิงก์ไฟล์ PDF ในแท็บใหม่
+    window.open(research.paper_file, "_blank", "noopener,noreferrer");
+
+    // KLA : อัปเดตตัวนับการดาวน์โหลด
+    setDownloadCount((prev) => prev + 1);
+  };
 
   useEffect(() => {
+    
     if (!id) return;
+
+    
+
 
     const fetchResearch = async () => {
       try {
@@ -171,10 +223,18 @@ export default function ResearchDetailPage() {
 
         if (error) throw error;
 
-        setResearch(data || null);
-        setErrorMsg(data ? "" : "ไม่พบข้อมูลงานวิจัย");
+        // KLA:  ถ้า paper_file ไม่ใช่ URL เต็ม ให้แปลงเป็น public URL ของ Supabase Storage
+        if (data?.paper_file && !data.paper_file.startsWith("http")) {
+          const { data: fileUrl } = supabase.storage.from("paper_bk").getPublicUrl(data.paper_file);
+          data.paper_file = fileUrl.publicUrl;
+        }
 
-        // ✅ ดึงชื่อจริงของผู้เขียนจาก user_tb
+        setResearch(data || null); // KLA : ตั้งค่า research เป็น null ถ้าไม่มีข้อมูล
+        setErrorMsg(data ? "" : "ไม่พบข้อมูลงานวิจัย"); // KLA : ข้อความถ้าไม่พบข้อมูล
+
+
+
+        //  ดึงชื่อจริงของผู้เขียนจาก user_tb
         if (data?.user_id) {
           const { data: userData, error: userError } = await supabase
             .from("user_tb")
@@ -201,10 +261,34 @@ export default function ResearchDetailPage() {
 
     fetchResearch();
 
+    const fetchCurrentUser = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("user_tb")
+          .select("user_fullname")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        setCurrentUser({
+          user_id: user.id,
+          user_fullname: profile?.user_fullname || "ไม่ระบุชื่อ",
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching current user:", err);
+    }
+  };
+  fetchCurrentUser();
+
+
+
+
     const fetchComments = async () => {
       try {
         const { data, error } = await supabase
-          .from("paper_comment_mtb")
+          .from("comment_tb")
           .select(`
             comment_id,
             paper_id,
@@ -234,6 +318,10 @@ export default function ResearchDetailPage() {
 
     fetchComments();
   }, [id]);
+
+  
+
+
 
   if (!research)
     return <div className="text-center py-20 text-gray-500">{errorMsg || "กำลังโหลดข้อมูล..."}</div>;
@@ -273,18 +361,27 @@ export default function ResearchDetailPage() {
                 className="w-full h-full flex items-center justify-center text-center px-6"
                 style={{
                   backgroundColor: [
-                    "#2563EB",
-                    "#9333EA",
-                    "#DB2777",
-                    "#059669",
-                    "#EA580C",
-                    "#1E3A8A",
-                    "#047857",
+                    "#2563EB", // blue-600
+                    "#9333EA", // purple-600
+                    "#DB2777", // pink-600
+                    "#059669", // green-600
+                    "#EA580C", // orange-600
+                    "#1E3A8A", // indigo-900
+                    "#047857", // emerald-700
+                    "#DC2626", // red-600
+                    "#0EA5E9", // sky-500
+                    "#D97706", // amber-600
+                    "#7C3AED", // violet-600
+                    "#15803D", // green-700
+                    "#BE185D", // rose-700
+                    "#14B8A6", // teal-500
+                    "#3B82F6", // blue-500
+                    "#4F46E5", // indigo-600
                   ][Math.floor(Math.random() * 7)],
                 }}
               >
                 <span className="text-white text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
-                  {research.paper_title || "ไม่มีชื่อเรื่อง"} 
+                  {research.paper_title || "ไม่มีชื่อเรื่อง"}
                 </span>
               </div>
             )}
@@ -304,7 +401,7 @@ export default function ResearchDetailPage() {
             {research.paper_file ? (
               <iframe
                 src={research.paper_file}
-                className="w-full h-96 rounded-lg border"
+                className="w-full h-[700px] rounded-lg border"
                 title="PDF Viewer"
               />
             ) : (
@@ -323,10 +420,16 @@ export default function ResearchDetailPage() {
             </div>
           </section>
 
-          {/* Comment */}
+          {/* KLA : ส่วนแสดงComment ปรับใหม่ */}
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-6">คอมเมนต์</h2>
-            <CommentForm />
+            <CommentForm
+              paperId={id}
+              currentUser={currentUser} // ต้องมี { user_id, user_fullname }
+              onNewComment={(newComment) =>
+                setComments((prev) => [newComment, ...prev])
+              }
+            />
             <div className="space-y-4">
               {comments.map((c) => (
                 <Comment
@@ -346,15 +449,13 @@ export default function ResearchDetailPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">ดำเนินการ</h3>
             <div className="space-y-3">
               {research.paper_file && (
-                <a
-                  href={research.paper_file}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={handleDownload} // KLA : เพิ่มฟังก์ชันดาวน์โหลด
                   className={`w-full flex items-center justify-center space-x-2 px-4 py-3 text-white font-bold rounded-xl transition ${primaryBlue} shadow-lg shadow-blue-200/50`}
                 >
                   <Download className="w-5 h-5" />
                   <span>ดาวน์โหลด (PDF)</span>
-                </a>
+                </button>
               )}
               <button className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-white text-blue-600 font-semibold rounded-xl border-2 border-blue-600 hover:bg-blue-50 transition">
                 <Archive className="w-5 h-5" />
@@ -368,7 +469,7 @@ export default function ResearchDetailPage() {
             <div className="flex justify-around divide-x divide-gray-200">
               <StatItem Icon={Eye} count={research.paper_views || 0} label="รับชม" />
               <StatItem Icon={MessageSquare} count={comments.length} label="คอมเมนต์" />
-              <StatItem Icon={Download} count={research.paper_file ? 1 : 0} label="ดาวน์โหลด" />
+              <StatItem Icon={Download} count={downloadCount} label="ดาวน์โหลด" />
             </div>
           </div>
 
