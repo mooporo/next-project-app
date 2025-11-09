@@ -72,7 +72,7 @@ const KeywordTag = ({ label }) => (
   </span>
 );
 
-// --- Comment แสดงรูปผู้ใช้จริง ---
+// KLA  : Comment แสดงรูปผู้ใช้จริง 
 const Comment = ({ user, text, date, userId }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
 
@@ -190,7 +190,7 @@ export default function ResearchDetailPage() {
   const [errorMsg, setErrorMsg] = useState("");// KLA : ข้อความแสดงข้อผิดพลาด
   const [authorName, setAuthorName] = useState(""); // ✅ เพิ่ม state สำหรับชื่อผู้เขียน
   const [downloadCount, setDownloadCount] = useState(0); // KLA : เพิ่ม state สำหรับนับดาวน์โหลด
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // KLA : state สำหรับผู้ใช้ปัจจุบัน
 
   // KLA : ฟังก์ชันจัดการการดาวน์โหลดไฟล์ PDF
   const handleDownload = () => {
@@ -261,6 +261,7 @@ export default function ResearchDetailPage() {
 
     fetchResearch();
 
+    // KLA : ดึงข้อมูลผู้ใช้ปัจจุบัน
     const fetchCurrentUser = async () => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -285,6 +286,8 @@ export default function ResearchDetailPage() {
 
 
 
+
+    // KLA : ดึงคอมเมนต์ที่เกี่ยวข้องกับงานวิจัยนี้
     const fetchComments = async () => {
       try {
         const { data, error } = await supabase
@@ -307,7 +310,7 @@ export default function ResearchDetailPage() {
           comment: c.comment,
           created_at: c.created_at,
           user_fullname: c.user_tb?.user_fullname || "ไม่ระบุชื่อ",
-          user_id: c.user_id, // ✅ เพิ่ม user_id สำหรับโหลดรูป
+          user_id: c.user_id, // KLA : เพิ่ม user_id
         }));
 
         setComments(formatted);
@@ -337,7 +340,7 @@ export default function ResearchDetailPage() {
               {research.paper_title || "ไม่มีชื่อเรื่อง"}
             </h1>
             <div className="text-sm text-gray-500 flex flex-wrap space-x-4 mt-2">
-              <span>โดย: {authorName || research.user_id || "ไม่ระบุผู้เขียน"}</span> {/* ✅ แก้ให้แสดงชื่อจริง */}
+              <span>โดย: {authorName || research.user_id || "ไม่ระบุผู้เขียน"}</span> 
               <span>
                 วันที่เผยแพร่:{" "}
                 {research.created_at
@@ -425,7 +428,7 @@ export default function ResearchDetailPage() {
             <h2 className="text-xl font-bold text-gray-800 mb-6">คอมเมนต์</h2>
             <CommentForm
               paperId={id}
-              currentUser={currentUser} // ต้องมี { user_id, user_fullname }
+              currentUser={currentUser} // KLA: ส่งข้อมูลผู้ใช้ปัจจุบัน
               onNewComment={(newComment) =>
                 setComments((prev) => [newComment, ...prev])
               }
@@ -437,7 +440,7 @@ export default function ResearchDetailPage() {
                   user={c.user_fullname}
                   text={c.comment}
                   date={new Date(c.created_at).toLocaleString("th-TH")}
-                  userId={c.user_id} // ✅ ส่ง userId เพื่อโหลดรูป
+                  userId={c.user_id} // KLA  : ส่ง userId เพื่อโหลดรูป
                 />
               ))}
             </div>
