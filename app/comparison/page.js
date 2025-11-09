@@ -4,16 +4,16 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Search, Eye, MessageSquare, Plus, Trash2, ArrowBigDownDash } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth";
+import { N8N_TUNNEL_URL } from "../lib/config";
+import axios from "axios";
 
-const mockResearchData = [
-  { id: 1, title: "การวิเคราะห์ปัจจัยที่มีผลต่อการยอมรับ AI ในองค์กร", year: 2023 },
-  { id: 2, title: "ผลกระทบของ Big Data ต่อการตัดสินใจทางการตลาด", year: 2022 },
-  { id: 3, title: "เปรียบเทียบประสิทธิภาพของ Machine Learning Models ในการพยากรณ์", year: 2024 },
-  { id: 4, title: "แนวทางการประยุกต์ใช้ Blockchain ในระบบ Supply Chain", year: 2021 },
-  { id: 5, title: "การพัฒนาโมเดลจำลองเพื่อทำนายความเสี่ยงด้านเครดิต", year: 2023 },
+const mockCompareData = [
+  { id: 1, title: "การชะลอความสุกของกล้วยไข่ด้วยถ่านไม้", score: 0.985, abstract: "โครงงานวิชาวิทยาศาสตร์..." },
+  { id: 2, title: "เทคนิคการเก็บรักษาผลไม้หลังการเก็บเกี่ยว", score: 0.912, abstract: "ศึกษาการใช้สารเคมี..." },
+  { id: 3, title: "ผลกระทบของถ่านต่อการสลายตัวของเอทิลีน", score: 0.850, abstract: "วิเคราะห์คุณสมบัติของถ่าน..." },
 ];
 
-//popup สำหรับ search
+//เจมส์ : popup สำหรับ search
 const ShowSearchPopup = ({ Plus, onSearchChange, currentSearchQuery, onSelectResearch, papers, onPinnedEnabledClick }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -144,15 +144,35 @@ const ShowSearchPopup = ({ Plus, onSearchChange, currentSearchQuery, onSelectRes
   );
 }
 
+//เจมส์ : แสดงรายการความคล้ายคลึง
+const CompareResultItem = ({ item }) => (
+  <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 hover:bg-gray-100 transition cursor-pointer">
+    <div className="flex justify-between items-start mb-2">
+      <span className={`text-xl font-bold ${parseFloat(item.score) > 0.9 ? 'text-green-600' : 'text-yellow-600'}`}>
+        {(parseFloat(item.score) * 100).toFixed(1)}%
+      </span>
+    </div>
+    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{item.abstract}</p>
+    <div className="text-xs text-gray-500">
+      คะแนนความคล้ายคลึง: {parseFloat(item.score).toFixed(3)}
+    </div>
+  </div>
+);
+
 export default function ComparisonPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [isPinnedEnabled, setIsPinnedEnabled] = useState(false);
 
+  //เจมส์ : ค่าของเอกสารสำหรับแสดงให้ผู้ใช้เห็น
   const [papers, setPapers] = useState(null);
+  //เจมส์ : เก็บเอกสารที่ถูกปักหมุด
   const [pinPaper, setPinPaper] = useState([]);
+  //เจมส์ : เก็บเอกสารที่ไม่ถูกปักหมุด
   const [unpinPaper, setUnpinPaper] = useState([]);
+  //เจมส์ : เก็บค่าของเอกสารที่เทียบ
+  const [comparePaper, setComparePaper] = useState([]);
 
   const { user } = useAuth();
 
@@ -236,6 +256,25 @@ export default function ComparisonPage() {
     // console.log(isPinnedEnabled)
   };
 
+  const handleCompareClick = async () => {
+
+    // console.log(selectedPaper.paper_id);
+
+    try {
+      const res = await axios.get(`${N8N_TUNNEL_URL}/webhook/8c1db8bc-42a9-4a9c-8a68-82546d1c3254/comparison/${selectedPaper.paper_id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+      console.log(res.data.data);
+      setComparePaper(res.data.data);
+    } catch (error) {
+      console.log("เกิดข้อผิดพลาดในการเปรียบเทียบ" + error);
+    }
+
+  };
+
   return (
     // หน้าเปรียบเทียบ
     <div className="flex flex-col items-center">
@@ -249,7 +288,7 @@ export default function ComparisonPage() {
 
         {selectedPaper === null ? (
 
-          <div className="bg-white border rounded-2xl w-full md:w-[700px] p-6 flex flex-col justify-center items-center text-center shadow-sm">
+          <div className="bg-white border rounded-2xl w-full md:w-[800px] p-6 flex flex-col justify-center items-center text-center shadow-sm">
 
             <ShowSearchPopup
               Plus={Plus}
@@ -270,7 +309,7 @@ export default function ComparisonPage() {
 
         ) : (
 
-          <div className="bg-white rounded-2xl shadow-md w-full md:w-[700px] p-6 relative border border-gray-100 flex flex-col">
+          <div className="bg-white rounded-2xl shadow-md w-full md:w-[800px] p-6 relative border border-gray-100 flex flex-col">
             {/* ปุ่มปิด (Close Button) - ตำแหน่ง Absolute */}
             <button
               onClick={() => setSelectedPaper(null)}
@@ -279,7 +318,6 @@ export default function ComparisonPage() {
             >
               <Trash2 className="h-6 w-6" />
             </button>
-            {/* สังเกต: เราให้ div ตัวแม่เป็น relative เพื่อให้ปุ่ม absolute ทำงานได้ถูกต้อง */}
 
             {/* ปก */}
             <div className="bg-blue-500 text-white h-60 rounded-xl flex items-center justify-center text-xl font-semibold mb-4 overflow-hidden">
@@ -340,7 +378,9 @@ export default function ComparisonPage() {
             </div>
 
             {/* ปุ่มดูรายละเอียด */}
-            <button className="w-full bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 transition mt-auto">
+            <button
+              onClick={handleCompareClick}
+              className="w-full bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 transition mt-auto">
               เริ่มเปรียบเทียบ 🚀
             </button>
           </div>
@@ -354,10 +394,21 @@ export default function ComparisonPage() {
           <ArrowBigDownDash className="text-gray-500" />
         </div>
 
-        <div className="bg-white border-2 border-dashed border-gray-500 rounded-2xl w-full md:w-[700px] p-6 flex flex-col justify-center items-center text-center shadow-sm mb-10">
-          <h1 className="text-gray-500 text-xl mb-2">รอการเปรียบเทียบ</h1>
-          <p className="text-gray-500">รายการเอกสารที่คล้ายคลึงจะแสดงเมื่อประมวลผลเสร็จสิ้น...</p>
-        </div>
+        {comparePaper?.length === 0 ? (
+          <div className="bg-white border-2 border-dashed border-gray-500 rounded-2xl w-full md:w-[800px] p-6 flex flex-col justify-center items-center text-center shadow-sm mb-10">
+            <h1 className="text-gray-500 text-xl mb-2">รอการเปรียบเทียบ</h1>
+            <p className="text-gray-500">รายการเอกสารที่คล้ายคลึงจะแสดงเมื่อประมวลผลเสร็จสิ้น...</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-md w-full md:w-[800px] p-6 relative border border-gray-100 flex flex-col mb-10">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-700">
+              พบเอกสารที่เกี่ยวข้อง {comparePaper?.length} ฉบับ
+            </h2>
+            {comparePaper?.map((item, index) => (
+              <CompareResultItem key={index} item={item} />
+            ))}
+          </div>
+        )}
 
       </div>
 
