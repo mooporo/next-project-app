@@ -245,19 +245,21 @@ export default function SearchPage() {
     const fetchedPinnedIds = await fetchPinnedData(user?.user_id);
     setPinnedIds(fetchedPinnedIds);
 
-    // 🔹 ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb
-    const { data: papers, error } = await supabase
-      .from("paper_tb")
-      .select(`
-          paper_id,
-          user_id,
-          paper_title,
-          paper_image,
-          paper_views,
-          created_at,
-          user_tb:user_id ( user_fullname )
-        `)
-      .order("created_at", { ascending: false });
+  // 🔹 ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb และกรองเฉพาะที่อนุมัติแล้ว
+  const { data: papers, error } = await supabase
+    .from("paper_tb")
+    .select(`
+      paper_id,
+      user_id,
+      paper_title,
+      paper_image,
+      paper_views,
+      created_at,
+      user_tb:user_id ( user_fullname ),
+      paper_status
+    `)
+  .eq("paper_status", 2) // 🔹 เพิ่มตรงนี้
+  .order("created_at", { ascending: false });
 
     if (error) {
       console.error("❌ Error fetching data:", error);

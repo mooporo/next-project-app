@@ -22,13 +22,13 @@ const SortDropdown = ({ value, onChange }) => (
 const ResearchCard = ({ title, id, date, author, status, onApprove, onReject, onView }) => {
   let statusClass = "";
   switch (status) {
-    case "ตรวจรอบ":
+    case "รออนุมัติ":
       statusClass = "bg-yellow-100 text-yellow-800 border border-yellow-300";
       break;
     case "อนุมัติ":
       statusClass = "bg-green-100 text-green-800 border border-green-300";
       break;
-    case "ต้องการแก้ไข":
+    case "ไม่อนุมัติ":
       statusClass = "bg-red-100 text-red-800 border border-red-300";
       break;
     default:
@@ -116,13 +116,11 @@ export default function VerifyResearchPage() {
             author: item.users?.user_fullname || "ไม่ทราบชื่อ",
             date: new Date(item.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }),
             status:
-              item.paper_status === 1
-                ? "ตรวจรอบ"
-                : item.paper_status === 2
+              item.paper_status === 2
                 ? "อนุมัติ"
                 : item.paper_status === 3
-                ? "ต้องการแก้ไข"
-                : "ไม่ทราบสถานะ",
+                ? "ไม่อนุมัติ"
+                : "รออนุมัติ", // ✅ ค่าเริ่มต้นงานใหม่
           }))
         );
       }
@@ -275,11 +273,11 @@ export default function VerifyResearchPage() {
                       <td className="px-6 py-4 border-b">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            data.status === "ตรวจรอบ"
+                            data.status === "รออนุมัติ"
                               ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
                               : data.status === "อนุมัติ"
                               ? "bg-green-100 text-green-800 border border-green-300"
-                              : data.status === "ต้องการแก้ไข"
+                              : data.status === "ไม่อนุมัติ"
                               ? "bg-red-100 text-red-800 border border-red-300"
                               : "bg-gray-100 text-gray-800 border border-gray-300"
                           }`}

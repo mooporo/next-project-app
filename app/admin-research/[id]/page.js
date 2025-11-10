@@ -15,7 +15,6 @@ import {
 
 import DrawerAdmin from "../../components/DrawerAdmin";
 
-
 const STORAGE_BUCKET = "user_bk";
 
 const StatItem = ({ Icon, count, label }) => (
@@ -90,7 +89,7 @@ export default function AdminResearchDetailPage() {
   const [comments, setComments] = useState([]);
   const [authorName, setAuthorName] = useState("");
   const [status, setStatus] = useState("รออนุมัติ");
-  const [drawerOpen, setDrawerOpen] = useState(false); // ✅ เพิ่ม state drawer
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleDrawerToggle = (isOpen) => {
     setDrawerOpen(isOpen);
@@ -105,8 +104,14 @@ export default function AdminResearchDetailPage() {
         .eq("paper_id", id)
         .maybeSingle();
       if (data) {
+        // ปรับให้ตรงกับหน้า VerifyResearchPage
+        let mappedStatus = "รออนุมัติ";
+        if (data.paper_status === 2 || data.paper_status === "อนุมัติ") mappedStatus = "อนุมัติ";
+        else if (data.paper_status === 3 || data.paper_status === "ไม่อนุมัติ") mappedStatus = "ไม่อนุมัติ";
+
         setResearch(data);
-        setStatus(data.paper_status || "รออนุมัติ");
+        setStatus(mappedStatus);
+
         const { data: userData } = await supabase
           .from("user_tb")
           .select("user_fullname")
@@ -119,12 +124,12 @@ export default function AdminResearchDetailPage() {
   }, [id]);
 
   const handleApprove = async (approved) => {
-    const newStatus = approved ? "อนุมัติแล้ว" : "ไม่อนุมัติ";
+    const newStatus = approved ? 2 : 3; // เก็บเป็นเลขใน DB
     const { error } = await supabase
       .from("paper_tb")
       .update({ paper_status: newStatus })
       .eq("paper_id", id);
-    if (!error) setStatus(newStatus);
+    if (!error) setStatus(approved ? "อนุมัติ" : "ไม่อนุมัติ");
   };
 
   if (!research)
@@ -134,10 +139,8 @@ export default function AdminResearchDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 sm:p-10 font-inter flex">
-      {/* ================= DrawerAdmin ================= */}
       <DrawerAdmin onToggle={handleDrawerToggle} />
 
-      {/* Main Content */}
       <div
         className={`flex-1 transition-all duration-300 overflow-auto`}
         style={{ marginLeft: drawerOpen ? "18rem" : "0" }}
@@ -155,7 +158,6 @@ export default function AdminResearchDetailPage() {
               </span>
             </div>
 
-            {/* --- หน้าปกงานวิจัย --- */}
             <div className="w-full h-72 rounded-xl overflow-hidden shadow-lg flex items-center justify-center relative mt-4">
               {research.paper_image ? (
                 <img
@@ -206,14 +208,13 @@ export default function AdminResearchDetailPage() {
           </div>
 
           <div className="space-y-8 mt-8">
-            {/* --- สถานะเอกสาร ปรับใหญ่ขึ้นสมส่วน --- */}
             <div className="inline-flex items-center bg-white px-4 py-3 rounded-xl shadow-lg border space-x-3">
               <span className="font-semibold text-gray-800 text-base">
                 สถานะเอกสาร:
               </span>
               <span
                 className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                  status === "อนุมัติแล้ว"
+                  status === "อนุมัติ"
                     ? "bg-green-100 text-green-700"
                     : status === "ไม่อนุมัติ"
                     ? "bg-red-100 text-red-700"
