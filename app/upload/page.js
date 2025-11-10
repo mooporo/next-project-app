@@ -71,6 +71,7 @@ const UploadPage = () => {
     setIsAutoGenEnabled(prev => !prev);
   };
 
+  //เจมส์ : เมื่อกดปุ่ม Auto Gen
   const handleAutoGenClick = async () => {
     if (!paperFile) {
       alert("กรุณาอัปโหลดไฟล์เอกสารก่อน");
