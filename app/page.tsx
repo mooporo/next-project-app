@@ -1,33 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Image from "next/image";
 import { Search, Upload, Users } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; 
-import { supabase } from "./lib/supabaseClient"; 
-import { useAuth } from "./auth"; 
-import { MoreHorizontalIcon, Pin, PinOff } from "lucide-react";
 
-// --- Type ของ user ตามตาราง user_tb 
-interface User {
-  user_id: number;
-  user_fullname?: string;
-}
-
-
-// --- type ของ useAuth ---
-interface UseAuthReturn {
-  user?: User | null;
-}
-
-// --- Feature Card ---
+// --- Type Definitions ---
 type Feature = {
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
   title: string;
   subtitle: string;
 };
 
+type ResearchItem = {
+  id: string;
+  color: string;
+  title: string;
+  author: string;
+  date: string;
+  views: string;
+  comments: string;
+};
+
+// --- Feature Card ---
 const FeatureCard: React.FC<Feature> = ({ icon: Icon, title, subtitle }) => (
   <div className="bg-white text-center p-8 rounded-2xl shadow-md hover:shadow-2xl border border-gray-100 transition duration-300 hover:-translate-y-1 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-blue-100/80 fade-in">
     <div className="mx-auto w-16 h-16 flex items-center justify-center mb-5 text-blue-600 rounded-full bg-blue-50 shadow-inner hover:rotate-6 transition-transform duration-300">
@@ -38,179 +33,132 @@ const FeatureCard: React.FC<Feature> = ({ icon: Icon, title, subtitle }) => (
   </div>
 );
 
-// --- Research Card (เหมือนตัวอย่างของคุณ) ---
-interface ResearchItem {
-  paper_id: number;
-  paper_title: string;
-  paper_image?: string;
-  paper_views?: number;
-  user_fullname?: string;
-  comment_count?: number;
-  created_at?: string;
-  is_pinned?: boolean;
-}
-
-interface ResearchCardProps {
-  item: ResearchItem;
-  onClick: (item: ResearchItem) => void;
-  isPinned?: boolean;
-  paperId: number;
-  onPinned: (paperId: number, isPinned?: boolean) => void;
-}
-
-const ResearchCard: React.FC<ResearchCardProps> = ({ item, onClick, isPinned, paperId, onPinned }) => {
-  const [cardMenuState, setCardMenuState] = useState(false);
-  const [bgColor] = useState(() => {
-    const colors = ["#2563EB","#1E40AF","#9333EA","#7E22CE","#DB2777","#BE185D","#059669","#047857","#16A34A","#EA580C","#C2410C","#1E3A8A","#0F766E","#DC2626"];
-    return colors[Math.floor(Math.random()*colors.length)];
-  });
-
-  const handleCardClick = () => onClick(item);
-  const handleToggleMenu = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => { e.stopPropagation(); setCardMenuState(prev=>!prev); };
-  const handlePinClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => { e.stopPropagation(); onPinned(paperId, isPinned); };
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition duration-300 cursor-pointer relative overflow-hidden border border-gray-100 hover:-translate-y-1 transform hover:scale-102" onClick={handleCardClick}>
-      <div className="h-40 flex items-center justify-center overflow-hidden">
-        {item.paper_image ? (
-          <img src={item.paper_image} alt={item.paper_title} className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500"/>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-center px-6" style={{ backgroundColor: bgColor }}>
-            <span className="text-white text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
-              {item.paper_title || "ไม่มีชื่อเรื่อง"}
-            </span>
-          </div>
-        )}
+// --- Research Card ---
+const ResearchCard: React.FC<ResearchItem> = ({
+  id,
+  color,
+  title,
+  author,
+  date,
+  views,
+  comments,
+}) => (
+  <Link href={`/งานวิจัย/${id}`} className="group">
+    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden cursor-pointer transition duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-300 fade-in">
+      <div
+        className={`${color} h-28 p-4 flex items-center justify-center text-center`}
+      >
+        <span className="text-white text-lg font-bold tracking-wide">
+          Research Cover
+        </span>
       </div>
-      <div className="p-4 space-y-2">
-        <h3 className="text-gray-900 font-bold text-lg leading-snug truncate hover:text-blue-600 transition-colors duration-300">{item.paper_title}</h3>
-        <p className="text-sm text-gray-500 truncate">โดย: {item.user_fullname || "ไม่ระบุชื่อ"}</p>
-        <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500">
-          <div className="flex space-x-4">
-            <div className="flex items-center space-x-1 text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <div className="p-5 space-y-2">
+        <h4 className="text-gray-800 text-sm font-semibold line-clamp-2 min-h-[40px] leading-snug group-hover:text-blue-600 transition-colors">
+          {title}
+        </h4>
+        <div className="text-xs text-gray-500">
+          <p>{author}</p>
+        </div>
+        <div className="flex justify-between items-center border-t border-gray-100 pt-3 text-xs text-gray-500 mt-3">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-1"
+              >
                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <span className="font-medium">{item.paper_views?.toLocaleString() || 0}</span>
+              <span>{views}</span>
             </div>
-            <div className="flex items-center space-x-1 text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <div className="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-1"
+              >
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              <span className="font-medium">{item.comment_count || 0} คอมเมนต์</span>
+              <span>{comments}</span>
             </div>
           </div>
-          <span className="text-xs text-gray-400 italic">{item.created_at ? new Date(item.created_at).toLocaleDateString("th-TH") : "-"}</span>
-          <button className="rounded-full hover:bg-gray-100 cursor-pointer transition-colors p-1" aria-label="More options" onClick={handleToggleMenu}>
-            <MoreHorizontalIcon className="h-6 w-6 text-gray-600 hover:text-blue-600 transition-colors" />
-          </button>
+          <span className="text-xs text-gray-400">{date}</span>
         </div>
-        {cardMenuState && (
-          <div className="absolute right-2 bottom-10 mt-10 w-44 rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 origin-top-right animate-fadeIn" onClick={(e)=>e.stopPropagation()}>
-            <div className="py-1">
-              {!isPinned ? (
-                <button onClick={handlePinClick} className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                  <Pin className="h-4 w-4 mr-2 text-blue-600" /> ปักหมุด
-                </button>
-              ) : (
-                <button onClick={handlePinClick} className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors">
-                  <PinOff className="h-4 w-4 mr-2 text-red-500" /> เลิกปักหมุด
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
-  );
-};
+  </Link>
+);
 
-// --- Home Page ---
 export default function Page() {
-  const router = useRouter();
-  const { user } = useAuth() as UseAuthReturn; // <-- แก้ตรงนี้เพื่อกำหนด type ให้ user
-  const [researchItems, setResearchItems] = useState<ResearchItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
-  
   const features: Feature[] = [
-    { icon: Search, title: "ค้นหาง่าย", subtitle: "ค้นหาและเข้าถึงงานวิจัยได้ง่ายขึ้น" },
-    { icon: Upload, title: "อัปโหลดเอกสาร", subtitle: "แชร์ผลงานของคุณพร้อมอัปเดตข้อมูลได้ตลอด" },
-    { icon: Users, title: "สร้างชุมชน", subtitle: "เชื่อมต่อและร่วมมือกับผู้เชี่ยวชาญ และเพื่อนร่วมงาน" },
+    {
+      icon: Search,
+      title: "ค้นหาง่าย",
+      subtitle: "ค้นหาและเข้าถึงงานวิจัยได้ง่ายขึ้น",
+    },
+    {
+      icon: Upload,
+      title: "อัปโหลดเอกสาร",
+      subtitle: "แชร์ผลงานของคุณพร้อมอัปเดตข้อมูลได้ตลอด",
+    },
+    {
+      icon: Users,
+      title: "สร้างชุมชน",
+      subtitle: "เชื่อมต่อและร่วมมือกับผู้เชี่ยวชาญ และเพื่อนร่วมงาน",
+    },
   ];
 
-  const fetchPinnedData = async (): Promise<Set<number>> => {
-    if(!user?.user_id) return new Set();
-    const { data, error } = await supabase.from('paper_pin_mtb').select('paper_id').eq('user_id', user?.user_id);
-    if(error) return new Set();
-    return new Set(data.map((item:any)=>item.paper_id));
-  }
-
-  const fetchResearchData = async () => {
-    setLoading(true);
-    const fetchedPinnedIds = await fetchPinnedData();
-    setPinnedIds(fetchedPinnedIds);
-
-    const { data: papers } = await supabase.from("paper_tb").select(`
-      paper_id,
-      user_id,
-      paper_title,
-      paper_image,
-      paper_views,
-      created_at,
-      user_tb:user_id ( user_fullname ),
-      paper_status
-    `).eq("paper_status",2).order("created_at",{ascending:false});
-
-    const { data: commentsData } = await supabase.from("comment_tb").select("paper_id, comment_id");
-
-    const commentCountMap: Record<string, number> = {};
-    (commentsData || []).forEach((c:any)=> {
-      const pid = String(c.paper_id).trim();
-      commentCountMap[pid] = (commentCountMap[pid]||0)+1;
-    });
-
-    const combinedData: ResearchItem[] = (papers || []).map((paper:any) => {
-      const paperIdAsString = String(paper.paper_id).trim();
-      const is_pinned = fetchedPinnedIds.has(paper.paper_id);
-      return {
-        ...paper,
-        is_pinned,
-        user_fullname: paper.user_tb?.user_fullname || "ไม่ระบุชื่อ",
-        comment_count: commentCountMap[paperIdAsString] || 0,
-      };
-    });
-
-    setResearchItems(combinedData);
-    setLoading(false);
-  }
-
-  useEffect(()=>{ if(user?.user_id) fetchResearchData(); }, [user?.user_id]);
-
-  const handleView = async (item: ResearchItem) => {
-    const newViews = (item.paper_views||0)+1;
-    await supabase.from("paper_tb").update({ paper_views: newViews }).eq("paper_id", item.paper_id);
-    setResearchItems(prev=>prev.map(r=>r.paper_id===item.paper_id ? {...r,paper_views:newViews}:r));
-    router.push(`/research/${item.paper_id}`);
-  }
-
-  const handlePinClick = async (paperId:number,isPinned?:boolean) => {
-    try{
-      if(isPinned){
-        await supabase.from('paper_pin_mtb').delete().eq('paper_id',paperId).eq('user_id',user?.user_id);
-      } else {
-        await supabase.from('paper_pin_mtb').insert([{user_id:user?.user_id,paper_id:paperId}]);
-      }
-      fetchResearchData();
-    }catch(e){ console.error(e); }
-  }
+  const researchItems: ResearchItem[] = [
+    {
+      id: "1",
+      color: "bg-blue-600",
+      title: "การพัฒนาเวชระเบียนแบบนำทางสำหรับการประเมิน...",
+      author: "รศ.ดร.ชินวัตร",
+      date: "17 ก.ค. 2566",
+      views: "1,200",
+      comments: "15",
+    },
+    {
+      id: "2",
+      color: "bg-green-500",
+      title: "ผลกระทบของ Climate Change ต่อการเกษตรและ...",
+      author: "อ.ดร.ปิติ",
+      date: "20 พ.ค. 2566",
+      views: "980",
+      comments: "8",
+    },
+    {
+      id: "3",
+      color: "bg-purple-600",
+      title: "แนวคิด Blockchain กับระบบ Supply Chain...",
+      author: "วิทยา ดอนหาด",
+      date: "1 ก.ค. 2566",
+      views: "786",
+      comments: "22",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 font-['Inter',_sans-serif]">
       <main>
         {/* Hero Section */}
-        <section className="relative h-[550px] overflow-hidden bg-cover bg-center bg-fixed fade-in" style={{backgroundImage:"url('/backgroud2.png')"}}>
+        <section
+          className="relative h-[550px] overflow-hidden bg-cover bg-center bg-fixed fade-in"
+          style={{ backgroundImage: "url('/backgroud2.png')" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A]/90 via-[#2563EB]/80 to-[#60A5FA]/70 opacity-40"></div>
           <div className="absolute inset-0 max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-white z-[1]">
             <div className="w-full md:w-3/5 space-y-6 pt-10 md:pt-0">
@@ -220,14 +168,26 @@ export default function Page() {
               <p className="text-lg md:text-xl font-light max-w-md text-blue-100">
                 สถานที่ที่เปิดโอกาสในการเข้าถึงแหล่งข้อมูล ศึกษา และสร้างคุณค่าทางปัญญาของคุณ
               </p>
-              <Link href="/search" className="inline-block bg-white text-blue-600 font-semibold py-3 px-8 rounded-xl shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-[1.05] hover:shadow-blue-200/50 hover:scale-110 transition-transform duration-300">
+              <Link
+                href="/search"
+                className="inline-block bg-white text-blue-600 font-semibold py-3 px-8 rounded-xl shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-[1.05] hover:shadow-blue-200/50 hover:scale-110 transition-transform duration-300"
+              >
                 เริ่มต้นใช้งาน
               </Link>
             </div>
+
+            {/* รูป Siam Archive */}
             <div className="w-full md:w-2/5 flex justify-center md:justify-end pt-12 md:pt-0">
               <div className="bg-white p-2 rounded-2xl shadow-2xl w-[320px] h-[320px] flex items-center justify-center hover:shadow-blue-400/40 transition duration-500 overflow-hidden fade-in">
                 <div className="relative w-full h-full">
-                  <Image src="/siam_archive.png" alt="Siam Archive" fill unoptimized priority className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700"/>
+                  <Image
+                    src="/siam_archive.png"
+                    alt="Siam Archive"
+                    fill
+                    unoptimized
+                    priority
+                    className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700"
+                  />
                 </div>
               </div>
             </div>
@@ -237,12 +197,25 @@ export default function Page() {
         {/* Features Section */}
         <section className="py-20 bg-white fade-in">
           <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">แพลตฟอร์มที่ออกแบบมาเพื่อคุณ</h2>
-            <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto">เราออกแบบมาเพื่อเป็นเครื่องมือและบริการจัดการงานวิจัยให้คุณเข้าถึงง่ายและมีประสิทธิภาพ ด้วยระบบที่ใช้งานง่าย</p>
+            <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">
+              แพลตฟอร์มที่ออกแบบมาเพื่อคุณ
+            </h2>
+            <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto">
+              เราออกแบบมาเพื่อเป็นเครื่องมือและบริการจัดการงานวิจัยให้คุณเข้าถึงง่ายและมีประสิทธิภาพ ด้วยระบบที่ใช้งานง่าย
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {features.map((feature,index)=>{
-                const linkHref = feature.title==="ค้นหาง่าย"?"/search":feature.title==="อัปโหลดเอกสาร"?"/upload":"#";
-                return <Link key={index} href={linkHref}><FeatureCard {...feature}/></Link>;
+              {features.map((feature, index) => {
+                const linkHref =
+                  feature.title === "ค้นหาง่าย"
+                    ? "/search"
+                    : feature.title === "อัปโหลดเอกสาร"
+                    ? "/upload"
+                    : "#";
+                return (
+                  <Link key={index} href={linkHref}>
+                    <FeatureCard {...feature} />
+                  </Link>
+                );
               })}
             </div>
           </div>
@@ -253,15 +226,18 @@ export default function Page() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold text-gray-800">งานวิจัยล่าสุด</h2>
-              <Link href="/search" className="text-blue-600 font-semibold text-sm hover:text-blue-700 transition duration-150 flex items-center space-x-1">
+              <Link
+                href="/search"
+                className="text-blue-600 font-semibold text-sm hover:text-blue-700 transition duration-150 flex items-center space-x-1"
+              >
                 <span className="text-gray-500 text-sm font-normal">ดูทั้งหมด</span>
                 <span>→</span>
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading ? <p className="text-gray-500 col-span-full text-center py-20">กำลังโหลด...</p>
-              : researchItems.length===0 ? <p className="text-gray-500 col-span-full text-center py-20">ไม่พบงานวิจัย</p>
-              : researchItems.map(item => <ResearchCard key={item.paper_id} item={item} onClick={handleView} isPinned={item.is_pinned} paperId={item.paper_id} onPinned={handlePinClick}/>)}
+              {researchItems.map((item, index) => (
+                <ResearchCard key={index} {...item} />
+              ))}
             </div>
           </div>
         </section>
@@ -270,15 +246,24 @@ export default function Page() {
         <section className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-500 py-16 fade-in">
           <div className="max-w-5xl mx-auto px-6 text-center text-white space-y-4">
             <h2 className="text-3xl font-bold">เริ่มต้นแบ่งปันผลงานของคุณ</h2>
-            <p className="text-lg font-light max-w-xl mx-auto">สำหรับทุกงานวิจัยที่คุณจะทำ และค้นคว้าแหล่งงานวิจัยของทุกคน</p>
-            <Link href="/register" className="bg-white text-blue-600 font-bold py-3 px-10 rounded-xl shadow-lg hover:bg-gray-100 transition duration-300 mt-4 transform hover:scale-[1.05] hover:shadow-blue-300/50 hover:-translate-y-1 transition-transform duration-300">สมัครสมาชิกเลย</Link>
+            <p className="text-lg font-light max-w-xl mx-auto">
+              สำหรับทุกงานวิจัยที่คุณจะทำ และค้นคว้าแหล่งงานวิจัยของทุกคน
+            </p>
+            <Link
+              href="/register"
+              className="bg-white text-blue-600 font-bold py-3 px-10 rounded-xl shadow-lg hover:bg-gray-100 transition duration-300 mt-4 transform hover:scale-[1.05] hover:shadow-blue-300/50 hover:-translate-y-1 transition-transform duration-300"
+            >
+              สมัครสมาชิกเลย
+            </Link>
           </div>
         </section>
       </main>
 
       {/* Footer */}
       <footer className="bg-gray-900 border-t border-gray-700 py-4 fade-in">
-        <div className="text-center text-gray-400 text-xs hover:text-gray-200 transition-colors duration-200">© 2025 Siam Archive. สงวนลิขสิทธิ์.</div>
+        <div className="text-center text-gray-400 text-xs hover:text-gray-200 transition-colors duration-200">
+          © 2025 Siam Archive. สงวนลิขสิทธิ์.
+        </div>
       </footer>
     </div>
   );
