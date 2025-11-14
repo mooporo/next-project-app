@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import { Download, Archive, Eye, MessageSquare, UserCircle } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react"; // KLA : ไอคอนแก้ไขและลบ
 
 const STORAGE_BUCKET = "user_bk";
 
@@ -72,9 +73,11 @@ const KeywordTag = ({ label }) => (
   </span>
 );
 
-// KLA  : Comment แสดงรูปผู้ใช้จริง 
-const Comment = ({ user, text, date, userId }) => {
+// KLA  : Comment แสดงรูปผู้ใช้จริง, แก้ไข และ ลบคอมเมนต์
+const Comment = ({ user, text, date, userId, currentUser, onUpdate, onDelete, commentId }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState(text);
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -97,6 +100,36 @@ const Comment = ({ user, text, date, userId }) => {
     fetchAvatar();
   }, [userId]);
 
+  // KLA : ฟังก์ชันจัดการการบันทึกการแก้ไขคอมเมนต์
+  const handleSave = async () => {
+    if (!editedText.trim()) return;
+    try {
+      const { error } = await supabase
+        .from("comment_tb")
+        .update({ comment: editedText })
+        .eq("comment_id", commentId);
+      if (error) throw error;
+      setIsEditing(false);
+      onUpdate(commentId, editedText);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+    }
+  };
+
+  // KLA : ฟังก์ชันจัดการการลบคอมเมนต์
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("comment_tb")
+        .delete()
+        .eq("comment_id", commentId);
+      if (error) throw error;
+      onDelete(commentId);
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+    }
+  };
+  // KLA : ส่วนแสดงคอมเมนต์ พร้อมปุ่มแก้ไขและลบ  
   return (
     <div className="flex space-x-4 py-4 border-b last:border-b-0">
       {avatarUrl ? (
@@ -108,12 +141,67 @@ const Comment = ({ user, text, date, userId }) => {
       ) : (
         <UserCircle className="w-8 h-8 text-gray-400 flex-shrink-0 mt-1" />
       )}
+
       <div className="flex-grow">
         <div className="flex items-center justify-between mb-1">
           <div className="font-semibold text-gray-800">{user}</div>
-          <div className="text-xs text-gray-400">{date}</div>
+          {currentUser?.user_id === userId && (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="p-1 hover:bg-blue-100 rounded-full transition"
+                title="แก้ไข"
+              >
+                <Edit className="w-4 h-4 text-blue-600" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-1 hover:bg-red-100 rounded-full transition"
+                title="ลบ"
+              >
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </button>
+            </div>
+          )}
         </div>
-        <p className="text-gray-600 text-sm leading-relaxed">{text}</p>
+
+        {/* ข้อความคอมเมนต์ */}
+        {isEditing ? (
+          <div className="flex space-x-2 mb-1">
+            <textarea
+              className="w-full p-2 border border-gray-300 rounded"
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault(); // KLA :ป้องกันขึ้นบรรทัดใหม่ เมื่อกด Enter หรือก็กันหลอน
+                  handleSave();       // KLA: กด Enter → บันทึก
+                }
+              }}
+            />
+            <button
+              onClick={handleSave}
+              className="px-3 py-1 bg-blue-600 text-white rounded"
+            >
+              บันทึก
+            </button>
+          </div>
+        ) : (
+          //KLA : แสดงข้อความคอมเมนต์
+          <p className="text-gray-600 text-sm leading-relaxed mb-1 break-words whitespace-pre-wrap overflow-wrap break-all">
+            {text}
+          </p>
+
+        )}
+
+
+        {currentUser?.user_id === userId && (
+          <div className="text-xs text-gray-400 mt-1">{date}</div>
+        )}
+
+        {currentUser?.user_id !== userId && (
+          <div className="text-xs text-gray-400 mt-1">{date}</div>
+        )}
       </div>
     </div>
   );
@@ -169,6 +257,12 @@ const CommentForm = ({ paperId, currentUser, onNewComment }) => {
         placeholder="กรุณาพิมพ์ข้อความ..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault(); // KLA :ป้องกันขึ้นบรรทัดใหม่ เมื่อกด Enter หรือก็กันหลอน
+            handleSubmit(e);    // KLA: กด Enter → ส่งคอมเมนต์
+          }
+        }}
       ></textarea>
       <button
         type="submit"
@@ -207,10 +301,10 @@ export default function ResearchDetailPage() {
   };
 
   useEffect(() => {
-    
+
     if (!id) return;
 
-    
+
 
 
     const fetchResearch = async () => {
@@ -263,25 +357,25 @@ export default function ResearchDetailPage() {
 
     // KLA : ดึงข้อมูลผู้ใช้ปัจจุบัน
     const fetchCurrentUser = async () => {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      if (user) {
-        const { data: profile } = await supabase
-          .from("user_tb")
-          .select("user_fullname")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        setCurrentUser({
-          user_id: user.id,
-          user_fullname: profile?.user_fullname || "ไม่ระบุชื่อ",
-        });
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (user) {
+          const { data: profile } = await supabase
+            .from("user_tb")
+            .select("user_fullname")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          setCurrentUser({
+            user_id: user.id,
+            user_fullname: profile?.user_fullname || "ไม่ระบุชื่อ",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching current user:", err);
       }
-    } catch (err) {
-      console.error("Error fetching current user:", err);
-    }
-  };
-  fetchCurrentUser();
+    };
+    fetchCurrentUser();
 
 
 
@@ -322,7 +416,7 @@ export default function ResearchDetailPage() {
     fetchComments();
   }, [id]);
 
-  
+
 
 
 
@@ -340,7 +434,7 @@ export default function ResearchDetailPage() {
               {research.paper_title || "ไม่มีชื่อเรื่อง"}
             </h1>
             <div className="text-sm text-gray-500 flex flex-wrap space-x-4 mt-2">
-              <span>โดย: {authorName || research.user_id || "ไม่ระบุผู้เขียน"}</span> 
+              <span>โดย: {authorName || research.user_id || "ไม่ระบุผู้เขียน"}</span>
               <span>
                 วันที่เผยแพร่:{" "}
                 {research.created_at
@@ -437,10 +531,20 @@ export default function ResearchDetailPage() {
               {comments.map((c) => (
                 <Comment
                   key={c.comment_id}
+                  commentId={c.comment_id}
                   user={c.user_fullname}
                   text={c.comment}
                   date={new Date(c.created_at).toLocaleString("th-TH")}
-                  userId={c.user_id} // KLA  : ส่ง userId เพื่อโหลดรูป
+                  userId={c.user_id}
+                  currentUser={currentUser}
+                  onUpdate={(id, newText) =>
+                    setComments((prev) =>
+                      prev.map((cm) => (cm.comment_id === id ? { ...cm, comment: newText } : cm))
+                    )
+                  }
+                  onDelete={(id) =>
+                    setComments((prev) => prev.filter((cm) => cm.comment_id !== id))
+                  }
                 />
               ))}
             </div>
