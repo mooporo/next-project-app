@@ -22,33 +22,17 @@ const ProfileCard = ({ data }) => {
         <p className="text-sm text-gray-400">{data.institution}</p>
       </div>
 
+      {/* ปุ่มแก้ไขโปรไฟล์ */}
       <button
-        onClick={() => router.push('/edit-profile')} // เพิ่ม navigation ไปหน้าแก้ไข
-        className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-150 shadow-md mb-8 flex items-center justify-center space-x-2"
+        onClick={() => router.push('/edit-profile')}
+        className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-150 shadow-md"
       >
-        <Users size={18} /> 
-        <span>แก้ไขโปรไฟล์</span>
+        แก้ไขโปรไฟล์
       </button>
-
-      <div className="mb-8 border-t pt-4">
-        <h3 className="text-base font-semibold text-gray-800 mb-2">เกี่ยวกับ</h3>
-        <p className="text-sm text-gray-600 leading-relaxed">{data.about}</p>
-      </div>
-
-      <div className="border-t pt-4">
-        <h3 className="text-base font-semibold text-gray-800 mb-2">ช่องทางติดต่อ</h3>
-        <div className="space-y-3">
-          {data.contacts.map((contact, index) => (
-            <div key={index} className="flex items-center space-x-3 text-sm text-gray-700 hover:text-blue-600 transition duration-150">
-              <contact.icon size={18} className="text-gray-500 flex-shrink-0" />
-              <span className="truncate">{contact.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
+
 
 const ResearchItem = ({ item }) => (
   <div className="flex justify-between items-center py-4 border-b hover:bg-gray-50 transition duration-150 px-2 -mx-2 rounded-lg">

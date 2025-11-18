@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
-const STORAGE_BUCKET = "user_bk"; 
+const STORAGE_BUCKET = "user_bk";
 
 export default function EditProfilePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
@@ -14,12 +16,6 @@ export default function EditProfilePage() {
     user_fullname: "",
     user_email: "",
     user_birthdate: "",
-    user_org_id: "",
-    user_type_id: "",
-    bio: "",
-    current_password: "",
-    new_password: "",
-    confirm_new_password: "",
     user_image: "",
   });
 
@@ -49,26 +45,18 @@ export default function EditProfilePage() {
           return;
         }
 
-        setForm((prev) => ({
-          ...prev,
+        setForm({
           user_fullname: profileData.user_fullname || "",
-          user_email: profileData.user_email || (user.email || ""),
+          user_email: profileData.user_email || user.email || "",
           user_birthdate: profileData.user_birthdate || "",
-          user_org_id: profileData.user_org_id || "",
-          user_type_id: profileData.user_type_id || "",
-          bio: profileData.bio || "",
           user_image: profileData.user_image || "",
-        }));
+        });
 
         if (profileData.user_image) {
-          try {
-            const { data: publicData } = supabase.storage
-              .from(STORAGE_BUCKET)
-              .getPublicUrl(profileData.user_image);
-            setAvatarUrl(publicData?.publicUrl || null);
-          } catch (err) {
-            console.warn("Could not get public URL for avatar:", err);
-          }
+          const { data: publicData } = supabase.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(profileData.user_image);
+          setAvatarUrl(publicData?.publicUrl || null);
         } else {
           setAvatarUrl(null);
         }
@@ -87,7 +75,7 @@ export default function EditProfilePage() {
     setForm((p) => ({ ...p, [name]: value }));
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -97,9 +85,7 @@ export default function EditProfilePage() {
       return;
     }
 
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
-
+    setAvatarUrl(URL.createObjectURL(file));
     setForm((p) => ({ ...p, __newAvatarFile: file }));
   };
 
@@ -125,25 +111,8 @@ export default function EditProfilePage() {
       }
       const user = userData.user;
 
-      if (form.new_password || form.confirm_new_password) {
-        if (form.new_password !== form.confirm_new_password) {
-          alert("รหัสผ่านใหม่ไม่ตรงกัน");
-          setSaving(false);
-          return;
-        }
-        const { data: updateData, error: updateErr } = await supabase.auth.updateUser({
-          password: form.new_password,
-        });
-        if (updateErr) {
-          console.error("Error updating password:", updateErr);
-          alert("เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน: " + updateErr.message);
-          setSaving(false);
-          return;
-        }
-      }
-
+      // --- อัปโหลดรูป avatar ---
       let finalImagePath = form.user_image || "";
-
       if (form.__newAvatarFile) {
         const file = form.__newAvatarFile;
         const filename = `${user.id}/${Date.now()}_${file.name}`;
@@ -157,7 +126,6 @@ export default function EditProfilePage() {
           setSaving(false);
           return;
         }
-
         finalImagePath = uploadData?.path || filename;
       }
 
@@ -170,16 +138,14 @@ export default function EditProfilePage() {
         finalImagePath = "";
       }
 
+      // --- อัปเดตข้อมูล profile ---
       const updates = {
         user_fullname: form.user_fullname,
         user_birthdate: form.user_birthdate || null,
-        user_org_id: form.user_org_id || null,
-        user_type_id: form.user_type_id || null,
-        bio: form.bio || null,
         user_image: finalImagePath || null,
       };
 
-      const { data: updated, error: updateDbErr } = await supabase
+      const { error: updateDbErr } = await supabase
         .from("user_tb")
         .update(updates)
         .eq("user_id", user.id);
@@ -200,7 +166,9 @@ export default function EditProfilePage() {
 
       setForm((p) => ({ ...p, __newAvatarFile: null, __removeAvatar: false, user_image: finalImagePath }));
 
+      // --- บันทึกเรียบร้อย ให้ไปหน้า profile ---
       alert("บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว");
+      router.push("/profile");
     } catch (err) {
       console.error("Unexpected error saving profile:", err);
       alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
@@ -272,7 +240,6 @@ export default function EditProfilePage() {
           <section className="mb-10">
             <h2 className="text-lg font-medium text-gray-700 mb-4">ข้อมูลส่วนตัว</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* ชื่อ-นามสกุล */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">ชื่อ-นามสกุล</label>
                 <input
@@ -284,7 +251,6 @@ export default function EditProfilePage() {
                 />
               </div>
 
-              {/* Email */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">อีเมล</label>
                 <input
@@ -296,85 +262,16 @@ export default function EditProfilePage() {
                 <p className="text-xs text-gray-500">ไม่สามารถแก้ไขอีเมลได้</p>
               </div>
 
-              {/* สังกัด / มหาวิทยาลัย */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">สังกัด / มหาวิทยาลัย</label>
+                <label className="text-sm font-medium text-gray-700">วันเกิด</label>
                 <input
-                  type="text"
-                  name="user_org_id"
-                  value={form.user_org_id || ""}
+                  type="date"
+                  name="user_birthdate"
+                  value={form.user_birthdate || ""}
                   onChange={handleInputChange}
                   className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
                 />
               </div>
-
-              {/* ตำแหน่งทางวิชาการ */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">ตำแหน่งทางวิชาการ</label>
-                <input
-                  type="text"
-                  name="user_type_id"
-                  value={form.user_type_id || ""}
-                  onChange={handleInputChange}
-                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
-                />
-              </div>
-
-              {/* ประวัติโดยย่อ */}
-              <div className="mt-4 space-y-1 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">ประวัติโดยย่อ</label>
-                <textarea
-                  name="bio"
-                  value={form.bio || ""}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full p-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Change Password */}
-          <section className="pt-8 mb-10 border-t border-gray-200">
-            <h2 className="text-lg font-medium text-gray-700 mb-4">เปลี่ยนรหัสผ่าน</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Current password */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">รหัสผ่านปัจจุบัน</label>
-                <input
-                  type="password"
-                  name="current_password"
-                  value={form.current_password}
-                  onChange={handleInputChange}
-                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
-                />
-              </div>
-
-              {/* New password */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">รหัสผ่านใหม่</label>
-                <input
-                  type="password"
-                  name="new_password"
-                  value={form.new_password}
-                  onChange={handleInputChange}
-                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
-                />
-              </div>
-
-              {/* Confirm new password */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">ยืนยันรหัสผ่านใหม่</label>
-                <input
-                  type="password"
-                  name="confirm_new_password"
-                  value={form.confirm_new_password}
-                  onChange={handleInputChange}
-                  className="input-focus w-full border border-gray-300 p-2.5 rounded-md focus:outline-none"
-                />
-              </div>
-
-              <div className="hidden md:block"></div>
             </div>
           </section>
 
