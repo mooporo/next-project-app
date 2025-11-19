@@ -8,6 +8,7 @@ import { Edit, Trash2 } from "lucide-react"; // KLA : ไอคอนแก้�
 
 const STORAGE_BUCKET = "user_bk";
 
+
 const StatItem = ({ Icon, count, label }) => (
   <div className="flex flex-col items-center p-3 sm:p-4 text-center">
     <Icon className="w-6 h-6 text-blue-600 mb-1" />
@@ -322,6 +323,12 @@ export default function ResearchDetailPage() {
           const { data: fileUrl } = supabase.storage.from("paper_bk").getPublicUrl(data.paper_file);
           data.paper_file = fileUrl.publicUrl;
         }
+        // KLA:  ถ้า paper_image ไม่ใช่ URL เต็ม ให้แปลงเป็น public URL ของ Supabase Storage
+        if (data.paper_image && !data.paper_image.startsWith("http")) {
+          const { data: imgData } = supabase.storage.from("paper_bk").getPublicUrl(data.paper_image);
+          data.paper_image = imgData.publicUrl;
+        }
+
 
         setResearch(data || null); // KLA : ตั้งค่า research เป็น null ถ้าไม่มีข้อมูล
         setErrorMsg(data ? "" : "ไม่พบข้อมูลงานวิจัย"); // KLA : ข้อความถ้าไม่พบข้อมูล

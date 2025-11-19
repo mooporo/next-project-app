@@ -245,10 +245,10 @@ export default function SearchPage() {
     const fetchedPinnedIds = await fetchPinnedData(user?.user_id);
     setPinnedIds(fetchedPinnedIds);
 
-  // 🔹 ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb และกรองเฉพาะที่อนุมัติแล้ว
-  const { data: papers, error } = await supabase
-    .from("paper_tb")
-    .select(`
+    // 🔹 ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb และกรองเฉพาะที่อนุมัติแล้ว
+    const { data: papers, error } = await supabase
+      .from("paper_tb")
+      .select(`
       paper_id,
       user_id,
       paper_title,
@@ -258,8 +258,8 @@ export default function SearchPage() {
       user_tb:user_id ( user_fullname ),
       paper_status
     `)
-  .eq("paper_status", 2) // 🔹 เพิ่มตรงนี้
-  .order("created_at", { ascending: false });
+      .eq("paper_status", 2) // 🔹 เพิ่มตรงนี้
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("❌ Error fetching data:", error);
@@ -281,13 +281,23 @@ export default function SearchPage() {
 
       const combinedData = (papers || []).map(paper => {
         const paperIdAsString = String(paper.paper_id).trim();
-        
+
+        // 🔹 แปลง paper_image เป็น public URL
+        let paperImageUrl = null;
+        if (paper.paper_image) {
+          const { data: imgUrl } = supabase.storage
+            .from("paper_bk") // 🔹 ใช้ bucket ให้ตรงกับ storage ของคุณ
+            .getPublicUrl(paper.paper_image);
+          paperImageUrl = `${imgUrl.publicUrl}?t=${new Date().getTime()}`;
+        }
+
         const is_pinned = fetchedPinnedIds.has(paperIdAsString);
         return {
           ...paper,
+          paper_image: paperImageUrl, // <-- แทน path ด้วย public URL
           is_pinned,
           user_fullname: paper.user_tb?.user_fullname || "ไม่ระบุชื่อ",
-          comment_count: commentCountMap[paperIdAsString] || 0, // <-- ใช้ string
+          comment_count: commentCountMap[paperIdAsString] || 0,
         };
       });
       setResearchData(combinedData);

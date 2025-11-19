@@ -4,31 +4,27 @@ import React, { useState } from "react";
 
 export default function SettingsPage() {
   // --- State ---
-  const [notifications, setNotifications] = useState({
-    research: true,
-    feedback: true,
-    news: false,
-  });
-
   const [theme, setTheme] = useState("light");
   const [language, setLanguage] = useState("thai");
 
-  // --- Handlers ---
-  const handleToggle = (field) => {
-    setNotifications((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
-
   const handleThemeChange = (event) => {
-    setTheme(event.target.value);
-  };
+    const selected = event.target.value;
+    setTheme(selected);
 
+    if (selected === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    localStorage.setItem("theme", selected);
+  };
   const handleLanguageChange = (event) => {
     setLanguage(event.target.value);
   };
 
   const handleSave = () => {
     console.log("--- บันทึกการตั้งค่าแล้ว (Mock Save) ---");
-    console.log("การแจ้งเตือน:", notifications);
     console.log("การแสดงผล:", { theme, language });
   };
 
@@ -44,68 +40,6 @@ export default function SettingsPage() {
         การตั้งค่า
       </h1>
 
-      {/* การแจ้งเตือน */}
-      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 mb-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">การแจ้งเตือน</h2>
-
-        {/* สื่อสารงานวิจัย */}
-        <div className="flex justify-between items-center py-4 border-b border-gray-100">
-          <div className="flex-1 pr-4">
-            <p className="font-semibold text-gray-800">สื่อสารงานวิจัย</p>
-            <p className="text-sm text-gray-500 mt-1">
-              รับการแจ้งเตือนเมื่อมีงานวิจัยและงานวิเคราะห์ของระบบที่เกี่ยวข้อง (เช่น อนุมัติ, ต้องการแก้ไข)
-            </p>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={notifications.research}
-              onChange={() => handleToggle("research")}
-            />
-            <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        {/* ความคิดเห็นใหม่ */}
-        <div className="flex justify-between items-center py-4 border-b border-gray-100">
-          <div className="flex-1 pr-4">
-            <p className="font-semibold text-gray-800">ความคิดเห็นใหม่</p>
-            <p className="text-sm text-gray-500 mt-1">
-              รับการแจ้งเตือนเมื่อมีผู้ตรวจทาน (Reviewer) แสดงความคิดเห็น
-            </p>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={notifications.feedback}
-              onChange={() => handleToggle("feedback")}
-            />
-            <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        {/* ข่าวสารและโปรโมท */}
-        <div className="flex justify-between items-center py-4">
-          <div className="flex-1 pr-4">
-            <p className="font-semibold text-gray-800">ข่าวสารและโปรโมท</p>
-            <p className="text-sm text-gray-500 mt-1">
-              รับข่าวสาร การอัปเดต และประกาศสำคัญต่าง ๆ ของระบบ
-            </p>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={notifications.news}
-              onChange={() => handleToggle("news")}
-            />
-            <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-      </div>
-
       {/* การแสดงผล */}
       <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 mb-6">
         <h2 className="text-xl font-bold mb-4 text-gray-800">การแสดงผล</h2>
@@ -115,11 +49,10 @@ export default function SettingsPage() {
           <p className="font-semibold text-gray-800 mb-3">ธีม (Theme)</p>
           <div className="flex flex-wrap gap-3" id="theme_radio_group">
             <label
-              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all flex-shrink-0 ${
-                theme === "light"
-                  ? "border-blue-600 bg-blue-50 text-blue-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all flex-shrink-0 ${theme === "light"
+                ? "border-blue-600 bg-blue-50 text-blue-800"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
             >
               <input
                 type="radio"
@@ -131,12 +64,12 @@ export default function SettingsPage() {
               />
               <span className="text-sm font-medium whitespace-nowrap">☀️ สว่าง (Light)</span>
             </label>
+
             <label
-              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all flex-shrink-0 ${
-                theme === "dark"
-                  ? "border-blue-600 bg-blue-50 text-blue-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all flex-shrink-0 ${theme === "dark"
+                ? "border-blue-600 bg-blue-50 text-blue-800"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
             >
               <input
                 type="radio"
@@ -148,12 +81,12 @@ export default function SettingsPage() {
               />
               <span className="text-sm font-medium whitespace-nowrap">🌙 มืด (Dark)</span>
             </label>
+
             <label
-              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all flex-shrink-0 ${
-                theme === "system"
-                  ? "border-blue-600 bg-blue-50 text-blue-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`flex items-center px-4 py-2 border-2 rounded-lg cursor-pointer transition-all flex-shrink-0 ${theme === "system"
+                ? "border-blue-600 bg-blue-50 text-blue-800"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
             >
               <input
                 type="radio"
