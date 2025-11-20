@@ -28,7 +28,7 @@ const ChatPage = () => {
           .from('chat_history_tb')
           .select('*')
           .eq('session_id', session_id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: true });
 
         if (error) {
           console.error('Error fetching chat history:', error);

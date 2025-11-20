@@ -290,64 +290,94 @@ const UploadPage = () => {
           return;
         }
 
-        //เจมส์ : เพิ่ม webhook ส่งให้ n8n แปลงเอกสารเก็บเข้า vectordb
-        try {
-          const vectorForm = new FormData();
-          vectorForm.append("user_id", userId);
-          vectorForm.append("paper_title", formData.title);
-          vectorForm.append("paper_abstract", formData.abstract);
-          vectorForm.append("paper_keywords", formData.keywords);
-          vectorForm.append("paper_file", paperFileUrl);
-          vectorForm.append("paper_image", coverImgUrl);
-          vectorForm.append("paper_type_id", formData.researchType);
-          vectorForm.append("paper_category_id", 1); //mock
-          vectorForm.append("paper_status", 1); //mock
-          vectorForm.append("paper_views", 30); //mock
-          vectorForm.append("paper_score", 3.14); //mock
-          vectorForm.append("paper_authors", formData.coAuthors);
-          vectorForm.append("paperFile", paperFile);
+        // KLA : บันทึกข้อมูลลงฐานข้อมูล
+        const { data: res, error: insertPaperErr } = await supabase.from("paper_tb").insert([
+          {
+            user_id: userId, //ต้องไม่ null
+            paper_title: formData.title,
+            paper_abstract: formData.abstract,
+            paper_file: paperFileUrl, //ต้องไม่ null
+            paper_image: coverImgUrl,   // optional ถ้าไม่มีจะเป็น ""
+            paper_type_id: formData.researchType === "journal" ? 1 : 2, //mock
+            paper_category_id: 1, //mock
+            paper_authors: formData.coAuthors,
+          },
+        ])
+          .select('paper_id')
+          .single();
 
-          const res = await axios.post(`${N8N_TUNNEL_URL}/webhook-test/postpaper`, vectorForm, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Accept': 'application/json'
-            }
-          })
-          console.log(res)
+        if (insertPaperErr) throw insertPaperErr;
 
-          if (res.status === 200) {
-            console.log('เก็บข้อมูลเข้า vectordb สำเร็จ');
-          } else {
-            console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จ');
-            return;
+        //ตัวแปรเก็บ paper_id ที่เพิ่งถูกบันทึก
+        let paper_id = res.paper_id
+
+        //เจมส์ : เพิ่มส่วนจัดการ keywords โดย split และนำไปตรวจสอบ
+        const splitKeywords = formData.keywords.split(',')
+          .map(kw => kw.trim())
+          .filter(kw => kw.length > 0);
+
+        const uniqueKeywords = [...new Set(splitKeywords)];
+
+        if (uniqueKeywords.length > 0) {
+
+          //ค้นหา Keywords ที่มีอยู่แล้ว
+          const { data: existingKeywords, error: selectError } = await supabase
+            .from('keyword_tb')
+            .select('keyword_id, keyword_name')
+            .in('keyword_name', uniqueKeywords);
+
+          if (selectError) throw selectError;
+
+          const existingMap = new Map();
+          const existingText = new Set();
+          for (const row of existingKeywords) {
+            existingMap.set(row.keyword_name, row.keyword_id);
+            existingText.add(row.keyword_name);
           }
 
-        } catch (error) {
-          console.log('เก็บข้อมูลเข้า vectordb ไม่สำเร็จจากเหตุไม่คาดฝัน');
-          return;
+          //แยก Keyword ที่ยังไม่มีในระบบ
+          const newKeywordsToInsert = uniqueKeywords.filter(
+            kw => !existingText.has(kw)
+          );
+
+          //ตัวแปรสําหรับรวบรวม ID
+          let allKeywordIds = [];
+
+          //Insert Keyword ใหม่ (ถ้ามี)
+          if (newKeywordsToInsert.length > 0) {
+
+            const keywordsToInsertData = newKeywordsToInsert.map(kw => ({ keyword_name: kw }));
+
+            const { data: newKeywordData, error: insertError } = await supabase
+              .from('keyword_tb')
+              .insert(keywordsToInsertData)
+              .select('keyword_id, keyword_name'); // ดึง ID ของ Keyword ใหม่กลับมา
+
+            if (insertError) throw insertError;
+
+            // รวบรวม ID ของ Keyword ใหม่
+            newKeywordData.forEach(row => {
+              allKeywordIds.push(row.keyword_id);
+            });
+          }
+
+          //รวบรวม ID ของ Keyword เก่า
+          existingKeywords.forEach(row => {
+            allKeywordIds.push(row.keyword_id);
+          });
+
+          //ความสัมพันธ์ใน paper_keywords_mtb
+          const relationships = allKeywordIds.map(keyword_id => ({
+            paper_id: paper_id,
+            keyword_id: keyword_id
+          }));
+
+          const { error: linkError } = await supabase
+            .from('paper_keyword_mtb')
+            .insert(relationships);
+
+          if (linkError) throw linkError;
         }
-      }
-
-      // KLA : บันทึกข้อมูลลงฐานข้อมูล
-      // const { error } = await supabase.from("paper_tb").insert([
-      //   {
-      //     user_id: userId, //ต้องไม่ null
-      //     paper_title: formData.title,
-      //     paper_abstract: formData.abstract,
-      //     paper_file: paperFileUrl, //ต้องไม่ null
-      //     paper_image: coverImgUrl,   // optional ถ้าไม่มีจะเป็น ""
-      //     paper_type_id: formData.researchType === "journal" ? 1 : 2,
-      //     paper_category_id: 1,
-      //     paper_status: 0,  //KLA : draft เป็น 0
-      //     paper_views: 0,
-      //   },
-      // ]);
-
-      // KLA : ตรวจสอบข้อผิดพลาดจากการบันทึกข้อมูล
-      if (error) {
-        console.error("เกิดข้อผิดพลาดตอน insert DB:", error);
-        alert("เกิดข้อผิดพลาดตอนบันทึกลง database: " + error.message);
-        return;
       }
 
       alert("อัปโหลดสำเร็จ!");
