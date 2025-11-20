@@ -44,7 +44,8 @@ const AuthorBadge = ({ name, role, isPrimary, userId }) => {
           const { data } = supabase.storage
             .from(STORAGE_BUCKET)
             .getPublicUrl(userData.user_image);
-          setAvatarUrl(data.publicUrl);
+          // เพิ่ม cache buster
+          setAvatarUrl(`${data.publicUrl}?t=${new Date().getTime()}`);
         }
       } catch (err) {
         console.error("Error fetching avatar:", err);
@@ -86,10 +87,10 @@ const KeywordTag = ({ label }) => (
 export default function AdminResearchDetailPage() {
   const { id } = useParams();
   const [research, setResearch] = useState(null);
-  const [comments, setComments] = useState([]);
   const [authorName, setAuthorName] = useState("");
   const [status, setStatus] = useState("รออนุมัติ");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [paperImageUrl, setPaperImageUrl] = useState(null);
 
   const handleDrawerToggle = (isOpen) => {
     setDrawerOpen(isOpen);
@@ -112,12 +113,31 @@ export default function AdminResearchDetailPage() {
         setResearch(data);
         setStatus(mappedStatus);
 
+        // ดึงชื่อผู้เขียน
         const { data: userData } = await supabase
           .from("user_tb")
-          .select("user_fullname")
+          .select("user_fullname, user_image")
           .eq("user_id", data.user_id)
           .maybeSingle();
-        if (userData) setAuthorName(userData.user_fullname);
+        if (userData) {
+          setAuthorName(userData.user_fullname);
+
+          // ดึงรูป avatar พร้อม cache buster
+          if (userData.user_image) {
+            const { data: avatarData } = supabase.storage
+              .from(STORAGE_BUCKET)
+              .getPublicUrl(userData.user_image);
+            setPaperImageUrl(`${avatarData.publicUrl}?t=${new Date().getTime()}`);
+          }
+        }
+
+        // ดึงรูป paper_image พร้อม cache buster
+        if (data.paper_image) {
+          const { data: imgData } = supabase.storage
+            .from("paper_bk") // bucket ของ paper
+            .getPublicUrl(data.paper_image);
+          setPaperImageUrl(`${imgData.publicUrl}?t=${new Date().getTime()}`);
+        }
       }
     };
     fetchResearch();
@@ -159,9 +179,9 @@ export default function AdminResearchDetailPage() {
             </div>
 
             <div className="w-full h-72 rounded-xl overflow-hidden shadow-lg flex items-center justify-center relative mt-4">
-              {research.paper_image ? (
+              {paperImageUrl ? (
                 <img
-                  src={research.paper_image}
+                  src={paperImageUrl}
                   alt={research.paper_title}
                   className="object-cover w-full h-full"
                 />
