@@ -286,6 +286,7 @@ export default function ResearchDetailPage() {
   const [authorName, setAuthorName] = useState(""); // ✅ เพิ่ม state สำหรับชื่อผู้เขียน
   const [downloadCount, setDownloadCount] = useState(0); // KLA : เพิ่ม state สำหรับนับดาวน์โหลด
   const [currentUser, setCurrentUser] = useState(null); // KLA : state สำหรับผู้ใช้ปัจจุบัน
+  const [keywords, setKeywords] = useState([]); // KLA : state สำหรับคำสำคัญ
 
   // KLA : ฟังก์ชันจัดการการดาวน์โหลดไฟล์ PDF
   const handleDownload = () => {
@@ -304,6 +305,25 @@ export default function ResearchDetailPage() {
   useEffect(() => {
 
     if (!id) return;
+
+
+    const fetchKeywords = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("paper_keyword_mtb")
+          .select("keyword_tb(keyword_name)")
+          .eq("paper_id", id);
+
+        if (error) throw error;
+
+        const keywordList = data.map((k) => k.keyword_tb.keyword_name);
+        setKeywords(keywordList);
+      } catch (err) {
+        console.error("Error fetching keywords:", err);
+      }
+    };
+
+    fetchKeywords();
 
 
 
@@ -518,9 +538,11 @@ export default function ResearchDetailPage() {
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-4">คำสำคัญ</h2>
             <div className="flex flex-wrap gap-2">
-              <KeywordTag label="Machine Learning" />
-              <KeywordTag label="Recommendation System" />
-              <KeywordTag label="AI" />
+              {keywords.length > 0 ? (
+                keywords.map((k, i) => <KeywordTag key={i} label={k} />)
+              ) : (
+                <span className="text-gray-400">ไม่มีคำสำคัญ</span>
+              )}
             </div>
           </section>
 
@@ -580,10 +602,9 @@ export default function ResearchDetailPage() {
 
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">สถิติ</h3>
-            <div className="flex justify-around divide-x divide-gray-200">
+            <div className="grid grid-cols-2 divide-x divide-gray-200">
               <StatItem Icon={Eye} count={research.paper_views || 0} label="รับชม" />
               <StatItem Icon={MessageSquare} count={comments.length} label="คอมเมนต์" />
-              <StatItem Icon={Download} count={downloadCount} label="ดาวน์โหลด" />
             </div>
           </div>
 

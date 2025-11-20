@@ -44,28 +44,25 @@ const FileUploadDropZone = ({ icon: Icon, title, description, buttonText, accept
     <p className="mt-3 text-xs text-gray-500">{acceptedFormat}</p>
   </div>
 );
-
-
 const UploadPage = () => {
 
   const router = useRouter(); // KLA : สร้าง instance router
-
-
   const [formData, setFormData] = useState({
     title: "",
     abstract: "",
     keywords: "",
     researchType: "",
-    coAuthors: "",
+
   });
   const [userId, setUserId] = useState(null); // KLA :  User ID state
   const [paperFile, setPaperFile] = useState(null); // KLA :  PDF file state
   const [coverImg, setCoverImg] = useState(null); // KLA : Cover image state
   const [loading, setLoading] = useState(false); // KLA : Loading state
+  const [keywords, setKeywords] = useState([]); // แทน formData.keywords string
+  const [keywordInput, setKeywordInput] = useState(""); // input ชั่วคราวก่อนกด Enter/Add
 
   //เจมส์ : เพิ่ม state เก็บค่า switch
   const [isAutoGenEnabled, setIsAutoGenEnabled] = useState(false);
-
   const handleSwitchChange = () => {
     console.log(!isAutoGenEnabled);
     setIsAutoGenEnabled(prev => !prev);
@@ -99,6 +96,11 @@ const UploadPage = () => {
           keywords: res.data.keywords || prev.keywords,
           coAuthors: res.data.authors || prev.coAuthors,
         }));
+        // อัปเดต keywords array
+        if (res.data.keywords) {
+          const kwArray = res.data.keywords.split(',').map(k => k.trim()).filter(k => k);
+          setKeywords(kwArray);
+        }
       }
       setIsAutoGenEnabled(prev => !prev);
 
@@ -114,97 +116,14 @@ const UploadPage = () => {
     });
   }, []);
 
-  // KLA: เพิ่มฟังก์ชันสำหรับบันทึกเป็นฉบับร่าง
-  const handleSaveDraft = async () => {
-    if (!formData.title || !formData.abstract) {
-      alert("กรุณากรอกชื่อเรื่องและบทคัดย่อก่อนบันทึกฉบับร่าง");
-      return;
-    }
-
-    if (!userId) {
-      alert("ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบก่อนบันทึก");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      let paperFileUrl = "";
-      let coverImgUrl = "";
-
-      // KLA: ถ้ามีไฟล์ PDF ให้บันทึก
-      if (paperFile) {
-        const { data, error } = await supabase.storage
-          .from("paper_bk")
-          .upload(`draft_pdfs/${Date.now()}_${paperFile.name}`, paperFile);
-
-        if (error) {
-          console.error("Error uploading draft PDF:", error);
-          alert("เกิดข้อผิดพลาดตอนอัปโหลด PDF (ฉบับร่าง)");
-          return;
-        }
-
-        const { data: urlData } = supabase.storage
-          .from("paper_bk")
-          .getPublicUrl(data.path);
-        paperFileUrl = urlData?.publicUrl || "";
-      }
-
-      // KLA: ถ้ามีรูปปก
-      if (coverImg) {
-        const { data, error } = await supabase.storage
-          .from("paper_bk")
-          .upload(`draft_covers/${Date.now()}_${coverImg.name}`, coverImg);
-
-        if (error) {
-          console.error("Error uploading draft cover:", error);
-          alert("เกิดข้อผิดพลาดตอนอัปโหลดรูป (ฉบับร่าง)");
-          return;
-        }
-
-        const { data: coverUrlData } = supabase.storage
-          .from("paper_bk")
-          .getPublicUrl(data.path);
-        coverImgUrl = coverUrlData?.publicUrl || "";
-      }
-
-      // KLA บันทึกลงตาราง paper_tb
-      const { error } = await supabase.from("paper_tb").insert([
-        {
-          user_id: userId,
-          paper_title: formData.title,
-          paper_abstract: formData.abstract,
-          paper_file: paperFileUrl,
-          paper_image: coverImgUrl,
-          paper_type_id: formData.researchType === "journal" ? 1 : 2,
-          paper_category_id: 1,
-          paper_status: 0, // 0 = draft
-          paper_views: 0,
-        },
-      ]);
-
-      if (error) {
-        console.error("เกิดข้อผิดพลาดตอนบันทึกฉบับร่าง:", error);
-        alert("เกิดข้อผิดพลาดตอนบันทึกฉบับร่าง: " + error.message);
-        return;
-      }
-
-      alert("บันทึกฉบับร่างสำเร็จ!");
-      setFormData({ title: "", abstract: "", keywords: "", researchType: "", coAuthors: "" });
-      setPaperFile(null);
-      setCoverImg(null);
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
   // KLA : เมือจัดการการเปลี่ยนแปลงข้อมูลฟอร์ม
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === "researchType" ? Number(value) : value
+    }));
   };
-
   // KLA : เข้าถึงการเปลี่ยนแปลงไฟล์ PDF
   const handlePaperFileChange = (e) => {
     setPaperFile(e.target.files?.[0] || null);
@@ -240,9 +159,34 @@ const UploadPage = () => {
         let coverImgUrl = "";
         if (coverImg) {
           try {
-            const { data, error } = await supabase.storage
-              .from("paper_bk")
-              .upload(`covers/${Date.now()}_${coverImg.name}`, coverImg);
+            if (paperFile) {
+              try {
+                // ดึงนามสกุลไฟล์
+                const fileExtension = paperFile.name.split('.').pop();
+                // KLA : ตั้งชื่อไฟล์เป็น File_"+"DateTime"+"mimetype ตามที่เพื่อนเกบอก
+                const fileName = `File_${Date.now()}.${fileExtension}`;
+
+                const { data, error } = await supabase.storage
+                  .from("paper_bk")
+                  .upload(`pdfs/${fileName}`, paperFile);
+
+                if (error || !data) {
+                  console.error("เกิดข้อผิดพลาดตอนอัปโหลด PDF:", error);
+                  alert("เกิดข้อผิดพลาดตอนอัปโหลด PDF: " + (error?.message || "Unknown error"));
+                  return;
+                }
+
+                const { data: urlData } = supabase.storage.from("paper_bk").getPublicUrl(data.path);
+                paperFileUrl = urlData?.publicUrl || "";
+
+                console.log("อัปโหลด PDF สำเร็จ:", fileName);
+
+              } catch (uploadErr) {
+                console.error("Exception ขณะอัปโหลด PDF:", uploadErr);
+                alert("เกิดข้อผิดพลาดขณะอัปโหลด PDF");
+                return;
+              }
+            }
 
             if (error || !data) {
               console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", error);
@@ -299,7 +243,8 @@ const UploadPage = () => {
             paper_file: paperFileUrl, //ต้องไม่ null
             paper_image: coverImgUrl,   // optional ถ้าไม่มีจะเป็น ""
             paper_type_id: formData.researchType === "journal" ? 1 : 2, //mock
-            paper_category_id: 1, //mock
+            paper_category_id: formData.researchType, // เลือกจาก dropdown
+
             paper_authors: formData.coAuthors,
           },
         ])
@@ -312,8 +257,7 @@ const UploadPage = () => {
         let paper_id = res.paper_id
 
         //เจมส์ : เพิ่มส่วนจัดการ keywords โดย split และนำไปตรวจสอบ
-        const splitKeywords = formData.keywords.split(',')
-          .map(kw => kw.trim())
+        const splitKeywords = keywords.map(kw => kw.trim()) // <-- ใช้ keywords state แทน formData.keywords
           .filter(kw => kw.length > 0);
 
         const uniqueKeywords = [...new Set(splitKeywords)];
@@ -393,8 +337,6 @@ const UploadPage = () => {
     }
   };
 
-
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-12 flex justify-center font-sans">
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-8 lg:p-10">
@@ -425,7 +367,7 @@ const UploadPage = () => {
 
           <div
             className={`relative border-2 border-dashed rounded-xl p-10 text-center transition duration-300 cursor-pointer
-      ${paperFile ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"}`}
+        ${paperFile ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"}`}
             onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-blue-500", "bg-blue-50"); }}
             onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-blue-500", "bg-blue-50"); }}
             onDrop={(e) => {
@@ -506,16 +448,54 @@ const UploadPage = () => {
             />
           </FormField>
 
-          <FormField label="คีย์เวิร์ด (Keywords)" required helperText="คั่นแต่ละคีย์เวิร์ดด้วยเครื่องหมายจุลภาค (comma)">
-            <input
-              type="text"
-              name="keywords"
-              value={formData.keywords}
-              disabled={isAutoGenEnabled}
-              onChange={handleChange}
-              placeholder="เช่น AI, Machine Learning, Data Science"
-              className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
-            />
+          <FormField label="คีย์เวิร์ด (Keywords)" required helperText="กด Enter หรือคลิกเพิ่มเพื่อสร้างคีย์เวิร์ดใหม่">
+            <div className="flex flex-wrap gap-2 mb-2">
+              {keywords.map((kw, idx) => (
+                <span
+                  key={idx}
+                  className="flex items-center bg-gray-300 text-black px-4 py-2 rounded-full text-base"
+                >
+                  {kw}
+                  <button
+                    type="button"
+                    onClick={() => setKeywords(prev => prev.filter((_, i) => i !== idx))}
+                    className="ml-2 text-red-600 hover:text-red-800 font-bold text-lg"
+                  >
+                    X
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && keywordInput.trim()) {
+                    e.preventDefault();
+                    if (!keywords.includes(keywordInput.trim())) {
+                      setKeywords([...keywords, keywordInput.trim()]);
+                    }
+                    setKeywordInput("");
+                  }
+                }}
+                placeholder="พิมพ์คีย์เวิร์ดแล้วกด Enter"
+                className="flex-1 p-2 border border-gray-300 rounded-lg"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (keywordInput.trim() && !keywords.includes(keywordInput.trim())) {
+                    setKeywords([...keywords, keywordInput.trim()]);
+                    setKeywordInput("");
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
           </FormField>
         </section>
 
@@ -530,28 +510,21 @@ const UploadPage = () => {
               <FormField label="ประเภทงานวิจัย">
                 <select
                   name="researchType"
-                  value={formData.researchType}
+                  value={formData.researchType.toString()}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base appearance-none shadow-sm cursor-pointer"
                 >
                   <option value="" disabled>-- เลือกประเภท --</option>
-                  <option value="journal">บทความวารสาร</option>
-                  <option value="conference">การประชุมวิชาการ</option>
+                  <option value="1">ปรัชญาและจิตวิทยา (Philosophy & Psychology)</option>
+                  <option value="2">ศาสนาและเทววิทยา (Religion & Theology)</option>
+                  <option value="3">สังคมศาสตร์และกฎหมาย (Social Sciences & Law)</option>
+                  <option value="4">ภาษาศาสตร์และภาษา (Language & Linguistics)</option>
+                  <option value="5">วิทยาศาสตร์บริสุทธิ์ (Pure Sciences)</option>
+                  <option value="6">วิทยาศาสตร์ประยุกต์และเทคโนโลยี (Applied Science & Tech)</option>
+                  <option value="7">ศิลปะและนันทนาการ (Arts & Recreation)</option>
+                  <option value="8">วรรณกรรม (Literature)</option>
+                  <option value="9">ประวัติศาสตร์และภูมิศาสตร์ (History & Geography)</option>
                 </select>
-              </FormField>
-            </div>
-
-            <div className="flex-1">
-              <FormField label="ผู้เขียนร่วม (Co-authors)">
-                <input
-                  type="text"
-                  name="coAuthors"
-                  value={formData.coAuthors}
-                  disabled={isAutoGenEnabled}
-                  onChange={handleChange}
-                  placeholder="เช่น อลิสา ไอดี, วิทยา พัฒนาดี"
-                  className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
-                />
               </FormField>
             </div>
           </div>
@@ -593,14 +566,7 @@ const UploadPage = () => {
 
         {/* KLA : ปุ่มบันทึกการเปลี่ยนแปลง */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={handleSaveDraft} // KLA: เพิ่ม event handler
-            disabled={loading}
-            className="px-6 py-3 border border-gray-300 text-base font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out shadow-sm"
-          >
-            บันทึกเป็นฉบับร่าง
-          </button>
+
 
           <button
             type="button"
@@ -616,5 +582,4 @@ const UploadPage = () => {
     </div>
   );
 };
-
 export default UploadPage;

@@ -1,13 +1,10 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { Edit, Plus, UserCircle } from "lucide-react";
-
 const STORAGE_BUCKET = "paper_bk";
-
-// --- AuthorBadge ---
+// KLA : AuthorBadge แสดงรูปผู้ใช้และชื่อ
 const AuthorBadge = ({ name, role, userId }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
 
@@ -20,17 +17,21 @@ const AuthorBadge = ({ name, role, userId }) => {
           .select("user_image")
           .eq("user_id", userId)
           .maybeSingle();
+
         if (!error && userData?.user_image) {
-          const fileUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(userData.user_image);
+          const fileUrl = supabase.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(userData.user_image);
+
           setAvatarUrl(fileUrl.publicUrl);
         }
       } catch (err) {
         console.error("Error fetching avatar:", err);
       }
     };
+
     fetchAvatar();
   }, [userId]);
-
   return (
     <div className="flex items-center gap-4">
       {avatarUrl ? (
@@ -60,8 +61,20 @@ export default function ResearchEditPage() {
   const [newKeyword, setNewKeyword] = useState("");
   const [savingFile, setSavingFile] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [popup, setPopup] = useState({ show: false, message: "", success: true }); // KLA : popup state 
 
-  // --- Fetch research ---
+
+  // KLA : ฟังก์ชันแสดง popup
+  const showPopup = (message, success = true) => {
+    setPopup({ show: true, message, success });
+
+    setTimeout(() => {
+      setPopup({ show: false, message: "", success: true });
+    }, 2000);
+  };
+
+
+  // KLA : ดึงข้อมูลงานวิจัย
   useEffect(() => {
     if (!id) return;
 
@@ -75,27 +88,21 @@ export default function ResearchEditPage() {
         if (error) throw error;
         if (!data) return;
 
-        // แปลง paper_file เป็น public URL
-        if (data.paper_file && !data.paper_file.startsWith("http")) {
-          const { data: fileUrl } = supabase.storage
-            .from(STORAGE_BUCKET)
-            .getPublicUrl(data.paper_file);
-          data.paper_file = fileUrl.publicUrl;
-        }
-
-        // แปลง paper_image เป็น public URL
-        if (data.paper_image && !data.paper_image.startsWith("http")) {
-          const { data: imgUrl } = supabase.storage
-            .from(STORAGE_BUCKET)
-            .getPublicUrl(data.paper_image);
-          data.paper_image = `${imgUrl.publicUrl}?t=${new Date().getTime()}`; // ป้องกัน cache
-        }
-
         setResearch(data);
         setEditedAbstract(data.paper_abstract || "");
-        setKeywords(data.keywords ? data.keywords.split(",") : []);
 
-        // ดึงชื่อผู้เขียน
+        // KLA : ดึง keywords ผ่าน paper_keyword_mtb
+        const { data: kwData, error: kwError } = await supabase
+          .from("paper_keyword_mtb")
+          .select("keyword_tb(*)")
+          .eq("paper_id", id);
+
+        if (!kwError && kwData) {
+          const kwList = kwData.map((item) => item.keyword_tb);
+          setKeywords(kwList);
+        }
+
+        // KLA : ดึงชื่อผู้เขียนหลัก
         if (data.user_id) {
           const { data: userData, error: userError } = await supabase
             .from("user_tb")
@@ -104,6 +111,21 @@ export default function ResearchEditPage() {
             .maybeSingle();
           if (!userError && userData) setAuthorName(userData.user_fullname);
         }
+
+        // KLA: แปลง URL ของไฟล์/รูป เป็น public URL
+        if (data.paper_file && !data.paper_file.startsWith("http")) {
+          const { data: fileUrl } = supabase.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(data.paper_file);
+          data.paper_file = fileUrl.publicUrl;
+        }
+        if (data.paper_image && !data.paper_image.startsWith("http")) {
+          const { data: imgUrl } = supabase.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(data.paper_image);
+          data.paper_image = `${imgUrl.publicUrl}?t=${new Date().getTime()}`;
+        }
+
       } catch (err) {
         console.error("Error fetching research:", err);
       }
@@ -111,7 +133,8 @@ export default function ResearchEditPage() {
 
     fetchResearch();
   }, [id]);
-  // --- Update abstract ---
+
+  // KLA : อัปเดต abstract
   const handleSaveAbstract = async () => {
     if (!research) return;
     const { error } = await supabase
@@ -123,39 +146,89 @@ export default function ResearchEditPage() {
     setIsEditingAbstract(false);
   };
 
-  // --- Add keyword ---
+  // KLA : เพิ่ม keyword
+  // เพิ่ม keyword
   const handleAddKeyword = async () => {
-    if (!newKeyword.trim() || !research) return;
-    const updatedKeywords = [...keywords, newKeyword.trim()];
-    const { error } = await supabase
-      .from("paper_tb")
-      .update({ keywords: updatedKeywords.join(",") })
-      .eq("paper_id", research.paper_id);
-    if (error) return console.error(error);
-    setKeywords(updatedKeywords);
-    setNewKeyword("");
+    const trimmedKeyword = newKeyword.trim();
+    if (!trimmedKeyword) {
+      showPopup("กรุณากรอกคีย์เวิร์ด", false);
+      return;
+    }
+
+    try {
+      // ตรวจสอบว่า keyword ซ้ำหรือยัง
+      const { data: existing, error: checkError } = await supabase
+        .from("keyword_tb")
+        .select("*")
+        .eq("keyword_name", trimmedKeyword)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      let keywordId;
+      let keywordObj;
+
+      if (existing) {
+        keywordId = existing.keyword_id;
+        keywordObj = existing;
+      } else {
+        const { data: newKeywordData, error: insertError } = await supabase
+          .from("keyword_tb")
+          .insert([{ keyword_name: trimmedKeyword }])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        keywordId = newKeywordData.keyword_id;
+        keywordObj = newKeywordData;
+      }
+
+      // สร้าง mapping paper_keyword_mtb
+      const { error: mappingError } = await supabase
+        .from("paper_keyword_mtb")
+        .insert([{ paper_id: id, keyword_id: keywordId }]);
+      if (mappingError) throw mappingError;
+
+      // อัปเดต state
+      setKeywords((prev) => [...prev, keywordObj]);
+      setNewKeyword("");
+      showPopup("เพิ่มคีย์เวิร์ดสำเร็จ!", true);
+
+    } catch (err) {
+      console.error("Error adding keyword:", err);
+      showPopup("เกิดข้อผิดพลาดในการเพิ่มคีย์เวิร์ด", false);
+    }
   };
 
-  // --- Delete keyword ---
-  const handleDeleteKeyword = async (kw) => {
-    if (!research) return;
-    const updatedKeywords = keywords.filter((k) => k !== kw);
-    const { error } = await supabase
-      .from("paper_tb")
-      .update({ keywords: updatedKeywords.join(",") })
-      .eq("paper_id", research.paper_id);
-    if (error) return console.error(error);
-    setKeywords(updatedKeywords);
+  // KLA : ลบ keyword
+  const handleDeleteKeyword = async (keywordId) => {
+    try {
+      // ลบ mapping ก่อน
+      const { error: mappingError } = await supabase
+        .from("paper_keyword_mtb")
+        .delete()
+        .eq("paper_id", id)
+        .eq("keyword_id", keywordId);
+      if (mappingError) throw mappingError;
+
+      // อัปเดต state
+      setKeywords(keywords.filter((k) => k.keyword_id !== keywordId));
+      showPopup("ลบคีย์เวิร์ดสำเร็จ", true);
+    } catch (err) {
+      console.error("Error deleting keyword:", err);
+      showPopup("ลบไม่สำเร็จ", false);
+    }
   };
 
-  // --- Save PDF changes ---
+  // KLA : บันทึกการเปลี่ยนแปลงไฟล์ PDF
   const handleSaveFile = async () => {
     if (!research) return;
     setSavingFile(true);
     try {
-      const filePath = `papers/${research.paper_id}.pdf`;
+      const fileExtension = file.name.split(".").pop();
+      const filePath = `pdfs/File_${Date.now()}.${fileExtension}`;
 
-      // อัปเดต database (ตัวอย่าง: เซ็ต paper_file เป็นค่าเดิม หรือ null)
+      // KLA : อัปเดต database (ตัวอย่าง: เซ็ต paper_file เป็นค่าเดิม หรือ null)
       const { error: dbError } = await supabase
         .from("paper_tb")
         .update({ paper_file: research.paper_file || null })
@@ -209,10 +282,11 @@ export default function ResearchEditPage() {
                     const filePath = `papers/${research.paper_id}_cover.${fileExt}`;
 
                     try {
-                      // อัปโหลดไป storage
+                      //  อัปโหลดไปยัง storage
                       const { error: uploadError } = await supabase.storage
                         .from(STORAGE_BUCKET)
                         .upload(filePath, file, { upsert: true });
+
                       if (uploadError) throw uploadError;
 
                       // อัปเดต database
@@ -360,34 +434,35 @@ export default function ResearchEditPage() {
             )}
           </section>
 
-          {/* Keywords */}
           <section className="bg-white p-6 rounded-xl shadow-md border">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-xl font-bold text-gray-800">คีย์เวิร์ด</h2>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  placeholder="เพิ่มคำสำคัญ"
-                  className="p-2 border border-gray-300 rounded"
-                />
-                <button
-                  onClick={handleAddKeyword}
-                  className="px-3 py-1 bg-blue-600 text-white rounded flex items-center space-x-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>เพิ่ม</span>
-                </button>
-              </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-3">คีย์เวิร์ด</h2>
+
+            {/* KLA : เพิ่มคีย์เวิร์ด */}
+            <div className="flex gap-2 mb-4">
+              <input
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                placeholder="เพิ่มคำสำคัญ"
+                className="flex-1 p-2 border rounded-lg"
+              />
+              <button
+                onClick={handleAddKeyword}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg active:scale-95"
+              >
+                เพิ่ม
+              </button>
             </div>
+
             <div className="flex flex-wrap gap-2">
               {keywords.map((kw) => (
-                <div key={kw} className="flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full">
-                  <span>{kw}</span>
+                <div
+                  key={kw.keyword_id}
+                  className="flex items-center px-3 py-1 bg-gray-200 rounded-full gap-2"
+                >
+                  <span>{kw.keyword_name}</span>
                   <button
-                    onClick={() => handleDeleteKeyword(kw)}
-                    className="hover:text-red-600"
+                    onClick={() => handleDeleteKeyword(kw.keyword_id)}
+                    className="text-red-600"
                   >
                     ×
                   </button>
@@ -409,6 +484,15 @@ export default function ResearchEditPage() {
           </div>
         </div>
       </div>
+      {popup.show && (
+        <div
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-xl text-white text-sm font-medium
+      ${popup.success ? "bg-green-600" : "bg-red-600"}`}
+        >
+          {popup.message}
+        </div>
+      )}
+
     </div>
   );
 }

@@ -477,7 +477,7 @@ const Drawer = ({ onToggle }) => {
                 <>
                   <div onClick={() => router.push("/profile")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ดูโปรไฟล์</div>
                   <div onClick={() => router.push("/history")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ประวัติการอัพโหลด</div>
-                  <div onClick={() => router.push("/setting")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
+                 
                   <div onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">ออกจากระบบ</div>
                 </>
               ) : (
@@ -492,7 +492,7 @@ const Drawer = ({ onToggle }) => {
                   <div onClick={() => router.push("/login-admin")} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center">
                     <LogIn className="w-4 h-4 mr-2" /> Admin
                   </div>
-                  <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">ตั้งค่า</div>
+                 
                 </>
               )}
             </div>
