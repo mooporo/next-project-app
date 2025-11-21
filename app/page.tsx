@@ -197,7 +197,7 @@ export default function Page() {
     setLoading(false);
   }
 
-  useEffect(() => { if (user?.user_id) fetchResearchData(); }, [user?.user_id]);
+  useEffect(() => { fetchResearchData(); }, [user?.user_id]);
 
   const handleView = async (item: ResearchItem) => {
     const newViews = (item.paper_views || 0) + 1;
@@ -228,7 +228,8 @@ export default function Page() {
             <div className="w-full md:w-2/5 flex justify-center md:justify-end pt-12 md:pt-0">
               <div className="bg-white p-2 rounded-2xl shadow-2xl w-[320px] h-[320px] flex items-center justify-center hover:shadow-blue-400/40 transition duration-500 overflow-hidden fade-in">
                 <div className="relative w-full h-full">
-                  <Image src="/Logo.png" alt="Siam Archive" fill unoptimized priority className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700" />
+                  <Image src="/siam_archive.png" alt="Siam Archive" fill unoptimized priority className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700" />
+
                 </div>
               </div>
             </div>
@@ -242,8 +243,24 @@ export default function Page() {
             <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto">เราออกแบบมาเพื่อเป็นเครื่องมือและบริการจัดการงานวิจัยให้คุณเข้าถึงง่ายและมีประสิทธิภาพ ด้วยระบบที่ใช้งานง่าย</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature, index) => {
-                const linkHref = feature.title === "ค้นหาง่าย" ? "/search" : feature.title === "อัปโหลดเอกสาร" ? "/upload" : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison" : "#";
-                return <Link key={index} href={linkHref}><FeatureCard {...feature} /></Link>;
+                const handleClick = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  if (feature.title === "อัปโหลดเอกสาร" && !user) {
+                    alert("กรุณาล็อกอินก่อนทำการอัปโหลดเอกสาร");
+                    return;
+                  }
+                  const linkHref = feature.title === "ค้นหาง่าย" ? "/search"
+                    : feature.title === "อัปโหลดเอกสาร" ? "/upload"
+                    : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison"
+                    : "#";
+                  router.push(linkHref);
+                };
+
+                return (
+                  <button key={index} onClick={handleClick} className="w-full">
+                    <FeatureCard {...feature} />
+                  </button>
+                );
               })}
             </div>
           </div>

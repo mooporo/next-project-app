@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Siam Archive",
   description: "Search and Upload Research Works",
   icons: {
-    //
+    icon: "/icon.png", // ✅ ตั้ง favicon เป็น public/icon.png
   },
   authors: [
     {
@@ -43,8 +43,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-
-        <link rel="icon" href="/favicon.ico" />
+        {/* ✅ favicon หลายขนาดให้สวยขึ้น */}
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icon.png" />
       </head>
       <body
         className={`${prompt.className} flex`}

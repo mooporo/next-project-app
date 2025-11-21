@@ -405,7 +405,7 @@ const Drawer = ({ onToggle }) => {
                   key={item.key}
                   icon={item.icon}
                   label={item.name}
-                  disabled={!user}
+                  disabled={!user && item.key === "extract"} // ❌ ปิดเฉพาะ "ดึงข้อมูล"
                   isActive={activeMenuKey === item.key}
                   onClick={() => {
                     setActiveMenuKey(item.key);
@@ -413,6 +413,7 @@ const Drawer = ({ onToggle }) => {
                   }}
                 />
               ))}
+
             </div>
           </section>
 

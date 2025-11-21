@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Search, RefreshCcw, ChevronRight, ChevronLeft, Eye, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import DrawerAdmin from "../components/DrawerAdmin"; // ✅ ใช้ DrawerAdmin
+import DrawerAdmin from "../components/DrawerAdmin";
 
 // Sort Dropdown
 const SortDropdown = ({ value, onChange }) => (
@@ -18,69 +18,6 @@ const SortDropdown = ({ value, onChange }) => (
   </select>
 );
 
-// Research Card (สำหรับตรวจสอบ)
-const ResearchCard = ({ title, id, date, author, status, onApprove, onReject, onView }) => {
-  let statusClass = "";
-  switch (status) {
-    case "รออนุมัติ":
-      statusClass = "bg-yellow-100 text-yellow-800 border border-yellow-300";
-      break;
-    case "อนุมัติ":
-      statusClass = "bg-green-100 text-green-800 border border-green-300";
-      break;
-    case "ไม่อนุมัติ":
-      statusClass = "bg-red-100 text-red-800 border border-red-300";
-      break;
-    default:
-      statusClass = "bg-gray-100 text-gray-800 border border-gray-300";
-  }
-
-  return (
-    <div className="bg-white p-6 border border-gray-100 rounded-xl shadow-md flex flex-col justify-between h-full hover:shadow-xl transition duration-300">
-      <div>
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-lg font-bold text-gray-900 mr-4 leading-snug line-clamp-2 min-h-[50px]">
-            {title}
-          </h3>
-          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass}`}>
-            {status}
-          </span>
-        </div>
-        <div className="text-sm text-gray-600 space-y-1">
-          <p>ID: <span className="font-mono text-gray-700">{id}</span></p>
-          <p>ผู้ส่ง: <span className="font-medium">{author}</span></p>
-          <p>อัปโหลดเมื่อ: <span className="font-medium">{date}</span></p>
-        </div>
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end space-x-6">
-        <button
-          onClick={() => onView(id)}
-          className="text-sm font-medium text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1"
-        >
-          <Eye className="w-4 h-4" />
-          <span>ดูรายละเอียด</span>
-        </button>
-        <button
-          onClick={() => onApprove(id)}
-          className="text-sm font-medium text-green-600 hover:text-green-700 transition duration-150 flex items-center space-x-1"
-        >
-          <CheckCircle className="w-4 h-4" />
-          <span>อนุมัติ</span>
-        </button>
-        <button
-          onClick={() => onReject(id)}
-          className="text-sm font-medium text-red-600 hover:text-red-700 transition duration-150 flex items-center space-x-1"
-        >
-          <XCircle className="w-4 h-4" />
-          <span>ไม่อนุมัติ</span>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ✅ Verify Research Page
 export default function VerifyResearchPage() {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -90,15 +27,12 @@ export default function VerifyResearchPage() {
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("date");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const router = useRouter();
 
-  // ✅ Drawer State (แบบผลักหน้าจอได้)
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const handleDrawerToggle = (isOpen) => {
-    setDrawerOpen(isOpen);
-  };
+  const handleDrawerToggle = (isOpen) => setDrawerOpen(isOpen);
 
-  // โหลดข้อมูลงานวิจัยทั้งหมด
+  // โหลดข้อมูลงานวิจัย
   const fetchAllPapers = async () => {
     setLoading(true);
     try {
@@ -114,13 +48,16 @@ export default function VerifyResearchPage() {
             id: item.paper_id,
             title: item.paper_title,
             author: item.users?.user_fullname || "ไม่ทราบชื่อ",
-            date: new Date(item.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }),
+            date: new Date(item.created_at).toLocaleString("th-TH", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }),
             status:
               item.paper_status === 2 || item.paper_status === 4
                 ? "อนุมัติ"
                 : item.paper_status === 3
                 ? "ไม่อนุมัติ"
-                : "รออนุมัติ", // ✅ ค่าเริ่มต้นงานใหม่
+                : "รออนุมัติ",
           }))
         );
       }
@@ -134,7 +71,6 @@ export default function VerifyResearchPage() {
     fetchAllPapers();
   }, []);
 
-  // ฟังก์ชันอนุมัติ / ไม่อนุมัติ / ดูรายละเอียด
   const handleApprove = async (paperId) => {
     await supabase.from("paper_tb").update({ paper_status: 2 }).eq("paper_id", paperId);
     fetchAllPapers();
@@ -145,10 +81,7 @@ export default function VerifyResearchPage() {
     fetchAllPapers();
   };
 
-  // ✅ แก้เฉพาะตรงนี้เท่านั้น
-  const handleView = (paperId) => {
-    router.push(`/admin-research/${paperId}`);
-  };
+  const handleView = (paperId) => router.push(`/admin-research/${paperId}`);
 
   // Search + Sort + Pagination
   const filteredData = papers
@@ -174,14 +107,11 @@ export default function VerifyResearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 font-inter flex">
-      {/* ✅ Drawer */}
+      {/* Drawer */}
       <DrawerAdmin onToggle={handleDrawerToggle} />
 
-      {/* ✅ เนื้อหาหลัก (ผลักหน้าจอได้เหมือนโค้ดตัวอย่าง) */}
-      <div
-        className={`flex-1 transition-all duration-300`}
-        style={{ marginLeft: drawerOpen ? "18rem" : "0" }}
-      >
+      {/* เนื้อหาหลัก */}
+      <div className={`flex-1 transition-all duration-300`} style={{ marginLeft: drawerOpen ? "18rem" : "0" }}>
         <div className="p-4 sm:p-8 max-w-7xl mx-auto">
           {/* Header */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -245,7 +175,7 @@ export default function VerifyResearchPage() {
             </div>
           </div>
 
-          {/* ✅ Table View แทน Grid */}
+          {/* Table View */}
           {loading ? (
             <p className="text-center text-gray-500 py-10">กำลังโหลดข้อมูล...</p>
           ) : currentData.length === 0 ? (

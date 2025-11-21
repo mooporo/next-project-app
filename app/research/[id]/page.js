@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import { Download, Archive, Eye, MessageSquare, UserCircle } from "lucide-react";
 import { Edit, Trash2 } from "lucide-react"; // KLA : ไอคอนแก้ไขและลบ
-import { useRouter } from "next/navigation";
 
 const STORAGE_BUCKET = "user_bk";
 
@@ -17,8 +16,6 @@ const StatItem = ({ Icon, count, label }) => (
     <div className="text-sm text-gray-500">{label}</div>
   </div>
 );
-
-
 
 // --- AuthorBadge แสดงรูปผู้ใช้จริง ---
 const AuthorBadge = ({ name, role, isPrimary, userId }) => {
@@ -71,34 +68,11 @@ const AuthorBadge = ({ name, role, isPrimary, userId }) => {
   );
 };
 
-// KLA : KeywordTag และ ReferenceTag Components
 const KeywordTag = ({ label }) => (
   <span className="inline-block bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2 hover:bg-gray-200 transition">
     {label}
   </span>
 );
-
-// KLA : ReferenceTag Component พร้อมลิงก์ไปยังหน้ารายละเอียดงานวิจัย
-const ReferenceTag = ({ label, paperId }) => {
-  const router = useRouter();
-
-  const handleClick = () => {
-    if (paperId) {
-      router.push(`/research/${paperId}`);
-    }
-  };
-
-  return (
-    <span
-      onClick={handleClick}
-      className="inline-block cursor-pointer bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2 hover:bg-gray-200 transition"
-    >
-      {label}
-    </span>
-  );
-};
-
-
 
 // KLA  : Comment แสดงรูปผู้ใช้จริง, แก้ไข และ ลบคอมเมนต์
 const Comment = ({ user, text, date, userId, currentUser, onUpdate, onDelete, commentId }) => {
@@ -156,8 +130,6 @@ const Comment = ({ user, text, date, userId, currentUser, onUpdate, onDelete, co
       console.error("Error deleting comment:", err);
     }
   };
-
-
   // KLA : ส่วนแสดงคอมเมนต์ พร้อมปุ่มแก้ไขและลบ  
   return (
     <div className="flex space-x-4 py-4 border-b last:border-b-0">
@@ -315,7 +287,6 @@ export default function ResearchDetailPage() {
   const [downloadCount, setDownloadCount] = useState(0); // KLA : เพิ่ม state สำหรับนับดาวน์โหลด
   const [currentUser, setCurrentUser] = useState(null); // KLA : state สำหรับผู้ใช้ปัจจุบัน
   const [keywords, setKeywords] = useState([]); // KLA : state สำหรับคำสำคัญ
-  const [references, setReferences] = useState([]); // KLA : state สำหรับรายการอ้างอิง
 
   // KLA : ฟังก์ชันจัดการการดาวน์โหลดไฟล์ PDF
   const handleDownload = () => {
@@ -335,30 +306,6 @@ export default function ResearchDetailPage() {
 
     if (!id) return;
 
-    // KLA : ดึงรายการอ้างอิง
-    const fetchReferences = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("paper_citation_mtb")
-          .select(`
-        paper_ref,
-        paper_tb!paper_ref(paper_title)
-      `)
-          .eq("paper_id", id);
-
-        if (error) throw error;
-          
-        // KLA : สร้างรายการอ้างอิง
-        const referenceList = data.map((r) => ({
-          paper_id: r.paper_tb?.paper_id || r.paper_ref, // ใช้ paper_id ของงานวิจัยจริง หรือเก็บ ref
-          title: r.paper_tb?.paper_title || r.paper_ref
-        }));
-        setReferences(referenceList);
-      } catch (err) {
-        console.error("Error fetching references:", err);
-      }
-    };
-    fetchReferences();
 
     const fetchKeywords = async () => {
       try {
@@ -598,24 +545,6 @@ export default function ResearchDetailPage() {
               )}
             </div>
           </section>
-          {/* KLA : ส่วนแสดงอ้างอิง */}
-          <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">อ้างอิง</h2>
-            <div className="flex flex-wrap gap-2">
-              {references.length > 0 ? (
-                references.map((ref, i) => (
-
-                  <ReferenceTag
-                    key={i}
-                    label={ref.title || ref}
-                    paperId={ref.paper_id || ref} // ใช้ id สำหรับ navigate
-                  />
-                ))
-              ) : (
-                <span className="text-gray-400">ไม่มีอ้างอิง</span>
-              )}
-            </div>
-          </section>
 
           {/* KLA : ส่วนแสดงComment ปรับใหม่ */}
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
@@ -664,7 +593,10 @@ export default function ResearchDetailPage() {
                   <span>ดาวน์โหลด (PDF)</span>
                 </button>
               )}
-
+              <button className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-white text-blue-600 font-semibold rounded-xl border-2 border-blue-600 hover:bg-blue-50 transition">
+                <Archive className="w-5 h-5" />
+                <span>อ้างอิง</span>
+              </button>
             </div>
           </div>
 

@@ -3,10 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronRight, ChevronLeft, XCircle } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
-import { useAuth } from "../auth";
 import DrawerAdmin from "../components/DrawerAdmin"; // ✅ เพิ่ม DrawerAdmin
 
-// KLA : เพิ่ม Sort Dropdown Component
+// Sort Dropdown Component
 const SortDropdown = ({ value, onChange }) => (
   <select
     value={value}
@@ -19,35 +18,33 @@ const SortDropdown = ({ value, onChange }) => (
 );
 
 // Upload Card
-const UploadCard = ({ name, id, email, date, onReject }) => { 
-  return (
-    <div className="bg-white p-6 border border-gray-100 rounded-xl shadow-md flex flex-col justify-between h-full hover:shadow-xl transition duration-300">
-      <div>
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-lg font-bold text-gray-900 mr-4 leading-snug line-clamp-2 min-h-[50px]">{name}</h3>
-        </div>
-        <div className="text-sm text-gray-600 space-y-1">
-          <p>ID: <span className="font-mono text-gray-700">{id}</span></p>
-          <p>อีเมล: <span className="font-medium">{email}</span></p>
-          <p>วันที่สมัคร: <span className="font-medium">{date}</span></p>
-        </div>
+const UploadCard = ({ name, id, email, date, onReject }) => (
+  <div className="bg-white p-6 border border-gray-100 rounded-xl shadow-md flex flex-col justify-between h-full hover:shadow-xl transition duration-300">
+    <div>
+      <div className="flex justify-between items-start mb-3">
+        <h3 className="text-lg font-bold text-gray-900 mr-4 leading-snug line-clamp-2 min-h-[50px]">{name}</h3>
       </div>
-
-      {/* ❌ ลบปุ่มอนุมัติออก ✅ เปลี่ยนปุ่มปฏิเสธเป็นลบบัญชี */}
-      <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-        <button
-          className="text-sm font-medium text-gray-500 hover:text-red-600 transition duration-150 flex items-center space-x-1"
-          onClick={() => onReject(id)}
-        >
-          <XCircle className="w-4 h-4" />
-          <span>ลบบัญชี</span>
-        </button>
+      <div className="text-sm text-gray-600 space-y-1">
+        <p>ID: <span className="font-mono text-gray-700">{id}</span></p>
+        <p>อีเมล: <span className="font-medium">{email}</span></p>
+        <p>วันที่สมัคร: <span className="font-medium">{date}</span></p>
       </div>
     </div>
-  );
-};
 
-// ✅ Verify User Page
+    {/* ปุ่มลบบัญชี */}
+    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+      <button
+        className="text-sm font-medium text-gray-500 hover:text-red-600 transition duration-150 flex items-center space-x-1"
+        onClick={() => onReject(id)}
+      >
+        <XCircle className="w-4 h-4" />
+        <span>ลบบัญชี</span>
+      </button>
+    </div>
+  </div>
+);
+
+// Verify User Page
 export default function VerifyUserPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +54,9 @@ export default function VerifyUserPage() {
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("date");
-  const { user } = useAuth();
 
-  const [drawerOpen, setDrawerOpen] = useState(false); // ✅ state สำหรับ Drawer
-  const handleDrawerToggle = (isOpen) => setDrawerOpen(isOpen); // ✅ toggle Drawer
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const handleDrawerToggle = (isOpen) => setDrawerOpen(isOpen);
 
   // Fetch users
   useEffect(() => {
@@ -91,7 +87,7 @@ export default function VerifyUserPage() {
     fetchUsers();
   }, []);
 
-  // ✅ ฟังก์ชันลบบัญชี (แทนปฏิเสธ)
+  // ฟังก์ชันลบบัญชี
   const handleReject = async (id) => {
     if (!confirm("ยืนยันการลบบัญชีผู้ใช้นี้?")) return;
     await supabase.from("user_tb").delete().eq("user_id", id);
@@ -122,10 +118,8 @@ export default function VerifyUserPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 font-inter flex">
-      {/* ✅ Drawer */}
       <DrawerAdmin onToggle={handleDrawerToggle} />
 
-      {/* ✅ Main Content ดันตาม Drawer */}
       <div
         className={`flex-1 transition-all duration-300`}
         style={{ marginLeft: drawerOpen ? "18rem" : "0" }}
@@ -175,7 +169,7 @@ export default function VerifyUserPage() {
             </div>
           </div>
 
-          {/* ✅ เปลี่ยนจาก Grid เป็น Table List */}
+          {/* Table List */}
           {loading ? (
             <p className="text-center text-gray-500 py-10">กำลังโหลดข้อมูล...</p>
           ) : currentData.length === 0 ? (

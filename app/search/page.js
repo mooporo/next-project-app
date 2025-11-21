@@ -328,8 +328,8 @@ export default function SearchPage() {
   };
 
   useEffect(() => {
-    if (user?.user_id) fetchResearchData();
-  }, [user?.user_id]); //เจมส์ : เพิ่มให้ useEffect รอ user_id
+      fetchResearchData(); // 🔹 เรียก fetchResearchData() ไม่ว่าผู้ใช้ล็อกอินหรือไม่
+  }, [user?.user_id]);
 
   // KLA : เมื่อคลิกการ์ด → เพิ่ม paper_views +1
   const handleView = async (item) => {
@@ -411,29 +411,36 @@ export default function SearchPage() {
   //เจมส์ : เพิ่ม function ปักหมุด
   const handlePinClick = async (paperId, isPinned) => {
     try {
+      // ✅ เช็คก่อนว่าผู้ใช้ล็อกอิน
+      if (!user) {
+        alert("กรุณาล็อกอินก่อนปักหมุดเอกสาร");
+        return; // ออกจากฟังก์ชันทันที
+     }
+
       if (isPinned == true) {
         const { error } = await supabase
           .from('paper_pin_mtb')
           .delete()
           .eq('paper_id', paperId)
-          .eq('user_id', user?.user_id)
+          .eq('user_id', user?.user_id);
         if (!error) fetchResearchData();
       }
       if (isPinned == false) {
         const { error } = await supabase
           .from('paper_pin_mtb')
-          .insert([
-            {
-              user_id: user?.user_id,
-              paper_id: paperId,
-            }
-          ])
+         .insert([
+           {
+             user_id: user?.user_id,
+             paper_id: paperId,
+           }
+         ]);
         if (!error) fetchResearchData();
       }
     } catch (error) {
       console.error('Swap pin state error:', error);
     }
   }
+
 
   return (
     // KLA : หน้า Search Page
@@ -443,11 +450,18 @@ export default function SearchPage() {
         <header className="flex justify-between items-center mb-6 pt-4">
           <h1 className="text-3xl font-bold text-gray-800 drop-shadow-sm">คลังงานวิจัย</h1>
           <button
-            onClick={() => router.push("/upload")} // KLA : เปลี่ยนเส้นทางไปยังหน้าอัพโหลด
+            onClick={() => {    // KLA : เปลี่ยนเส้นทางไปยังหน้าอัพโหลด
+              if (!user) {
+                alert("กรุณาล็อกอินก่อนอัพโหลดเอกสาร");
+                return; // ออกจากฟังก์ชันทันที
+              }
+              router.push("/upload"); // ถ้า login แล้วไปหน้าอัพโหลด
+            }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 flex items-center space-x-2 transform hover:scale-105"
           >
             <span>อัพโหลดงานวิจัย</span>
           </button>
+
         </header>
 
         {/* Search Bar */}
