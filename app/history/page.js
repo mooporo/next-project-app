@@ -113,9 +113,9 @@ export default function HistoryPage() {
               date: new Date(item.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }),
               version: "1.0",
               status:
-                item.paper_status === 1
+                item.paper_status === 1 
                   ? "ตรวจรอบ"
-                  : item.paper_status === 2
+                  : item.paper_status === 2 || item.paper_status === 4
                     ? "อนุมัติ"
                     : item.paper_status === 3
                       ? "ต้องการแก้ไข"

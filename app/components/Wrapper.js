@@ -10,8 +10,8 @@ export default function DrawerWrapper({ children }) {
     const [isOpen, setIsOpen] = useState(false);
 
     // 2. ตรวจสอบเงื่อนไขการซ่อน
-    // เช็คว่า pathname ตรงกับ /login หรือ /register หรือไม่
-    const isAuthPage = pathname === '/login' || pathname === '/register';
+    // เช็คว่า pathname ตรงกับ /login หรือ /register หรือ /login-admin
+    const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/login-admin';
 
     // 3. Conditional Rendering: ถ้าเป็นหน้า Auth ให้แสดงแค่ Children
     if (isAuthPage) {

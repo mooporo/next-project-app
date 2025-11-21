@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Upload, ChevronRight, ChevronLeft, CheckCircle, XCircle } from "lucide-react";
+import { Search, ChevronRight, ChevronLeft, XCircle } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth";
-import { useRouter } from "next/navigation"; // เพิ่ม useRouter
 import DrawerAdmin from "../components/DrawerAdmin"; // ✅ เพิ่ม DrawerAdmin
 
 // KLA : เพิ่ม Sort Dropdown Component
@@ -59,7 +58,6 @@ export default function VerifyUserPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("date");
   const { user } = useAuth();
-  const router = useRouter();
 
   const [drawerOpen, setDrawerOpen] = useState(false); // ✅ state สำหรับ Drawer
   const handleDrawerToggle = (isOpen) => setDrawerOpen(isOpen); // ✅ toggle Drawer

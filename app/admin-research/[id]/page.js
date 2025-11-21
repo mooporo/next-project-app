@@ -3,29 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import {
-  Download,
-  Archive,
-  Eye,
-  MessageSquare,
-  UserCircle,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { UserCircle, CheckCircle, XCircle } from "lucide-react";
 
 import DrawerAdmin from "../../components/DrawerAdmin";
 
 const STORAGE_BUCKET = "user_bk";
-
-const StatItem = ({ Icon, count, label }) => (
-  <div className="flex flex-col items-center p-3 sm:p-4 text-center">
-    <Icon className="w-6 h-6 text-blue-600 mb-1" />
-    <div className="font-bold text-gray-800 text-lg">
-      {count?.toLocaleString() ?? 0}
-    </div>
-    <div className="text-sm text-gray-500">{label}</div>
-  </div>
-);
 
 const AuthorBadge = ({ name, role, isPrimary, userId }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
@@ -44,7 +26,6 @@ const AuthorBadge = ({ name, role, isPrimary, userId }) => {
           const { data } = supabase.storage
             .from(STORAGE_BUCKET)
             .getPublicUrl(userData.user_image);
-          // เพิ่ม cache buster
           setAvatarUrl(`${data.publicUrl}?t=${new Date().getTime()}`);
         }
       } catch (err) {
@@ -78,12 +59,6 @@ const AuthorBadge = ({ name, role, isPrimary, userId }) => {
   );
 };
 
-const KeywordTag = ({ label }) => (
-  <span className="inline-block bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2 hover:bg-gray-200 transition">
-    {label}
-  </span>
-);
-
 export default function AdminResearchDetailPage() {
   const { id } = useParams();
   const [research, setResearch] = useState(null);
@@ -105,15 +80,14 @@ export default function AdminResearchDetailPage() {
         .eq("paper_id", id)
         .maybeSingle();
       if (data) {
-        // ปรับให้ตรงกับหน้า VerifyResearchPage
         let mappedStatus = "รออนุมัติ";
-        if (data.paper_status === 2 || data.paper_status === "อนุมัติ") mappedStatus = "อนุมัติ";
-        else if (data.paper_status === 3 || data.paper_status === "ไม่อนุมัติ") mappedStatus = "ไม่อนุมัติ";
+          if (data.paper_status === 2 || data.paper_status === 4) mappedStatus = "อนุมัติ";
+          else if (data.paper_status === 3) mappedStatus = "ไม่อนุมัติ";
+
 
         setResearch(data);
         setStatus(mappedStatus);
 
-        // ดึงชื่อผู้เขียน
         const { data: userData } = await supabase
           .from("user_tb")
           .select("user_fullname, user_image")
@@ -122,7 +96,6 @@ export default function AdminResearchDetailPage() {
         if (userData) {
           setAuthorName(userData.user_fullname);
 
-          // ดึงรูป avatar พร้อม cache buster
           if (userData.user_image) {
             const { data: avatarData } = supabase.storage
               .from(STORAGE_BUCKET)
@@ -131,10 +104,9 @@ export default function AdminResearchDetailPage() {
           }
         }
 
-        // ดึงรูป paper_image พร้อม cache buster
         if (data.paper_image) {
           const { data: imgData } = supabase.storage
-            .from("paper_bk") // bucket ของ paper
+            .from("paper_bk")
             .getPublicUrl(data.paper_image);
           setPaperImageUrl(`${imgData.publicUrl}?t=${new Date().getTime()}`);
         }
@@ -144,7 +116,7 @@ export default function AdminResearchDetailPage() {
   }, [id]);
 
   const handleApprove = async (approved) => {
-    const newStatus = approved ? 2 : 3; // เก็บเป็นเลขใน DB
+    const newStatus = approved ? 2 : 3;
     const { error } = await supabase
       .from("paper_tb")
       .update({ paper_status: newStatus })

@@ -258,7 +258,7 @@ export default function SearchPage() {
       user_tb:user_id ( user_fullname ),
       paper_status
     `)
-      .eq("paper_status", 2) // 🔹 เพิ่มตรงนี้
+     .in("paper_status", [2, 4]) // 🔹 เพิ่มตรงนี้
       .order("created_at", { ascending: false });
 
     if (error) {

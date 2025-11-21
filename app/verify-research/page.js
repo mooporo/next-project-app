@@ -116,7 +116,7 @@ export default function VerifyResearchPage() {
             author: item.users?.user_fullname || "ไม่ทราบชื่อ",
             date: new Date(item.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }),
             status:
-              item.paper_status === 2
+              item.paper_status === 2 || item.paper_status === 4
                 ? "อนุมัติ"
                 : item.paper_status === 3
                 ? "ไม่อนุมัติ"
