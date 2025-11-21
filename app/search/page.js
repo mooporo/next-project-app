@@ -276,7 +276,7 @@ export default function SearchPage() {
       user_tb:user_id ( user_fullname ),
       paper_status
     `)
-     .in("paper_status", [2, 4]) // 🔹 เพิ่มตรงนี้
+      .in("paper_status", [2, 4]) // 🔹 เพิ่มตรงนี้
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -303,10 +303,15 @@ export default function SearchPage() {
         // 🔹 แปลง paper_image เป็น public URL
         let paperImageUrl = null;
         if (paper.paper_image) {
-          const { data: imgUrl } = supabase.storage
-            .from("paper_bk") // 🔹 ใช้ bucket ให้ตรงกับ storage ของคุณ
+          const { data, error } = supabase.storage
+            .from("paper_bk")
             .getPublicUrl(paper.paper_image);
-          paperImageUrl = `${imgUrl.publicUrl}?t=${new Date().getTime()}`;
+
+          if (error) {
+            console.error("Error getting public URL:", error);
+          } else {
+            paperImageUrl = data.publicUrl + `?t=${new Date().getTime()}`;
+          }
         }
 
         const is_pinned = fetchedPinnedIds.has(paperIdAsString);

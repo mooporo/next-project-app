@@ -60,6 +60,9 @@ const UploadPage = () => {
   const [loading, setLoading] = useState(false); // KLA : Loading state
   const [keywords, setKeywords] = useState([]); // แทน formData.keywords string
   const [keywordInput, setKeywordInput] = useState(""); // input ชั่วคราวก่อนกด Enter/Add
+  const [allPapers, setAllPapers] = useState([]); // KLA : สถานะเก็บรายการงานวิจัยทั้งหมด
+  const [selectedRef, setSelectedRef] = useState(""); // KLA : สถานะเก็บงานวิจัยที่เลือกเป็นอ้างอิง
+  const [references, setReferences] = useState([]); // KLA : สถานะเก็บรายการอ้างอิง
 
   //เจมส์ : เพิ่ม state เก็บค่า switch
   const [isAutoGenEnabled, setIsAutoGenEnabled] = useState(false);
@@ -67,6 +70,17 @@ const UploadPage = () => {
     console.log(!isAutoGenEnabled);
     setIsAutoGenEnabled(prev => !prev);
   };
+
+  const generateUploadFileName = (file) => {
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-:]/g, "").split(".")[0];
+    const ext = file.type.split("/")[1] || "dat"; // ดึงนามสกุลจาก mime type
+    return `File_${timestamp}.${ext}`;
+  };
+
+
+
+
 
   //เจมส์ : เมื่อกดปุ่ม Auto Gen
   const handleAutoGenClick = async () => {
@@ -114,6 +128,16 @@ const UploadPage = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.id) setUserId(session.user.id);
     });
+
+    // KLA : ดึงรายการงานวิจัยทั้งหมด
+    const fetchResearch = async () => {
+      const { data, error } = await supabase
+        .from("paper_tb")
+        .select("paper_id, paper_title");
+
+      if (!error && data) setAllPapers(data);
+    };
+    fetchResearch();
   }, []);
 
   // KLA : เมือจัดการการเปลี่ยนแปลงข้อมูลฟอร์ม
@@ -159,56 +183,39 @@ const UploadPage = () => {
         let coverImgUrl = "";
         if (coverImg) {
           try {
-            if (paperFile) {
-              try {
-                // ดึงนามสกุลไฟล์
-                const fileExtension = paperFile.name.split('.').pop();
-                // KLA : ตั้งชื่อไฟล์เป็น File_"+"DateTime"+"mimetype ตามที่เพื่อนเกบอก
-                const fileName = `File_${Date.now()}.${fileExtension}`;
-
-                const { data, error } = await supabase.storage
-                  .from("paper_bk")
-                  .upload(`pdfs/${fileName}`, paperFile);
-
-                if (error || !data) {
-                  console.error("เกิดข้อผิดพลาดตอนอัปโหลด PDF:", error);
-                  alert("เกิดข้อผิดพลาดตอนอัปโหลด PDF: " + (error?.message || "Unknown error"));
-                  return;
-                }
-
-                const { data: urlData } = supabase.storage.from("paper_bk").getPublicUrl(data.path);
-                paperFileUrl = urlData?.publicUrl || "";
-
-                console.log("อัปโหลด PDF สำเร็จ:", fileName);
-
-              } catch (uploadErr) {
-                console.error("Exception ขณะอัปโหลด PDF:", uploadErr);
-                alert("เกิดข้อผิดพลาดขณะอัปโหลด PDF");
-                return;
-              }
-            }
+            const safeCoverName = generateUploadFileName(coverImg);
+            const { data, error } = await supabase.storage
+              .from("paper_bk")
+              .upload(`covers/${safeCoverName}`, coverImg);
 
             if (error || !data) {
-              console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", error);
               alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
               return;
             }
 
-            const { data: coverUrlData } = supabase.storage.from("paper_bk").getPublicUrl(data.path);
+            const { data: coverUrlData } = supabase.storage
+              .from("paper_bk")
+              .getPublicUrl(data.path);
+
             coverImgUrl = coverUrlData?.publicUrl || "";
+            console.log("Cover uploaded:", safeCoverName);
 
           } catch (imgErr) {
             console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", imgErr);
             alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
+            return;
           }
         }
-
+          // KLA : อัปโหลดไฟล์ PDF
         try {
           console.log("เริ่มอัปโหลด PDF:", paperFile.name, paperFile.size, paperFile.type);
 
+          // ใช้ฟังก์ชัน generateUploadFileName
+          const safePdfName = generateUploadFileName(paperFile);
+
           const { data, error } = await supabase.storage
-            .from("paper_bk")      // KLA : ส่งไฟล์ไปยัง bucket paper_bk
-            .upload(`pdfs/${Date.now()}_${paperFile.name}`, paperFile);
+            .from("paper_bk")
+            .upload(`pdfs/${safePdfName}`, paperFile); // <-- เปลี่ยนชื่อไฟล์ที่นี่
 
           if (error || !data) {
             console.error("เกิดข้อผิดพลาดตอนอัปโหลด PDF:", error);
@@ -218,7 +225,7 @@ const UploadPage = () => {
 
           console.log("อัปโหลด PDF สำเร็จ:", data);
 
-          // KLA : แปลง path เป็น public URL
+          // แปลง path เป็น public URL
           const { data: urlData } = supabase.storage.from("paper_bk").getPublicUrl(data.path);
 
           if (!urlData?.publicUrl) {
@@ -226,8 +233,7 @@ const UploadPage = () => {
             return;
           }
 
-          paperFileUrl = urlData.publicUrl; // KLA : กำหนด public URL ให้ตัวแปร
-
+          paperFileUrl = urlData.publicUrl; // กำหนด public URL ให้ตัวแปร
         } catch (uploadErr) {
           console.error("Exception ขณะอัปโหลด PDF:", uploadErr);
           alert("เกิดข้อผิดพลาดขณะอัปโหลด PDF");
@@ -255,6 +261,22 @@ const UploadPage = () => {
 
         //ตัวแปรเก็บ paper_id ที่เพิ่งถูกบันทึก
         let paper_id = res.paper_id
+
+        //KLA : เพิ่มส่วนจัดการอ้างอิง
+        if (references.length > 0) {
+          const refRelations = references.map(r => ({
+            paper_id: paper_id,
+            paper_ref: r.paper_id
+          }));
+
+          const { error: refError } = await supabase
+            .from("paper_citation_mtb")
+            .insert(refRelations);
+
+          if (refError) {
+            console.error("เพิ่มอ้างอิงผิดพลาด:", refError);
+          }
+        }
 
         //เจมส์ : เพิ่มส่วนจัดการ keywords โดย split และนำไปตรวจสอบ
         const splitKeywords = keywords.map(kw => kw.trim()) // <-- ใช้ keywords state แทน formData.keywords
@@ -367,7 +389,7 @@ const UploadPage = () => {
 
           <div
             className={`relative border-2 border-dashed rounded-xl p-10 text-center transition duration-300 cursor-pointer
-        ${paperFile ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"}`}
+          ${paperFile ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"}`}
             onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-blue-500", "bg-blue-50"); }}
             onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-blue-500", "bg-blue-50"); }}
             onDrop={(e) => {
@@ -498,6 +520,68 @@ const UploadPage = () => {
             </div>
           </FormField>
         </section>
+        <section className="mb-10 p-5 border border-gray-100 rounded-xl bg-white">
+          <h2 className="text-xl font-semibold text-gray-700 mb-5">
+            อ้างอิง (References)
+          </h2>
+
+          {/* แสดงรายการอ้างอิงที่เลือก */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {references.map((ref, idx) => (
+              <span
+                key={idx}
+                className="flex items-center bg-gray-300 text-black px-4 py-2 rounded-full text-base"
+              >
+                {ref.paper_title}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setReferences(prev => prev.filter((_, i) => i !== idx))
+                  }
+                  className="ml-2 text-red-600 hover:text-red-800 font-bold text-lg"
+                >
+                  X
+                </button>
+              </span>
+            ))}
+          </div>
+
+          {/* เลือกอ้างอิง */}
+          <div className="flex gap-2">
+            <select
+              value={selectedRef}
+              onChange={(e) => setSelectedRef(e.target.value)}
+              className="flex-1 p-2 border border-gray-300 rounded-lg"
+            >
+              <option value="">— เลือกงานวิจัยที่ต้องการอ้างอิง —</option>
+              {allPapers.map(p => (
+                <option key={p.paper_id} value={p.paper_id}>
+                  {p.paper_title}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!selectedRef) return;
+
+                const found = allPapers.find(p => p.paper_id == selectedRef);
+                if (!found) return;
+
+                // ป้องกันซ้ำ
+                if (!references.some(r => r.paper_id == found.paper_id)) {
+                  setReferences([...references, found]);
+                }
+
+                setSelectedRef("");
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Add
+            </button>
+          </div>
+        </section>
 
         {/* Additional Information Section */}
         <section className="mb-10 p-5 border border-gray-100 rounded-xl bg-white">
@@ -563,6 +647,7 @@ const UploadPage = () => {
             </div>
           </FormField>
         </section>
+
 
         {/* KLA : ปุ่มบันทึกการเปลี่ยนแปลง */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
