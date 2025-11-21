@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, Eye, MessageSquare, Plus, Trash2, ArrowBigDownDash } from "lucide-react";
+import { Eye, MessageSquare, Plus, Trash2, ArrowBigDownDash } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth";
 import { N8N_TUNNEL_URL } from "../lib/config";
@@ -146,16 +146,27 @@ const ShowSearchPopup = ({ Plus, onSearchChange, currentSearchQuery, onSelectRes
 
 //เจมส์ : แสดงรายการความคล้ายคลึง
 const CompareResultItem = ({ item }) => (
-  <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 hover:bg-gray-100 transition cursor-pointer">
-    <div className="flex justify-between items-start mb-2">
-      <span className={`text-xl font-bold ${parseFloat(item.score) > 0.9 ? 'text-green-600' : 'text-yellow-600'}`}>
+  <div onClick={() => window.open(`/research/${item.paper_id}`, '_blank')}
+    className="bg-white border border-gray-200 rounded-lg p-4 mb-4 hover:bg-gray-100 transition cursor-pointer">
+    <div className="flex flex-row items-center mb-2">
+
+      <h2 className="text-lg font-semibold leading-snug">
+        <a
+          href={`/research/${item.paper_id}`}
+          target="_blank"
+          className="text-gray-900 hover:text-blue-600 hover:underline cursor-pointer inline"
+        >
+          {item.paper_title}
+        </a>
+      </h2>
+
+      <span className={`text-xl font-bold ml-auto ${parseFloat(item.score) > 0.9 ? 'text-green-600' : 'text-yellow-600'}`}>
         {(parseFloat(item.score) * 100).toFixed(1)}%
       </span>
+
     </div>
-    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{item.abstract}</p>
-    <div className="text-xs text-gray-500">
-      คะแนนความคล้ายคลึง: {parseFloat(item.score).toFixed(3)}
-    </div>
+    <p className="text-sm text-gray-600 mb-2 line-clamp-3">{item.abstract}</p>
+    <p className="text-sm text-gray-600 mb-2">ผู้แต่ง: {item.paper_authors}</p>
   </div>
 );
 
@@ -180,18 +191,18 @@ export default function ComparisonPage() {
     const { data, error } = await supabase
       .from('paper_tb')
       .select(`
-                    *,
-                    users:user_id ( 
-                        user_fullname,
-                        user_email 
-                    )
-                `)
+                          *,
+                          users:user_id ( 
+                              user_fullname,
+                              user_email 
+                          )
+                      `)
+      .in('paper_status', [2, 4])
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error(error);
     } else {
-      // console.log(data);
       setPinPaper(data);
 
       if (!papers) {
@@ -204,15 +215,16 @@ export default function ComparisonPage() {
     const { data, error } = await supabase
       .from('paper_pin_mtb')
       .select(`
-                paper_tb:paper_id ( 
-                    *,
-                    users:user_id ( 
-                        user_fullname,
-                        user_email 
-                    )
-                )
-            `)
+                          paper_tb:paper_id ( 
+                              *,
+                              users:user_id ( 
+                                  user_fullname,
+                                  user_email 
+                              )
+                          )
+                      `)
       .eq('user_id', user?.user_id)
+      .filter('paper_tb.paper_status', 'in', '(2,4)')
       .order('created_at', { referencedTable: 'paper_tb', ascending: false });
 
     if (error) {
@@ -223,7 +235,6 @@ export default function ComparisonPage() {
           ...item.paper_tb,
         })) || [];
 
-      // console.log(cleanData);
       setUnpinPaper(cleanData);
     }
   }
@@ -267,8 +278,8 @@ export default function ComparisonPage() {
           'Accept': 'application/json'
         }
       })
-      console.log(res.data.data);
-      setComparePaper(res.data.data);
+      // console.log(res.data.data);
+      setComparePaper(res.data.output);
     } catch (error) {
       console.log("เกิดข้อผิดพลาดในการเปรียบเทียบ" + error);
     }
@@ -279,10 +290,10 @@ export default function ComparisonPage() {
     // หน้าเปรียบเทียบ
     <div className="flex flex-col items-center">
       <div className="container min-h-screen flex flex-col items-center justify-center px-4">
-        <h1 className="text-2xl font-semibold mb-2 text-gray-800 mt-10">
+        <h1 className="text-2xl font-semibold mb-2 text-gray-800 mt-20">
           เปรียบเทียบเอกสาร
         </h1>
-        <p className="mb-10 text-gray-600">
+        <p className="mb-5 text-gray-600">
           เลือกเอกสารที่คุณสนใจเพื่อค้นหาเอกสารที่ใกล้เคียงกัน โดยระบบจะตรวจสอบจากความใกล้เคียงกันของบทคัดย่อ
         </p>
 
@@ -333,74 +344,56 @@ export default function ComparisonPage() {
             </div>
 
             {/* ชื่อเรื่อง */}
-            <h2 className="text-lg font-semibold text-gray-900 leading-snug">
-              {selectedPaper.paper_title}
+            <h2 className="text-lg font-semibold leading-snug">
+              <a
+                href={`/research/${selectedPaper.paper_id}`}
+                target="_blank"
+                className="text-gray-900 hover:text-blue-600 hover:underline cursor-pointer inline"
+              >
+                {selectedPaper.paper_title}
+              </a>
             </h2>
 
             {/* ผู้เขียน */}
+            <p className="text-sm text-gray-600 mt-1">
+              ผู้แต่ง: {selectedPaper.paper_authors}
+            </p>
+
+            {/* ผู้อัปโหลด */}
             <p className="text-sm text-gray-600 mt-1 mb-3">
-              {selectedPaper.users.user_fullname}
+              ผู้อัปโหลด: {selectedPaper.users.user_fullname}
             </p>
 
             {/* บทคัดย่อ */}
             <div className="border-t border-gray-200 pt-3 mb-3 flex-1">
               <h3 className="font-semibold text-gray-800 mb-1">บทคัดย่อ</h3>
-              <p className="text-sm text-gray-600 leading-loose mb-8">
+              <p className="text-sm text-gray-600 leading-loose line-clamp-5">
                 {selectedPaper.paper_abstract}
-                <span className="text-gray-400"> (เนื้อหาย่อ)</span>
               </p>
-            </div>
-
-            {/* คีย์เวิร์ด */}
-            <div className="border-t border-gray-200 pt-3 mb-3">
-              <h3 className="font-semibold text-gray-800 mb-1">คีย์เวิร์ด</h3>
-              <div className="flex flex-wrap gap-2">
-                <span className="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">
-                  Machine Learning
-                </span>
-                <span className="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">
-                  Recommendation System
-                </span>
-              </div>
-            </div>
-
-            {/* สถิติ */}
-            <div className="border-t border-gray-200 pt-3 mb-3">
-              <h3 className="font-semibold text-gray-800 mb-2">สถิติ</h3>
-              <div className="flex gap-5 text-gray-600 text-sm">
-                <div className="flex items-center gap-1">
-                  <Eye size={16} /> <span>1,204</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageSquare size={16} /> <span>15</span>
-                </div>
-              </div>
             </div>
 
             {/* ปุ่มดูรายละเอียด */}
             <button
               onClick={handleCompareClick}
-              className="w-full bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 transition mt-auto">
+              className="w-full bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 cursor-pointer transition mt-auto">
               เริ่มเปรียบเทียบ 🚀
             </button>
           </div>
-
         )}
 
         <div className="flex flex-col gap-2 mt-5 mb-5">
           <ArrowBigDownDash className="text-gray-500" />
           <ArrowBigDownDash className="text-gray-500" />
           <ArrowBigDownDash className="text-gray-500" />
-          <ArrowBigDownDash className="text-gray-500" />
         </div>
 
         {comparePaper?.length === 0 ? (
-          <div className="bg-white border-2 border-dashed border-gray-500 rounded-2xl w-full md:w-[800px] p-6 flex flex-col justify-center items-center text-center shadow-sm mb-10">
+          <div className="bg-white border-2 border-dashed border-gray-500 rounded-2xl w-full md:w-[800px] p-6 flex flex-col justify-center items-center text-center shadow-sm mb-20">
             <h1 className="text-gray-500 text-xl mb-2">รอการเปรียบเทียบ</h1>
             <p className="text-gray-500">รายการเอกสารที่คล้ายคลึงจะแสดงเมื่อประมวลผลเสร็จสิ้น...</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-md w-full md:w-[800px] p-6 relative border border-gray-100 flex flex-col mb-10">
+          <div className="bg-white rounded-2xl shadow-md w-full md:w-[800px] p-6 relative border border-gray-100 flex flex-col mb-20">
             <h2 className="text-2xl font-semibold mb-4 text-gray-700">
               พบเอกสารที่เกี่ยวข้อง {comparePaper?.length} ฉบับ
             </h2>
