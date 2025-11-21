@@ -181,12 +181,7 @@ export default function HistoryPage() {
   const currentData = filteredData.slice(startIdx, startIdx + itemsPerPage);
 
   const handleSearch = () => setCurrentPage(1);
-  const handleClear = () => {
-    setInputValue("");
-    setSearch("");
-    setSortField("date");
-    setCurrentPage(1);
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-100 font-inter">
@@ -204,9 +199,10 @@ export default function HistoryPage() {
         </header>
 
         {/* SearchBar, Sort, Buttons */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8 items-stretch md:items-center bg-white p-4 rounded-xl shadow-md border border-gray-200">
+        <div className="flex flex-col md:flex-row gap-4 mb-8 items-stretch md:items-center bg-white p-5 rounded-xl shadow-md border border-gray-200">
+
           {/* Search Bar */}
-          <div className="flex items-center border border-gray-300 rounded-xl p-3 flex-grow md:flex-[2] bg-gray-50 shadow-inner">
+          <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 flex-grow md:flex-[2.5] bg-gray-50 shadow-inner">
             <Search className="w-5 h-5 text-gray-500 mr-3" />
             <input
               type="text"
@@ -224,23 +220,20 @@ export default function HistoryPage() {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex md:flex-[1]">
-            <SortDropdown value={sortField} onChange={(val) => { setSortField(val); handleSearch(); }} />
+          <div className="flex md:flex-[1.2]">
+            <SortDropdown
+              value={sortField}
+              onChange={(val) => { setSortField(val); handleSearch(); }}
+            />
           </div>
 
-          {/* Search + Clear */}
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-2 flex-[1.5]">
+          {/* Search  */}
+          <div className="flex md:flex-[1]">
             <button
               onClick={() => { setSearch(inputValue); handleSearch(); }}
-              className="bg-blue-600 text-white px-17.5 py-3 rounded-lg font-medium shadow-md hover:bg-blue-700 transition duration-150 w-full sm:w-auto text-lg"
+              className="bg-blue-600 text-white w-full py-3 rounded-xl font-semibold shadow-md hover:bg-blue-700 transition duration-150 text-base"
             >
               ค้นหา
-            </button>
-            <button
-              onClick={handleClear}
-              className="bg-red-600 text-white px-17.5 py-3 rounded-lg font-medium shadow-md hover:bg-red-700 transition duration-150 w-full sm:w-auto text-lg"
-            >
-              ยกเลิก
             </button>
           </div>
         </div>

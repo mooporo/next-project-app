@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, Upload, Users } from "lucide-react";
+import { Search, Upload, BarChart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "./lib/supabaseClient";
@@ -49,7 +49,7 @@ interface ResearchItem {
   user_fullname?: string;
   comment_count?: number;
   created_at?: string;
-  
+
 }
 
 //
@@ -79,7 +79,7 @@ const ResearchCard: React.FC<{ item: ResearchItem; onClick: (item: ResearchItem)
       "#1E3A8A", // indigo-900
       "#0F766E", // teal-700
       "#DC2626", // red-600
-      ];
+    ];
     return colors[Math.floor(Math.random() * colors.length)];
   });
 
@@ -98,7 +98,7 @@ const ResearchCard: React.FC<{ item: ResearchItem; onClick: (item: ResearchItem)
       {/* KLA: ภาพหรือพื้นหลังสีถ้าไม่มีภาพ */}
       <div className="h-40 flex items-center justify-center overflow-hidden">
         {item.paper_image ? (
-          <img src={item.paper_image} alt={item.paper_title} className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500"/>
+          <img src={item.paper_image} alt={item.paper_title} className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-center px-6" style={{ backgroundColor: bgColor }}>
             <span className="text-white text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
@@ -148,7 +148,7 @@ export default function Page() {
   const features: Feature[] = [
     { icon: Search, title: "ค้นหาง่าย", subtitle: "ค้นหาและเข้าถึงงานวิจัยได้ง่ายขึ้น" },
     { icon: Upload, title: "อัปโหลดเอกสาร", subtitle: "แชร์ผลงานของคุณพร้อมอัปเดตข้อมูลได้ตลอด" },
-    { icon: Users, title: "สร้างชุมชน", subtitle: "เชื่อมต่อและร่วมมือกับผู้เชี่ยวชาญ และเพื่อนร่วมงาน" },
+    { icon: BarChart, title: "เปรียบเทียบงานวิจัย", subtitle: "เปรียบเทียบข้อมูลและคุณลักษณะของงานวิจัยอย่างง่าย" },
   ];
 
   const fetchPinnedData = async (): Promise<Set<number>> => {
@@ -242,7 +242,7 @@ export default function Page() {
             <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto">เราออกแบบมาเพื่อเป็นเครื่องมือและบริการจัดการงานวิจัยให้คุณเข้าถึงง่ายและมีประสิทธิภาพ ด้วยระบบที่ใช้งานง่าย</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature, index) => {
-                const linkHref = feature.title === "ค้นหาง่าย" ? "/search" : feature.title === "อัปโหลดเอกสาร" ? "/upload" : "#";
+                const linkHref = feature.title === "ค้นหาง่าย" ? "/search" : feature.title === "อัปโหลดเอกสาร" ? "/upload" : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison" : "#";
                 return <Link key={index} href={linkHref}><FeatureCard {...feature} /></Link>;
               })}
             </div>
@@ -262,8 +262,8 @@ export default function Page() {
             {/* KLA : แสดงรายการงานวิจัยโดยใช้ ResearchCard */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {loading ? <p className="text-gray-500 col-span-full text-center py-20">กำลังโหลด...</p>
-                : researchItems.length === 0 ? <p className="text-gray-500 col-span-full text-center py-20">ไม่พบงานวิจัย</p> 
-                  : researchItems.map(item => <ResearchCard key={item.paper_id} item={item} onClick={handleView}  />)}
+                : researchItems.length === 0 ? <p className="text-gray-500 col-span-full text-center py-20">ไม่พบงานวิจัย</p>
+                  : researchItems.map(item => <ResearchCard key={item.paper_id} item={item} onClick={handleView} />)}
             </div>
           </div>
         </section>
