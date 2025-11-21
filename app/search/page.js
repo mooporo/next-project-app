@@ -307,13 +307,10 @@ export default function SearchPage() {
             .from("paper_bk")
             .getPublicUrl(paper.paper_image);
 
-          if (error) {
-            console.error("Error getting public URL:", error);
-          } else {
+          if (!error) {
             paperImageUrl = data.publicUrl + `?t=${new Date().getTime()}`;
           }
         }
-
         const is_pinned = fetchedPinnedIds.has(paperIdAsString);
         return {
           ...paper,

@@ -206,7 +206,7 @@ const UploadPage = () => {
             return;
           }
         }
-          // KLA : อัปโหลดไฟล์ PDF
+        // KLA : อัปโหลดไฟล์ PDF
         try {
           console.log("เริ่มอัปโหลด PDF:", paperFile.name, paperFile.size, paperFile.type);
 
@@ -249,6 +249,8 @@ const UploadPage = () => {
             paper_file: paperFileUrl, //ต้องไม่ null
             paper_image: coverImgUrl,   // optional ถ้าไม่มีจะเป็น ""
             paper_type_id: formData.researchType === "journal" ? 1 : 2, //mock
+            paper_category_id: formData.researchType, // เลือกจาก dropdown
+            paper_type_id: formData.paperType,
             paper_category_id: formData.researchType, // เลือกจาก dropdown
 
             paper_authors: formData.coAuthors,
@@ -457,6 +459,17 @@ const UploadPage = () => {
               className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
             />
           </FormField>
+          <FormField label="ชื่อ​งานผู้เขียนและผู้ร่วมเขียน (Author)" required>
+            <input
+              type="text"
+              name="author"
+              value={formData.author}
+              disabled={isAutoGenEnabled}
+              onChange={handleChange}
+              placeholder="ระบุชื่อ​ผู้เขียนและผู้ร่วมเขียน..."
+              className={`w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-sm ${isAutoGenEnabled ? "border-red-500 border-dashed" : "border-gray-300"}`}
+            />
+          </FormField>
 
           <FormField label="บทคัดย่อ (Abstract)" required>
             <textarea
@@ -551,7 +564,7 @@ const UploadPage = () => {
             <select
               value={selectedRef}
               onChange={(e) => setSelectedRef(e.target.value)}
-              className="flex-1 p-2 border border-gray-300 rounded-lg"
+              className="flex-1 min-w-0 p-2 border border-gray-300 rounded-lg"
             >
               <option value="">— เลือกงานวิจัยที่ต้องการอ้างอิง —</option>
               {allPapers.map(p => (
@@ -591,14 +604,28 @@ const UploadPage = () => {
 
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="flex-1">
-              <FormField label="ประเภทงานวิจัย">
+              <FormField label="ประเภทงานวิจัย" required>
+                <select
+                  name="paperType"
+                  value={formData.paperType || ""}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base appearance-none shadow-sm cursor-pointer"
+                >
+                  <option value="" disabled>-- เลือกประเภทงานวิจัย --</option>
+                  <option value="1">งานวิจัย (Research)</option>
+                  <option value="2">โครงงาน (Project)</option>
+                  <option value="3">วิทยานิพนธ์ (Thesis)</option>
+                </select>
+              </FormField>
+
+              <FormField label="หมวดหมู่วิจัย">
                 <select
                   name="researchType"
                   value={formData.researchType.toString()}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base appearance-none shadow-sm cursor-pointer"
                 >
-                  <option value="" disabled>-- เลือกประเภท --</option>
+                  <option value="" disabled>-- เลือกหมวดหมู่ --</option>
                   <option value="1">ปรัชญาและจิตวิทยา (Philosophy & Psychology)</option>
                   <option value="2">ศาสนาและเทววิทยา (Religion & Theology)</option>
                   <option value="3">สังคมศาสตร์และกฎหมาย (Social Sciences & Law)</option>
