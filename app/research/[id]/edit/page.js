@@ -62,6 +62,9 @@ export default function ResearchEditPage() {
   const [savingFile, setSavingFile] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [popup, setPopup] = useState({ show: false, message: "", success: true }); // KLA : popup state 
+  const [references, setReferences] = useState([]); // แสดงรายการ references ปัจจุบัน
+  const [allPapers, setAllPapers] = useState([]); // สำหรับ dropdown
+  const [selectedRef, setSelectedRef] = useState(""); // paper_id ที่เลือก
 
 
   // KLA : ฟังก์ชันแสดง popup
@@ -78,6 +81,66 @@ export default function ResearchEditPage() {
   useEffect(() => {
     if (!id) return;
 
+
+    // KLA : ดึงงานวิจัยทั้งหมด สำหรับเลือกอ้างอิง
+    const fetchAllPapers = async () => {
+      try {
+        const { data: allP, error: allErr } = await supabase
+          .from("paper_tb")
+          .select("paper_id, paper_title")
+          .neq("paper_id", id);
+        if (allErr) throw allErr;
+        setAllPapers(allP || []);
+
+        const { data: refsData, error: refsErr } = await supabase
+          .from("paper_citation_mtb")
+          .select("paper_ref")
+          .eq("paper_id", id);
+        if (refsErr) throw refsErr;
+
+        const refs = refsData.map(item => {
+          const paper = allP.find(p => p.paper_id === item.paper_ref);
+          return {
+            paper_id: id,
+            paper_ref: item.paper_ref,
+            paper_title: paper ? paper.paper_title : "ไม่ทราบชื่อ",
+          };
+        });
+
+        setReferences(refs);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAllPapers();
+
+    // KLA : ดึง references ปัจจุบัน
+    const fetchReferences = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("paper_citation_mtb")
+          .select("paper_ref"); // แค่ paper_ref ก็พอ
+
+        if (error) throw error;
+
+        // map ไปหา title จาก allPapers
+        const refs = data.map((item) => {
+          const paper = allPapers.find((p) => p.paper_id === item.paper_ref); // allPapers ยังไม่โหลด!
+          return {
+            paper_id: id,
+            paper_ref: item.paper_ref,
+            paper_title: paper ? paper.paper_title : "ไม่ทราบชื่อ",
+          };
+        });
+
+        setReferences(refs);
+      } catch (err) {
+        console.error("Error fetching references:", err);
+      }
+    };
+    fetchReferences();
     const fetchResearch = async () => {
       try {
         const { data, error } = await supabase
@@ -244,6 +307,65 @@ export default function ResearchEditPage() {
     }
   };
 
+  // KLA : เพิ่มอ้างอิงงานวิจัย
+  const handleAddReference = async () => {
+    if (!selectedRef) {
+      showPopup("กรุณาเลือกงานวิจัย", false);
+      return;
+    }
+
+    if (references.some((r) => r.paper_ref === selectedRef)) {
+      showPopup("งานวิจัยนี้ถูกอ้างอิงแล้ว", false);
+      return;
+    }
+
+    try {
+      // ตรวจสอบว่า paper_ref มีอยู่จริง
+      const refPaper = allPapers.find((p) => p.paper_id === selectedRef);
+      if (!refPaper) throw new Error("ไม่พบงานวิจัยที่เลือก");
+
+      const { data, error } = await supabase
+        .from("paper_citation_mtb")
+        .insert([{ paper_id: research.paper_id, paper_ref: selectedRef }])
+        .select(); // ดึงข้อมูลหลัง insert
+
+      if (error) throw error;
+
+      setReferences(prev => [
+        ...prev,
+        {
+          paper_id: research.paper_id,
+          paper_ref: selectedRef,
+          paper_title: refPaper.paper_title
+        }
+      ]);
+
+      setSelectedRef("");
+      showPopup("เพิ่มอ้างอิงสำเร็จ", true);
+    } catch (err) {
+      console.error("Error adding reference:", err);
+      showPopup("เพิ่มอ้างอิงไม่สำเร็จ", false);
+    }
+  };
+  // KLA : ลบอ้างอิงงานวิจัย
+  const handleDeleteReference = async (refId) => {
+    try {
+      await supabase
+        .from("paper_citation_mtb")
+        .delete()
+        .eq("paper_id", research.paper_id)
+        .eq("paper_ref", refId);
+
+      setReferences(references.filter((r) => r.paper_ref !== refId));
+      showPopup("ลบอ้างอิงสำเร็จ", true);
+    } catch (err) {
+      console.error("Error deleting reference:", err);
+      showPopup("ลบอ้างอิงไม่สำเร็จ", false);
+    }
+  };
+
+
+
   if (!research) return <div>Loading...</div>;
 
   return (
@@ -404,8 +526,8 @@ export default function ResearchEditPage() {
                   <button
                     onClick={handleSaveFile}
                     className={`px-3 py-1 rounded flex items-center space-x-1 transition
-                      ${savingFile ? "bg-gray-400 cursor-wait" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"}
-                      text-white`}
+                        ${savingFile ? "bg-gray-400 cursor-wait" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"}
+                        text-white`}
                     disabled={savingFile}
                   >
                     <span>
@@ -470,6 +592,47 @@ export default function ResearchEditPage() {
               ))}
             </div>
           </section>
+
+          <section className="bg-white p-6 rounded-xl shadow-md border mt-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-3">อ้างอิงงานวิจัย</h2>
+
+            {/* Dropdown + Add */}
+            <div className="flex gap-2 mb-4">
+              <select
+                value={selectedRef}
+                onChange={(e) => setSelectedRef(Number(e.target.value))} // แปลงเป็น number
+                className="flex-1 p-2 border rounded-lg"
+              >
+                <option value="">เลือกงานวิจัย...</option>
+                {allPapers.map((p) => (
+                  <option key={p.paper_id} value={p.paper_id}>
+                    {p.paper_title}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleAddReference}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg active:scale-95"
+              >
+                เพิ่ม
+              </button>
+            </div>
+
+            {/* แสดง references */}
+            <div className="flex flex-wrap gap-2">
+              {references.map((ref) => (
+                <div key={ref.paper_ref} className="flex items-center px-3 py-1 bg-gray-200 rounded-full gap-2">
+                  <span>{ref.paper_title}</span>
+                  <button
+                    onClick={() => handleDeleteReference(ref.paper_ref)}
+                    className="text-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* ขวา: ผู้เขียนหลัก */}
@@ -487,7 +650,7 @@ export default function ResearchEditPage() {
       {popup.show && (
         <div
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-xl text-white text-sm font-medium
-      ${popup.success ? "bg-green-600" : "bg-red-600"}`}
+        ${popup.success ? "bg-green-600" : "bg-red-600"}`}
         >
           {popup.message}
         </div>

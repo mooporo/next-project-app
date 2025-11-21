@@ -236,10 +236,28 @@ export default function SearchPage() {
     }
 
   };
-
   // KLA : ฟังก์ชันดึงข้อมูลงานวิจัยจาก Supabase
   const fetchResearchData = async () => {
     setLoading(true);
+
+    // KLA : ดึง keyword ทั้งหมดของทุก paper
+    const { data: keywordRows, error: keywordError } = await supabase
+      .from("paper_keyword_mtb")
+      .select(`
+      paper_id,
+      keyword_tb (
+        keyword_name
+      )
+  `);
+
+    if (keywordError) console.error(keywordError);
+
+    const keywordMap = {};
+    (keywordRows || []).forEach(row => {
+      const pid = String(row.paper_id).trim();
+      if (!keywordMap[pid]) keywordMap[pid] = [];
+      keywordMap[pid].push(row.keyword_tb.keyword_name.toLowerCase());
+    });
 
     // เจมส์ : ดึงข้อมูลการปักหมุดของผู้ใช้นี้
     const fetchedPinnedIds = await fetchPinnedData(user?.user_id);
@@ -298,6 +316,7 @@ export default function SearchPage() {
           is_pinned,
           user_fullname: paper.user_tb?.user_fullname || "ไม่ระบุชื่อ",
           comment_count: commentCountMap[paperIdAsString] || 0,
+          keywords: keywordMap[paperIdAsString] || [] // เพิ่ม keywords
         };
       });
       setResearchData(combinedData);
@@ -336,11 +355,15 @@ export default function SearchPage() {
   };
 
   // KLA : กรองข้อมูลตามคำค้นหา + keyword
-  const filteredData = researchData.filter(
-    (item) =>
-      item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      item.paper_title?.toLowerCase().includes(keywordTerm.toLowerCase())
-  );
+  const filteredData = researchData.filter((item) => {
+    const titleMatch = item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const keywordMatch =
+      keywordTerm.trim() === "" ||
+      item.keywords?.some(k => k.includes(keywordTerm.toLowerCase()));
+
+    return titleMatch && keywordMatch;
+  });
 
   // KLA : ฟังก์ชันเรียงข้อมูล
   const sortedData = [...filteredData].sort((a, b) => {
