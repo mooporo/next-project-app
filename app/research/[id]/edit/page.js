@@ -206,21 +206,28 @@ export default function ResearchEditPage() {
 
         // KLA: แปลง URL ของไฟล์/รูป เป็น public URL
         if (data.paper_file) {
+          const fileName = data.paper_file.split("/").pop();
+          const fullStoragePath = `covers/${fileName}`;
+
           const { data: fileUrl } = supabase.storage
             .from(STORAGE_BUCKET)
-            .getPublicUrl(data.paper_file);
+            .getPublicUrl(fullStoragePath);
+
+          // KLA: แปลง URL ของรูปปก เป็น public URL
+          if (data.paper_image) {
+            // ⚠️ Extract เฉพาะชื่อไฟล์จาก path ที่เก็บใน DB
+            const fileName = data.paper_image.split("/").pop();
+            const fullStoragePath = `covers/${fileName}`;  // 👈 ใช้ path จริงใน Supabase
+
+            const { data: imgUrl } = supabase.storage
+              .from(STORAGE_BUCKET)
+              .getPublicUrl(fullStoragePath);
+
+            data.paper_image = `${imgUrl.publicUrl}?t=${Date.now()}`;
+          }
 
           data.paper_file = fileUrl.publicUrl;
         }
-
-        // KLA: แปลง URL ของรูปปก เป็น public URL
-        if (data.paper_image) {
-          const { data: imgUrl } = supabase.storage
-            .from(STORAGE_BUCKET)
-            .getPublicUrl(data.paper_image);
-          data.paper_image = imgUrl.publicUrl;
-        }
-
       } catch (err) {
         console.error("Error fetching research:", err);
       }
