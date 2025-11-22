@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { Download, Archive, Eye, MessageSquare, UserCircle } from "lucide-react";
 import { Edit, Trash2 } from "lucide-react"; // KLA : ไอคอนแก้ไขและลบ
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/auth";
 
 const STORAGE_BUCKET = "user_bk";
 
@@ -237,15 +238,17 @@ const Comment = ({ user, text, date, userId, currentUser, onUpdate, onDelete, co
 };
 
 //  KLA : Comment Form Component จุดแสดงความคิดเห็น
-const CommentForm = ({ paperId, currentUser, onNewComment }) => {
+const CommentForm = ({ paperId, currentUser, onNewComment, user }) => {
   const [comment, setComment] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!comment.trim() || !currentUser?.user_id) return;
+
+    // ถ้าไม่ได้ล็อกอิน ป้องกัน submit
+    if (!currentUser?.user_id) return;
+    if (!comment.trim()) return;
 
     try {
-      // Insert คอมเมนต์ใหม่ลง comment_tb
       const { data, error } = await supabase
         .from("comment_tb")
         .insert([
@@ -256,11 +259,10 @@ const CommentForm = ({ paperId, currentUser, onNewComment }) => {
           },
         ])
         .select()
-        .maybeSingle(); // เลือกแถวที่ insert มา
+        .maybeSingle();
 
       if (error) throw error;
 
-      // เรียก callback เพื่ออัปเดต state ที่ parent
       if (onNewComment && data) {
         onNewComment({
           comment_id: data.comment_id,
@@ -277,33 +279,33 @@ const CommentForm = ({ paperId, currentUser, onNewComment }) => {
     }
   };
 
+  // disabled ถ้าไม่ได้ล็อกอิน
+  const isDisabled = !currentUser?.user_id;
   return (
     // KLA : ฟอร์มแสดงความคิดเห็น
     <form onSubmit={handleSubmit} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
       <div className="text-sm font-medium text-gray-700 mb-2">แสดงความคิดเห็นของคุณ</div>
       <textarea
-        className="w-full p-3 h-20 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-700 resize-none"
-        placeholder="กรุณาพิมพ์ข้อความ..."
+        className={`w-full p-3 h-20 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-700 resize-none ${isDisabled ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
+          }`}
+        placeholder={isDisabled ? "กรุณาล็อกอินก่อนแสดงความคิดเห็น" : "กรุณาพิมพ์ข้อความ..."}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault(); // KLA :ป้องกันขึ้นบรรทัดใหม่ เมื่อกด Enter หรือก็กันหลอน
-            handleSubmit(e);    // KLA: กด Enter → ส่งคอมเมนต์
-          }
-        }}
-      ></textarea>
+        disabled={isDisabled} // <-- ป้องกันการพิมพ์
+      />
       <button
         type="submit"
-        className="mt-3 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 disabled:opacity-50"
-        disabled={!comment.trim()}
+        disabled={isDisabled || !comment.trim()} // <-- ป้องกันการกดส่ง
+        className={`mt-3 px-6 py-2 rounded-lg font-semibold transition duration-150 ${isDisabled
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
       >
         ส่งคอมเมนต์
       </button>
     </form>
   );
 };
-
 
 
 export default function ResearchDetailPage() {
@@ -316,6 +318,9 @@ export default function ResearchDetailPage() {
   const [currentUser, setCurrentUser] = useState(null); // KLA : state สำหรับผู้ใช้ปัจจุบัน
   const [keywords, setKeywords] = useState([]); // KLA : state สำหรับคำสำคัญ
   const [references, setReferences] = useState([]); // KLA : state สำหรับรายการอ้างอิง
+
+  //เจมส์ : ดึงข้อมูลผู้ใช้ปัจจุบันจาก useAuth
+  const { user } = useAuth();
 
   // KLA : ฟังก์ชันจัดการการดาวน์โหลดไฟล์ PDF
   const handleDownload = () => {
@@ -341,13 +346,13 @@ export default function ResearchDetailPage() {
         const { data, error } = await supabase
           .from("paper_citation_mtb")
           .select(`
-        paper_ref,
-        paper_tb!paper_ref(paper_title)
-      `)
+          paper_ref,
+          paper_tb!paper_ref(paper_title)
+        `)
           .eq("paper_id", id);
 
         if (error) throw error;
-          
+
         // KLA : สร้างรายการอ้างอิง
         const referenceList = data.map((r) => ({
           paper_id: r.paper_tb?.paper_id || r.paper_ref, // ใช้ paper_id ของงานวิจัยจริง หรือเก็บ ref
@@ -467,13 +472,13 @@ export default function ResearchDetailPage() {
         const { data, error } = await supabase
           .from("comment_tb")
           .select(`
-            comment_id,
-            paper_id,
-            user_id,
-            comment,
-            created_at,
-            user_tb(user_fullname)
-          `)
+              comment_id,
+              paper_id,
+              user_id,
+              comment,
+              created_at,
+              user_tb(user_fullname)
+            `)
           .eq("paper_id", id)
           .order("created_at", { ascending: false });
 
@@ -617,16 +622,27 @@ export default function ResearchDetailPage() {
             </div>
           </section>
 
-          {/* KLA : ส่วนแสดงComment ปรับใหม่ */}
+          {/* KLA : ส่วนแสดงComment ตรวจสอบ user */}
+
           <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-6">คอมเมนต์</h2>
-            <CommentForm
-              paperId={id}
-              currentUser={currentUser} // KLA: ส่งข้อมูลผู้ใช้ปัจจุบัน
-              onNewComment={(newComment) =>
-                setComments((prev) => [newComment, ...prev])
-              }
-            />
+
+            {/* ถ้า currentUser มีค่า → แสดง CommentForm */}
+            {currentUser ? (
+              <CommentForm
+                paperId={id}
+                currentUser={currentUser}
+                user={user}
+                onNewComment={(newComment) =>
+                  setComments((prev) => [newComment, ...prev])
+                }
+              />
+            ) : (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-center">
+                กรุณาล็อกอินเพื่อแสดงความคิดเห็น
+              </div>
+            )}
+
             <div className="space-y-4">
               {comments.map((c) => (
                 <Comment
@@ -649,6 +665,7 @@ export default function ResearchDetailPage() {
               ))}
             </div>
           </section>
+
         </div>
 
         <div className="lg:col-span-1 space-y-8">

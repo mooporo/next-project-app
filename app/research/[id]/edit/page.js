@@ -671,22 +671,27 @@ export default function ResearchEditPage() {
             <h2 className="text-xl font-bold text-gray-800 mb-3">อ้างอิงงานวิจัย</h2>
 
             {/* Dropdown + Add */}
-            <div className="flex gap-2 mb-4">
-              <select
-                value={selectedRef}
-                onChange={(e) => setSelectedRef(Number(e.target.value))} // แปลงเป็น number
-                className="flex-1 p-2 border rounded-lg"
-              >
-                <option value="">เลือกงานวิจัย...</option>
-                {allPapers.map((p) => (
-                  <option key={p.paper_id} value={p.paper_id}>
-                    {p.paper_title}
-                  </option>
-                ))}
-              </select>
+            <div className="flex gap-2 mb-4 items-center">
+              {/* ห่อ select ด้วย div เพื่อควบคุม layout */}
+              <div className="flex-1">
+                <select
+                  value={selectedRef}
+                  onChange={(e) => setSelectedRef(Number(e.target.value))}
+                  className="w-full p-2 border rounded-lg truncate"
+                  title={allPapers.find(p => p.paper_id === selectedRef)?.paper_title || ""}
+                >
+                  <option value="">เลือกงานวิจัย...</option>
+                  {allPapers.map((p) => (
+                    <option key={p.paper_id} value={p.paper_id}>
+                      {p.paper_title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <button
                 onClick={handleAddReference}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg active:scale-95"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex-shrink-0 active:scale-95"
               >
                 เพิ่ม
               </button>

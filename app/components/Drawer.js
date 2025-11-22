@@ -306,6 +306,7 @@ const Drawer = ({ onToggle }) => {
   const handleLogout = () => {
     setIsProfileMenuOpen(false);
     logout();
+    
     router.replace("/login");
   };
 
