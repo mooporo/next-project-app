@@ -47,10 +47,9 @@ const TimelineVisualization = ({ data }) => (
   <div className="relative border-l border-gray-200 ml-4 pl-6">
     {data.map((item, index) => (
       <div key={index} className="mb-8 relative">
-        {/* วงกลม Timeline */}
+
         <div className="absolute w-3 h-3 bg-blue-600 rounded-full mt-1.5 -left-4 border border-white"></div>
 
-        {/* ✅ ใช้ item.time แทน item.date */}
         <time className="mb-1 text-sm font-normal leading-none text-gray-500">{item.time}</time>
         <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
         <p className="text-base font-normal text-gray-700">{item.description}</p>
@@ -410,6 +409,9 @@ export default function ComparisonPage() {
   }
 
   const getAllPinnedPapers = async () => {
+
+    if(user?.user_id === null) return;
+
     const { data, error } = await supabase
       .from('paper_pin_mtb')
       .select(`
@@ -439,8 +441,6 @@ export default function ComparisonPage() {
 
   //โหลดข้อมูล paper จาก supabase เพื่อส่งเป็น props ไปให้ ShowSearchPopup
   useEffect(() => {
-    if (!user?.user_id) return;
-
     getAllPapers();
     getAllPinnedPapers();
   }, [user?.user_id]);
