@@ -32,11 +32,14 @@ const ResearchCard = ({ item, onClick, isPinned, paperId, onPinned }) => {
     return colors[Math.floor(Math.random() * colors.length)];
   });
 
+
+  // เจมส์ : ฟังก์ชันเปิดปิดเมนู
   const handleToggleMenu = (e) => {
     e.stopPropagation();
     setCardMenuState(prev => !prev);
   };
 
+  // เจมส์ : ฟังก์ชันปักหมุด
   const handlePinClick = (e) => {
     e.stopPropagation();
     onPinned(paperId, isPinned); //เด่วมาเพิ่ม isPinned
@@ -236,6 +239,9 @@ export default function SearchPage() {
     }
 
   };
+
+
+
   // KLA : ฟังก์ชันดึงข้อมูลงานวิจัยจาก Supabase
   const fetchResearchData = async () => {
     setLoading(true);
@@ -263,7 +269,7 @@ export default function SearchPage() {
     const fetchedPinnedIds = await fetchPinnedData(user?.user_id);
     setPinnedIds(fetchedPinnedIds);
 
-    // 🔹 ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb และกรองเฉพาะที่อนุมัติแล้ว
+    // ดึง paper_tb พร้อมชื่อผู้ใช้จาก user_tb และกรองเฉพาะที่อนุมัติแล้ว
     const { data: papers, error } = await supabase
       .from("paper_tb")
       .select(`
@@ -328,7 +334,7 @@ export default function SearchPage() {
   };
 
   useEffect(() => {
-      fetchResearchData(); // 🔹 เรียก fetchResearchData() ไม่ว่าผู้ใช้ล็อกอินหรือไม่
+    fetchResearchData(); // 🔹 เรียก fetchResearchData() ไม่ว่าผู้ใช้ล็อกอินหรือไม่
   }, [user?.user_id]);
 
   // KLA : เมื่อคลิกการ์ด → เพิ่ม paper_views +1
@@ -356,13 +362,26 @@ export default function SearchPage() {
     router.push(`/research/${item.paper_id}`);
   };
 
-  // KLA : กรองข้อมูลตามคำค้นหา + keyword
-  const filteredData = researchData.filter((item) => {
-    const titleMatch = item.paper_title?.toLowerCase().includes(searchTerm.toLowerCase());
+  // KLA : ฟังก์ชันกรองข้อมูลตามคำค้นหาและคีย์เวิร์ด รรองรับ space และ comma
+  const keywordTermArray = keywordTerm
+    .toLowerCase()
+    .split(/[\s,]+/)     // รองรับ "ai ml", "ai,ml", "ai, ml"
+    .filter(Boolean);     // ลบช่องว่าง
 
-    const keywordMatch =
-      keywordTerm.trim() === "" ||
-      item.keywords?.some(k => k.includes(keywordTerm.toLowerCase()));
+  const filteredData = researchData.filter((item) => {
+    const titleMatch = item.paper_title
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    // ถ้าไม่พิมพ์ keyword → ผ่านเลย
+    if (keywordTermArray.length === 0) return titleMatch;
+
+    // check ทุกคำต้อง match keyword หนึ่งตัวใดตัวหนึ่ง
+    const keywordMatch = keywordTermArray.every(term =>
+      item.keywords?.some(k =>
+        k.toLowerCase().includes(term)
+      )
+    );
 
     return titleMatch && keywordMatch;
   });
@@ -415,7 +434,7 @@ export default function SearchPage() {
       if (!user) {
         alert("กรุณาล็อกอินก่อนปักหมุดเอกสาร");
         return; // ออกจากฟังก์ชันทันที
-     }
+      }
 
       if (isPinned == true) {
         const { error } = await supabase
@@ -428,12 +447,12 @@ export default function SearchPage() {
       if (isPinned == false) {
         const { error } = await supabase
           .from('paper_pin_mtb')
-         .insert([
-           {
-             user_id: user?.user_id,
-             paper_id: paperId,
-           }
-         ]);
+          .insert([
+            {
+              user_id: user?.user_id,
+              paper_id: paperId,
+            }
+          ]);
         if (!error) fetchResearchData();
       }
     } catch (error) {
