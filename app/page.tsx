@@ -232,7 +232,13 @@ export default function Page() {
             <div className="w-full md:w-2/5 flex justify-center md:justify-end pt-12 md:pt-0">
               <div className="bg-white p-2 rounded-2xl shadow-2xl w-[320px] h-[320px] flex items-center justify-center hover:shadow-blue-400/40 transition duration-500 overflow-hidden fade-in">
                 <div className="relative w-full h-full">
-                  <Image src="/Logo.png" alt="Siam Archive" fill unoptimized priority className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700" />
+                  <Image
+                    src="/siam_archive.png"
+                    alt="Siam Archive"
+                    fill
+                    priority
+                    className="object-cover rounded-2xl hover:scale-105 transition-transform duration-700"
+                  />
                 </div>
               </div>
             </div>
