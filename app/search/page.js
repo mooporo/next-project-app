@@ -255,9 +255,9 @@ export default function SearchPage() {
         keyword_name
       )
   `);
-
+    
     if (keywordError) console.error(keywordError);
-
+    
     const keywordMap = {};
     (keywordRows || []).forEach(row => {
       const pid = String(row.paper_id).trim();
