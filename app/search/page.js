@@ -377,7 +377,7 @@ export default function SearchPage() {
     if (keywordTermArray.length === 0) return titleMatch;
 
     // check ทุกคำต้อง match keyword หนึ่งตัวใดตัวหนึ่ง
-    const keywordMatch = keywordTermArray.every(term =>
+    const keywordMatch = keywordTermArray.some(term =>
       item.keywords?.some(k =>
         k.toLowerCase().includes(term)
       )
