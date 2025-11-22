@@ -183,31 +183,27 @@ const UploadPage = () => {
         let coverImgUrl = "";
         if (coverImg) {
           try {
-            const fileName = coverImg.name;
-
+            const safeCoverName = generateUploadFileName(coverImg);
             const { data, error } = await supabase.storage
               .from("paper_bk")
-              .upload(`covers/${fileName}`, coverImg, { upsert: true });
-            // ⚠️ upsert:true เพื่อให้สามารถอัปไฟล์ชื่อซ้ำได้
+              .upload(`covers/${safeCoverName}`, coverImg);
 
             if (error || !data) {
               alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
               return;
             }
 
-            // ✅ ดึง URL แบบ public
-            const { data: urlData } = supabase.storage
+            const { data: coverUrlData } = supabase.storage
               .from("paper_bk")
-              .getPublicUrl(`covers/${fileName}`);
+              .getPublicUrl(data.path);
 
-            const coverUrl = urlData.publicUrl;
-            console.log("📌 Cover URL:", coverUrl);
+            coverImgUrl = coverUrlData?.publicUrl || "";
+            console.log("Cover uploaded:", safeCoverName);
 
-            // 👉 นำ coverUrl ไปเก็บใน database ได้เลยตรงนี้
-
-          } catch (err) {
-            console.error(err);
-            alert("เกิดข้อผิดพลาดระหว่างอัปโหลด");
+          } catch (imgErr) {
+            console.error("เกิดข้อผิดพลาดตอนอัปโหลดรูป:", imgErr);
+            alert("เกิดข้อผิดพลาดตอนอัปโหลดรูปภาพ");
+            return;
           }
         }
         // KLA : อัปโหลดไฟล์ PDF
