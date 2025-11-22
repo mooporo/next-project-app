@@ -197,7 +197,11 @@ export default function Page() {
     setLoading(false);
   }
 
-  useEffect(() => { if (user?.user_id) fetchResearchData(); }, [user?.user_id]);
+  // ให้ guest มองเห็นงานวิจัยได้ปกติ
+      useEffect(() => {
+        fetchResearchData();
+      }, [user?.user_id]);
+
 
   const handleView = async (item: ResearchItem) => {
     const newViews = (item.paper_views || 0) + 1;
@@ -235,19 +239,36 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Features Section */}
+                {/* Features Section */}
         <section className="py-20 bg-white fade-in">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">แพลตฟอร์มที่ออกแบบมาเพื่อคุณ</h2>
             <p className="text-center text-gray-500 mb-16 max-w-3xl mx-auto">เราออกแบบมาเพื่อเป็นเครื่องมือและบริการจัดการงานวิจัยให้คุณเข้าถึงง่ายและมีประสิทธิภาพ ด้วยระบบที่ใช้งานง่าย</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature, index) => {
-                const linkHref = feature.title === "ค้นหาง่าย" ? "/search" : feature.title === "อัปโหลดเอกสาร" ? "/upload" : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison" : "#";
-                return <Link key={index} href={linkHref}><FeatureCard {...feature} /></Link>;
+                const handleClick = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  if (feature.title === "อัปโหลดเอกสาร" && !user) {
+                    alert("กรุณาล็อกอินก่อนทำการอัปโหลดเอกสาร");
+                    return;
+                  }
+                  const linkHref = feature.title === "ค้นหาง่าย" ? "/search"
+                    : feature.title === "อัปโหลดเอกสาร" ? "/upload"
+                    : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison"
+                    : "#";
+                  router.push(linkHref);
+                };
+
+                return (
+                  <button key={index} onClick={handleClick} className="w-full">
+                    <FeatureCard {...feature} />
+                  </button>
+                );
               })}
             </div>
           </div>
         </section>
+
 
         {/* KLA : Section for latest research */}
         <section className="py-20 bg-gray-50 fade-in">
