@@ -205,17 +205,20 @@ export default function ResearchEditPage() {
         }
 
         // KLA: แปลง URL ของไฟล์/รูป เป็น public URL
-        if (data.paper_file && !data.paper_file.startsWith("http")) {
+        if (data.paper_file) {
           const { data: fileUrl } = supabase.storage
             .from(STORAGE_BUCKET)
             .getPublicUrl(data.paper_file);
+
           data.paper_file = fileUrl.publicUrl;
         }
-        if (data.paper_image && !data.paper_image.startsWith("http")) {
+
+        // KLA: แปลง URL ของรูปปก เป็น public URL
+        if (data.paper_image) {
           const { data: imgUrl } = supabase.storage
             .from(STORAGE_BUCKET)
             .getPublicUrl(data.paper_image);
-          data.paper_image = `${imgUrl.publicUrl}?t=${new Date().getTime()}`;
+          data.paper_image = imgUrl.publicUrl;
         }
 
       } catch (err) {
