@@ -212,6 +212,9 @@ export default function ComparisonPage() {
   }
 
   const getAllPinnedPapers = async () => {
+
+    if(user?.user_id === null) return;
+
     const { data, error } = await supabase
       .from('paper_pin_mtb')
       .select(`
@@ -241,8 +244,6 @@ export default function ComparisonPage() {
 
   //โหลดข้อมูล paper จาก supabase เพื่อส่งเป็น props ไปให้ ShowSearchPopup
   useEffect(() => {
-    if (!user?.user_id) return;
-
     getAllPapers();
     getAllPinnedPapers();
   }, [user?.user_id]);
@@ -404,11 +405,6 @@ export default function ComparisonPage() {
         )}
 
       </div>
-
-      {/* Footer */}
-      {/* <footer className="w-full bg-gray-900 text-gray-300 text-sm text-center py-4 mt-auto">
-        © 2025 Siam Archive. สงวนลิขสิทธิ์.
-      </footer> */}
     </div >
   );
 }

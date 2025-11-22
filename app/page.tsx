@@ -98,7 +98,10 @@ const ResearchCard: React.FC<{ item: ResearchItem; onClick: (item: ResearchItem)
       {/* KLA: ภาพหรือพื้นหลังสีถ้าไม่มีภาพ */}
       <div className="h-40 flex items-center justify-center overflow-hidden">
         {item.paper_image ? (
-          <img src={item.paper_image} alt={item.paper_title} className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500" />
+          <img
+            src={item.paper_image}
+            alt={item.paper_title}
+            className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-center px-6" style={{ backgroundColor: bgColor }}>
             <span className="text-white text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
@@ -193,14 +196,15 @@ export default function Page() {
       };
     });
 
+    console.log(combinedData);
     setResearchItems(combinedData);
     setLoading(false);
   }
 
   // ให้ guest มองเห็นงานวิจัยได้ปกติ
-      useEffect(() => {
-        fetchResearchData();
-      }, [user?.user_id]);
+  useEffect(() => {
+    fetchResearchData();
+  }, [user?.user_id]);
 
 
   const handleView = async (item: ResearchItem) => {
@@ -245,7 +249,7 @@ export default function Page() {
           </div>
         </section>
 
-                {/* Features Section */}
+        {/* Features Section */}
         <section className="py-20 bg-white fade-in">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">แพลตฟอร์มที่ออกแบบมาเพื่อคุณ</h2>
@@ -260,8 +264,8 @@ export default function Page() {
                   }
                   const linkHref = feature.title === "ค้นหาง่าย" ? "/search"
                     : feature.title === "อัปโหลดเอกสาร" ? "/upload"
-                    : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison"
-                    : "#";
+                      : feature.title === "เปรียบเทียบงานวิจัย" ? "/comparison"
+                        : "#";
                   router.push(linkHref);
                 };
 
